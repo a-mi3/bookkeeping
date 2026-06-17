@@ -312,46 +312,106 @@ function setSyncStatus(msg) {
   if (msg) setTimeout(() => { document.getElementById('sync-status').textContent = ''; }, 3000);
 }
 
+// 必要なシートを全て確保する
+async function ensureSheets(sheetNames) {
+  const needed = ['出荷データ', '設定', '月次集計', '店舗別集計', '野菜別集計'];
+  const toAdd = needed.filter(n => !sheetNames.includes(n));
+  if (!toAdd.length) return;
+  await gapi.client.sheets.spreadsheets.batchUpdate({
+    spreadsheetId: SPREADSHEET_ID,
+    resource: { requests: toAdd.map(title => ({ addSheet: { properties: { title } } })) }
+  });
+}
+
+// 出荷データを行形式で保存
 async function syncToSheets() {
   if (!isSignedIn) return;
   try {
     setSyncStatus('⏳');
-    const data = { stores, veggies, records, nextId };
+    // 出荷データシート：ヘッダー＋全レコード
+    const header = [['ID','日付','店舗','野菜','個数','単価','合計金額','メモ']];
+    const rows = records.map(r => [r.id, r.date, r.store, r.veggie, r.qty, r.price||0, r.total||0, r.memo||'']);
     await gapi.client.sheets.spreadsheets.values.update({
-      spreadsheetId: SPREADSHEET_ID, range: `${SHEET_NAME}!A1`,
-      valueInputOption: 'RAW', resource: { values: [[JSON.stringify(data)]] },
+      spreadsheetId: SPREADSHEET_ID, range: '出荷データ!A1',
+      valueInputOption: 'RAW', resource: { values: [...header, ...rows] },
     });
+    // 設定シート：店舗・野菜リスト
+    const settingRows = [['店舗リスト','野菜リスト'], ...Array.from({length: Math.max(stores.length, veggies.length)}, (_, i) => [stores[i]||'', veggies[i]||''])];
+    await gapi.client.sheets.spreadsheets.values.update({
+      spreadsheetId: SPREADSHEET_ID, range: '設定!A1',
+      valueInputOption: 'RAW', resource: { values: settingRows },
+    });
+    // 集計シートを更新
+    await updateAggSheets();
     setSyncStatus('✅ 保存');
-  } catch (e) { setSyncStatus('❌'); }
+  } catch (e) { setSyncStatus('❌'); console.error(e); }
+}
+
+// 集計シートを自動生成
+async function updateAggSheets() {
+  // 月次集計
+  const byMonth = {};
+  records.forEach(r => {
+    const ym = r.date.substring(0,7);
+    if (!byMonth[ym]) byMonth[ym] = {total:0, qty:0, count:0};
+    byMonth[ym].total += r.total||0; byMonth[ym].qty += r.qty||0; byMonth[ym].count++;
+  });
+  const monthRows = [['年月','件数','個数合計','売上合計'], ...Object.entries(byMonth).sort((a,b)=>b[0].localeCompare(a[0])).map(([ym,v])=>[ym.replace('-','年')+'月', v.count, v.qty, v.total])];
+  await gapi.client.sheets.spreadsheets.values.update({
+    spreadsheetId: SPREADSHEET_ID, range: '月次集計!A1',
+    valueInputOption: 'RAW', resource: { values: monthRows },
+  });
+  // 店舗別集計
+  const byStore = {};
+  records.forEach(r => {
+    if (!byStore[r.store]) byStore[r.store] = {total:0, qty:0, count:0};
+    byStore[r.store].total += r.total||0; byStore[r.store].qty += r.qty||0; byStore[r.store].count++;
+  });
+  const storeRows = [['店舗','件数','個数合計','売上合計'], ...Object.entries(byStore).sort((a,b)=>b[1].total-a[1].total).map(([s,v])=>[s, v.count, v.qty, v.total])];
+  await gapi.client.sheets.spreadsheets.values.update({
+    spreadsheetId: SPREADSHEET_ID, range: '店舗別集計!A1',
+    valueInputOption: 'RAW', resource: { values: storeRows },
+  });
+  // 野菜別集計
+  const byVeggie = {};
+  records.forEach(r => {
+    if (!byVeggie[r.veggie]) byVeggie[r.veggie] = {total:0, qty:0, count:0};
+    byVeggie[r.veggie].total += r.total||0; byVeggie[r.veggie].qty += r.qty||0; byVeggie[r.veggie].count++;
+  });
+  const veggieRows = [['野菜','件数','個数合計','売上合計'], ...Object.entries(byVeggie).sort((a,b)=>b[1].total-a[1].total).map(([v,d])=>[v, d.count, d.qty, d.total])];
+  await gapi.client.sheets.spreadsheets.values.update({
+    spreadsheetId: SPREADSHEET_ID, range: '野菜別集計!A1',
+    valueInputOption: 'RAW', resource: { values: veggieRows },
+  });
 }
 
 async function syncFromSheets() {
   if (!isSignedIn) return;
   try {
     setSyncStatus('⏳ 読込中');
-    // シートが存在しない場合は作成
     const sheetMeta = await gapi.client.sheets.spreadsheets.get({ spreadsheetId: SPREADSHEET_ID });
     const sheetNames = sheetMeta.result.sheets.map(s => s.properties.title);
-    if (!sheetNames.includes(SHEET_NAME)) {
-      await gapi.client.sheets.spreadsheets.batchUpdate({
-        spreadsheetId: SPREADSHEET_ID,
-        resource: { requests: [{ addSheet: { properties: { title: SHEET_NAME } } }] }
-      });
-      setSyncStatus('📋 新規シート作成');
-      return;
-    }
-    const resp = await gapi.client.sheets.spreadsheets.values.get({
-      spreadsheetId: SPREADSHEET_ID, range: `${SHEET_NAME}!A1`
+    await ensureSheets(sheetNames);
+    // 出荷データ読み込み
+    const dataResp = await gapi.client.sheets.spreadsheets.values.get({
+      spreadsheetId: SPREADSHEET_ID, range: '出荷データ!A2:H'
     });
-    const rows = resp.result.values;
-    if (rows && rows[0] && rows[0][0]) {
-      const data = JSON.parse(rows[0][0]);
-      stores = data.stores || stores;
-      veggies = data.veggies || veggies;
-      records = data.records || [];
-      nextId = data.nextId || records.reduce((m, r) => Math.max(m, r.id), 0) + 1;
-      buildSelects(); renderSummary(); setSyncStatus(`✅ ${records.length}件`);
-    } else { setSyncStatus('📋 新規'); }
+    const rows = dataResp.result.values || [];
+    records = rows.filter(r => r[0]).map(r => ({
+      id: parseInt(r[0]), date: r[1], store: r[2], veggie: r[3],
+      qty: parseInt(r[4])||0, price: parseInt(r[5])||0, total: parseInt(r[6])||0, memo: r[7]||''
+    }));
+    nextId = records.reduce((m, r) => Math.max(m, r.id), 0) + 1;
+    // 設定読み込み
+    const settingResp = await gapi.client.sheets.spreadsheets.values.get({
+      spreadsheetId: SPREADSHEET_ID, range: '設定!A2:B'
+    });
+    const settingRows = settingResp.result.values || [];
+    const loadedStores = settingRows.map(r => r[0]).filter(Boolean);
+    const loadedVeggies = settingRows.map(r => r[1]).filter(Boolean);
+    if (loadedStores.length) stores = loadedStores;
+    if (loadedVeggies.length) veggies = loadedVeggies;
+    buildSelects(); renderSummary(); setSyncStatus(`✅ ${records.length}件`);
   } catch (e) { setSyncStatus('❌ 読込失敗'); console.error(e); }
 }
 
