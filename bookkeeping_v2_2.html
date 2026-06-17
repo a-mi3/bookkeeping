@@ -1,0 +1,1146 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>複式簿記アプリ</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Hiragino Sans',sans-serif;font-size:14px;color:#1a1a1a;background:#f5f5f3}
+.topbar{background:#fff;border-bottom:1px solid #e0e0dc;padding:0 1.5rem;display:flex;align-items:center;justify-content:space-between;height:52px;position:sticky;top:0;z-index:100}
+.topbar-title{font-size:16px;font-weight:500;display:flex;align-items:center;gap:8px}
+.topbar-title i{font-size:20px;color:#185FA5}
+.topbar-actions{display:flex;gap:8px;align-items:center}
+.btn{display:inline-flex;align-items:center;gap:5px;padding:6px 14px;border-radius:8px;font-size:13px;cursor:pointer;border:1px solid #d0d0cc;background:#fff;color:#1a1a1a;font-family:inherit;white-space:nowrap}
+.btn:hover{background:#f0f0ec}.btn:active{transform:scale(0.98)}
+.btn-primary{background:#185FA5;color:#fff;border-color:#185FA5}.btn-primary:hover{background:#0C447C}
+.btn-success{background:#3B6D11;color:#fff;border-color:#3B6D11}.btn-success:hover{background:#27500A}
+.btn-sm{padding:4px 10px;font-size:12px}
+.btn-danger{background:#fff;color:#A32D2D;border-color:#F09595}.btn-danger:hover{background:#FCEBEB}
+.save-status{font-size:12px;color:#888;display:flex;align-items:center;gap:4px}
+.save-status.saved{color:#3B6D11}.save-status.unsaved{color:#BA7517}
+.main{max-width:1200px;margin:0 auto;padding:1.25rem 1.5rem}
+.tabs{display:flex;gap:2px;border-bottom:1px solid #e0e0dc;flex-wrap:wrap;background:#fff;padding:0 1rem;border-radius:12px 12px 0 0;border:1px solid #e0e0dc;border-bottom:none}
+.tab{padding:10px 12px;font-size:12px;color:#666;cursor:pointer;border:none;background:none;border-bottom:2px solid transparent;margin-bottom:-1px;white-space:nowrap;display:flex;align-items:center;gap:4px}
+.tab.active{color:#185FA5;border-bottom-color:#185FA5;font-weight:500}
+.tab:hover:not(.active){color:#1a1a1a;background:#f5f5f3;border-radius:6px 6px 0 0}
+.panel{display:none}.panel.active{display:block}
+.metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:1.25rem}
+.metric{background:#fff;border:1px solid #e0e0dc;border-radius:10px;padding:.875rem}
+.metric-label{font-size:11px;color:#888;margin-bottom:4px}
+.metric-value{font-size:18px;font-weight:500}
+.card{background:#fff;border:1px solid #e0e0dc;border-radius:12px;padding:1.125rem;margin-bottom:1.25rem}
+.card-title{font-size:14px;font-weight:500;margin-bottom:1rem}
+.fg{display:flex;flex-direction:column;gap:3px;margin-bottom:8px}
+.fg label{font-size:11px;color:#888}
+input,select,textarea{width:100%;padding:7px 10px;border:1px solid #d0d0cc;border-radius:8px;font-size:13px;font-family:inherit;background:#fff;color:#1a1a1a}
+input:focus,select:focus,textarea:focus{outline:none;border-color:#185FA5;box-shadow:0 0 0 2px rgba(24,95,165,0.12)}
+input[type=number]{text-align:right}
+input[type=file]{padding:4px;font-size:12px}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+.actions{display:flex;justify-content:flex-end;gap:8px;margin-top:10px}
+table{width:100%;border-collapse:collapse;font-size:12px;table-layout:fixed}
+th{text-align:left;padding:7px 8px;font-size:11px;font-weight:500;color:#888;border-bottom:1px solid #e0e0dc;white-space:nowrap;overflow:hidden;background:#fafaf8}
+td{padding:7px 8px;border-bottom:1px solid #f0f0ec;color:#1a1a1a;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:#fafaf8}
+.tfoot-row td{font-weight:500;border-top:1px solid #d0d0cc;border-bottom:none;background:#f5f5f3}
+.num{text-align:right;font-variant-numeric:tabular-nums}
+.sec-hd{display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-wrap:wrap;gap:8px}
+.sec-title{font-size:14px;font-weight:500}
+.badge{display:inline-block;padding:1px 6px;border-radius:20px;font-size:10px;font-weight:500;white-space:nowrap}
+.b-asset{background:#E6F1FB;color:#0C447C}.b-liability{background:#FAEEDA;color:#633806}
+.b-equity{background:#EEEDFE;color:#3C3489}.b-revenue{background:#EAF3DE;color:#27500A}
+.b-expense{background:#FAECE7;color:#712B13}.b-taxable{background:#EAF3DE;color:#27500A}
+.b-taxable-r{background:#E6F1FB;color:#0C447C}.b-exempt{background:#f0f0ec;color:#444}
+.b-nontax{background:#FAEEDA;color:#633806}.b-zerotax{background:#EEEDFE;color:#3C3489}
+.b-debit{background:#E6F1FB;color:#0C447C}.b-credit{background:#EAF3DE;color:#27500A}
+.b-hq{background:#EEEDFE;color:#3C3489}.b-shop{background:#FAEEDA;color:#633806}.b-agri{background:#EAF3DE;color:#27500A}
+.del-btn{background:none;border:none;cursor:pointer;color:#bbb;padding:3px 5px;border-radius:4px;font-size:13px}
+.del-btn:hover{color:#E24B4A;background:#FCEBEB}
+.alert-ok{background:#EAF3DE;color:#27500A;padding:7px 12px;border-radius:8px;font-size:12px;margin-bottom:10px;display:none;border:1px solid #C0DD97}
+.alert-ng{background:#FCEBEB;color:#A32D2D;padding:7px 12px;border-radius:8px;font-size:12px;margin-bottom:10px;display:none;border:1px solid #F09595}
+.filter-row{display:flex;gap:8px;margin-bottom:1rem;flex-wrap:wrap;align-items:center}
+.filter-row label{font-size:12px;color:#888;white-space:nowrap}
+.filter-row select,.filter-row input{width:auto}
+.bs-head{font-size:13px;font-weight:500;padding:6px 10px;background:#f5f5f3;border-radius:6px;margin-bottom:4px}
+.bs-row{display:flex;justify-content:space-between;padding:6px 10px;font-size:13px;border-bottom:1px solid #f0f0ec}
+.bs-row:last-child{border-bottom:none}
+.bs-total{display:flex;justify-content:space-between;padding:7px 10px;font-size:13px;font-weight:500;border-top:1px solid #d0d0cc;margin-top:4px}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+.empty{text-align:center;padding:2rem;color:#bbb;font-size:13px}
+.tax-row{display:flex;justify-content:space-between;padding:6px 0;font-size:13px;border-bottom:1px solid #f0f0ec}
+.tax-row:last-child{border-bottom:none}
+.tax-total{display:flex;justify-content:space-between;padding:8px 0;font-size:15px;font-weight:500;border-top:1px solid #d0d0cc;margin-top:6px}
+.tax-box{background:#fafaf8;border-radius:8px;padding:1rem;margin-bottom:1rem}
+.hint{font-size:11px;color:#aaa;margin-top:4px;line-height:1.6}
+.col-hd{font-size:11px;color:#888;padding-bottom:3px}
+.receipt-thumb{width:36px;height:36px;object-fit:cover;border-radius:4px;cursor:pointer;border:1px solid #e0e0dc}
+.receipt-thumb:hover{opacity:.8}
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:1000;align-items:center;justify-content:center}
+.modal-overlay.open{display:flex}
+.modal-box{background:#fff;border-radius:12px;padding:1.5rem;max-width:90vw;max-height:90vh;overflow:auto;position:relative}
+.modal-box img{max-width:70vw;max-height:70vh;border-radius:8px}
+.modal-close{position:absolute;top:12px;right:12px;background:none;border:none;font-size:20px;cursor:pointer;color:#888;padding:4px 8px;border-radius:6px}
+.modal-close:hover{background:#f0f0ec}
+.petty-balance{font-size:20px;font-weight:500;color:#185FA5}
+.petty-balance.low{color:#A32D2D}
+.transfer-box{background:#E6F1FB;border:1px solid #B5D4F4;border-radius:10px;padding:1rem;margin-bottom:1rem}
+.transfer-box .title{font-size:13px;font-weight:500;color:#0C447C;margin-bottom:.5rem}
+.dept-badge{display:inline-block;padding:1px 6px;border-radius:20px;font-size:10px;font-weight:500}
+.tab-group-label{font-size:10px;color:#bbb;padding:10px 6px 0;white-space:nowrap;align-self:flex-end}
+.section-divider{height:1px;background:#e0e0dc;margin:1.25rem 0}
+</style>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
+<!-- Google API -->
+<script src="https://accounts.google.com/gsi/client" onload="gisLoaded()" async defer></script>
+<script src="https://apis.google.com/js/api.js" onload="gapiLoaded()" async defer></script>
+<style>
+.gauth-bar{background:#185FA5;color:#fff;text-align:center;padding:10px;font-size:13px;display:flex;align-items:center;justify-content:center;gap:12px}
+.gauth-bar.connected{background:#3B6D11}
+.gauth-bar button{background:#fff;color:#185FA5;border:none;border-radius:6px;padding:5px 14px;font-size:12px;cursor:pointer;font-weight:500}
+.gauth-bar.connected button{color:#3B6D11}
+.sync-status{font-size:11px;opacity:.85}
+</style>
+</head>
+<body>
+
+<!-- Google認証バー -->
+<div class="gauth-bar" id="gauth-bar">
+  <span id="gauth-msg">📊 Google Sheetsと連携してデータをクラウド保存できます</span>
+  <button onclick="handleAuthClick()" id="gauth-btn">Googleでログイン</button>
+  <span class="sync-status" id="sync-status"></span>
+</div>
+
+<!-- 画像拡大モーダル -->
+<div class="modal-overlay" id="img-modal" onclick="closeModal()">
+  <div class="modal-box" onclick="event.stopPropagation()">
+    <button class="modal-close" onclick="closeModal()"><i class="ti ti-x"></i></button>
+    <div id="modal-content"></div>
+  </div>
+</div>
+
+<!-- 小口→本帳簿転記モーダル -->
+<div class="modal-overlay" id="transfer-modal" onclick="closeTransferModal()">
+  <div class="modal-box" style="min-width:400px" onclick="event.stopPropagation()">
+    <button class="modal-close" onclick="closeTransferModal()"><i class="ti ti-x"></i></button>
+    <div class="card-title">本帳簿へ転記</div>
+    <div id="transfer-content"></div>
+  </div>
+</div>
+
+<div class="topbar">
+  <div class="topbar-title">
+    <i class="ti ti-calculator"></i>
+    複式簿記アプリ
+    <span style="font-size:11px;color:#aaa;font-weight:400;margin-left:4px">原則課税・部門管理・小口現金対応</span>
+  </div>
+  <div class="topbar-actions">
+    <span class="save-status" id="save-status"><i class="ti ti-circle-check"></i> 保存済み</span>
+    <label class="btn btn-sm" style="cursor:pointer">
+      <i class="ti ti-folder-open"></i> データ読み込み
+      <input type="file" id="file-input" accept=".json" style="display:none" onchange="loadFromFile(event)">
+    </label>
+    <button class="btn btn-sm btn-success" onclick="saveToFile()">
+      <i class="ti ti-device-floppy"></i> データを保存
+    </button>
+  </div>
+</div>
+
+<div class="main">
+  <div style="background:#fff;border:1px solid #e0e0dc;border-radius:12px;overflow:hidden">
+    <div class="tabs">
+      <span class="tab-group-label">本帳簿</span>
+      <button class="tab active" onclick="sw('journal')"><i class="ti ti-pencil"></i> 仕訳入力</button>
+      <button class="tab" onclick="sw('ledger')"><i class="ti ti-books"></i> 総勘定元帳</button>
+      <button class="tab" onclick="sw('trial')"><i class="ti ti-table"></i> 試算表</button>
+      <button class="tab" onclick="sw('pl')"><i class="ti ti-trending-up"></i> 損益計算書</button>
+      <button class="tab" onclick="sw('bs')"><i class="ti ti-building-bank"></i> 貸借対照表</button>
+      <button class="tab" onclick="sw('tax')"><i class="ti ti-receipt-tax"></i> 消費税申告</button>
+      <span class="tab-group-label">店舗・農業</span>
+      <button class="tab" onclick="sw('petty')"><i class="ti ti-cash"></i> 小口現金</button>
+      <span class="tab-group-label">設定</span>
+      <button class="tab" onclick="sw('accounts')"><i class="ti ti-settings"></i> 勘定科目</button>
+    </div>
+    <div style="padding:1.25rem">
+
+      <!-- 仕訳入力 -->
+      <div id="tab-journal" class="panel active">
+        <div class="metrics" id="j-metrics"></div>
+        <div class="card">
+          <div class="card-title">新規仕訳</div>
+          <div id="j-alert-ok" class="alert-ok"></div>
+          <div id="j-alert-ng" class="alert-ng"></div>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:10px">
+            <div class="fg"><label>日付</label><input type="date" id="j-date"></div>
+            <div class="fg"><label>部門</label>
+              <select id="j-dept">
+                <option value="hq">本社</option>
+                <option value="shop">店舗</option>
+                <option value="agri">農業</option>
+                <option value="common">共通</option>
+              </select>
+            </div>
+            <div class="fg"><label>摘要</label><input type="text" id="j-desc" placeholder="例：事務所家賃支払"></div>
+          </div>
+          <div style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:8px;margin-bottom:4px">
+            <div class="col-hd">借方科目</div><div class="col-hd">税区分</div>
+            <div class="col-hd">税抜金額（円）</div><div class="col-hd">消費税額（円）</div>
+          </div>
+          <div style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:8px;margin-bottom:10px">
+            <div class="fg" style="margin:0"><select id="j-d-acc"></select></div>
+            <div class="fg" style="margin:0"><select id="j-d-tax" onchange="calcTax('d')"></select></div>
+            <div class="fg" style="margin:0"><input type="number" id="j-d-amt" placeholder="0" min="0" oninput="calcTax('d')"></div>
+            <div class="fg" style="margin:0"><input type="number" id="j-d-taxamt" placeholder="自動計算" min="0"></div>
+          </div>
+          <div style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:8px;margin-bottom:4px">
+            <div class="col-hd">貸方科目</div><div class="col-hd">税区分</div>
+            <div class="col-hd">税抜金額（円）</div><div class="col-hd">消費税額（円）</div>
+          </div>
+          <div style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:8px;margin-bottom:10px">
+            <div class="fg" style="margin:0"><select id="j-c-acc"></select></div>
+            <div class="fg" style="margin:0"><select id="j-c-tax" onchange="calcTax('c')"></select></div>
+            <div class="fg" style="margin:0"><input type="number" id="j-c-amt" placeholder="0" min="0" oninput="calcTax('c')"></div>
+            <div class="fg" style="margin:0"><input type="number" id="j-c-taxamt" placeholder="自動計算" min="0"></div>
+          </div>
+          <div class="row2" style="margin-bottom:8px">
+            <div class="fg" style="margin:0">
+              <label>レシート・領収書（任意）</label>
+              <input type="file" id="j-receipt" accept="image/*" onchange="previewReceipt('j-receipt','j-receipt-preview')">
+            </div>
+            <div id="j-receipt-preview" style="display:flex;align-items:center;gap:8px;padding-top:4px"></div>
+          </div>
+          <div class="hint">※ 消費税額は自動計算。借方・貸方の合計（税抜＋消費税）が一致する必要があります。</div>
+          <div class="actions">
+            <button class="btn btn-primary" onclick="addJournal()"><i class="ti ti-plus"></i> 仕訳を追加</button>
+          </div>
+        </div>
+        <div class="sec-hd">
+          <span class="sec-title">仕訳帳</span>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <select id="j-filter-dept" onchange="renderJList()" style="font-size:12px;width:auto">
+              <option value="">全部門</option>
+              <option value="hq">本社</option>
+              <option value="shop">店舗</option>
+              <option value="agri">農業</option>
+                <option value="common">共通</option>
+            </select>
+            <button class="btn btn-sm" onclick="exportJournalCSV()"><i class="ti ti-download"></i> CSV</button>
+          </div>
+        </div>
+        <div class="card" style="padding:0;overflow:hidden"><div id="j-list" style="overflow-x:auto"></div></div>
+      </div>
+
+      <!-- 総勘定元帳 -->
+      <div id="tab-ledger" class="panel">
+        <div class="filter-row">
+          <label>科目：</label>
+          <select id="l-acc" onchange="renderLedger()" style="min-width:180px"></select>
+          <label>部門：</label>
+          <select id="l-dept" onchange="renderLedger()">
+            <option value="">全部門</option>
+            <option value="hq">本社</option>
+            <option value="shop">店舗</option>
+            <option value="agri">農業</option>
+                <option value="common">共通</option>
+          </select>
+        </div>
+        <div class="card" style="padding:0;overflow:hidden"><div id="l-content" style="padding:1rem;overflow-x:auto"></div></div>
+      </div>
+
+      <!-- 試算表 -->
+      <div id="tab-trial" class="panel">
+        <div class="sec-hd">
+          <span class="sec-title">合計残高試算表</span>
+          <div style="display:flex;gap:8px">
+            <select id="trial-dept" onchange="renderTrial()" style="font-size:12px;width:auto">
+              <option value="">全部門</option>
+              <option value="hq">本社</option>
+              <option value="shop">店舗</option>
+              <option value="agri">農業</option>
+                <option value="common">共通</option>
+            </select>
+            <button class="btn btn-sm" onclick="exportTrialCSV()"><i class="ti ti-download"></i> CSV</button>
+          </div>
+        </div>
+        <div class="card" style="padding:0;overflow:hidden"><div id="trial-content" style="overflow-x:auto"></div></div>
+      </div>
+
+      <!-- 損益計算書 -->
+      <div id="tab-pl" class="panel">
+        <div class="sec-hd">
+          <span class="sec-title">損益計算書</span>
+          <div style="display:flex;gap:8px">
+            <select id="pl-dept" onchange="renderPL()" style="font-size:12px;width:auto">
+              <option value="">全社合計</option>
+              <option value="hq">本社のみ</option>
+              <option value="shop">店舗のみ</option>
+              <option value="agri">農業のみ</option>
+              <option value="common">共通のみ</option>
+            </select>
+            <button class="btn btn-sm" onclick="exportPLCSV()"><i class="ti ti-download"></i> CSV</button>
+          </div>
+        </div>
+        <div id="pl-content"></div>
+      </div>
+
+      <!-- 貸借対照表 -->
+      <div id="tab-bs" class="panel">
+        <div class="sec-hd">
+          <span class="sec-title">貸借対照表</span>
+          <button class="btn btn-sm" onclick="exportBSCSV()"><i class="ti ti-download"></i> CSV</button>
+        </div>
+        <div id="bs-content"></div>
+      </div>
+
+      <!-- 消費税申告 -->
+      <div id="tab-tax" class="panel">
+        <div class="sec-hd">
+          <span class="sec-title">消費税申告集計（原則課税）</span>
+          <button class="btn btn-sm" onclick="exportTaxCSV()"><i class="ti ti-download"></i> CSV</button>
+        </div>
+        <div id="tax-content"></div>
+      </div>
+
+      <!-- 小口現金 -->
+      <div id="tab-petty" class="panel">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.25rem">
+          <div class="metric" style="border-radius:12px">
+            <div class="metric-label">小口現金残高</div>
+            <div id="petty-balance-disp" class="petty-balance">¥0</div>
+          </div>
+          <div class="metric" style="border-radius:12px">
+            <div class="metric-label">今月の小口支出合計</div>
+            <div id="petty-month-disp" class="metric-value">¥0</div>
+          </div>
+        </div>
+
+        <div class="transfer-box">
+          <div class="title"><i class="ti ti-arrow-right"></i> 本帳簿への転記</div>
+          <div style="font-size:13px;color:#185FA5;margin-bottom:.75rem">未転記の小口支出をまとめて本帳簿に仕訳転記できます。</div>
+          <button class="btn btn-primary btn-sm" onclick="openTransferModal()"><i class="ti ti-transfer"></i> 未転記分を転記する</button>
+        </div>
+
+        <div class="card">
+          <div class="card-title">小口現金 入出金記録</div>
+          <div id="petty-alert-ok" class="alert-ok"></div>
+          <div id="petty-alert-ng" class="alert-ng"></div>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:10px">
+            <div class="fg"><label>日付</label><input type="date" id="p-date"></div>
+            <div class="fg"><label>種別</label>
+              <select id="p-type" onchange="togglePettyType()">
+                <option value="out">支出（経費）</option>
+                <option value="in">補充（入金）</option>
+              </select>
+            </div>
+            <div class="fg"><label>金額（円・税込）</label><input type="number" id="p-amt" placeholder="0" min="0"></div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:10px" id="p-out-fields">
+            <div class="fg"><label>経費科目</label><select id="p-acc"></select></div>
+            <div class="fg"><label>税区分</label><select id="p-tax"></select></div>
+            <div class="fg"><label>摘要</label><input type="text" id="p-desc" placeholder="例：ゴミ袋・洗剤"></div>
+          </div>
+          <div style="display:none" id="p-in-fields">
+            <div class="fg"><label>補充元（摘要）</label><input type="text" id="p-in-desc" placeholder="例：本社より補充"></div>
+          </div>
+          <div class="row2" style="margin-bottom:8px">
+            <div class="fg" style="margin:0">
+              <label>レシート（任意）</label>
+              <input type="file" id="p-receipt" accept="image/*" onchange="previewReceipt('p-receipt','p-receipt-preview')">
+            </div>
+            <div id="p-receipt-preview" style="display:flex;align-items:center;gap:8px;padding-top:4px"></div>
+          </div>
+          <div class="actions">
+            <button class="btn btn-primary" onclick="addPetty()"><i class="ti ti-plus"></i> 記録を追加</button>
+          </div>
+        </div>
+
+        <div class="sec-hd">
+          <span class="sec-title">小口現金出納帳</span>
+          <button class="btn btn-sm" onclick="exportPettyCSV()"><i class="ti ti-download"></i> CSV</button>
+        </div>
+        <div class="card" style="padding:0;overflow:hidden"><div id="petty-list" style="overflow-x:auto"></div></div>
+      </div>
+
+      <!-- 勘定科目 -->
+      <div id="tab-accounts" class="panel">
+        <div class="card">
+          <div class="card-title">勘定科目を追加</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:8px;align-items:end">
+            <div class="fg" style="margin:0"><label>科目コード</label><input type="text" id="a-code" placeholder="例：1110"></div>
+            <div class="fg" style="margin:0"><label>科目名</label><input type="text" id="a-name" placeholder="例：普通預金"></div>
+            <div class="fg" style="margin:0"><label>種別</label>
+              <select id="a-type">
+                <option value="asset">資産</option><option value="liability">負債</option>
+                <option value="equity">純資産</option><option value="revenue">収益</option>
+                <option value="expense">費用</option>
+              </select>
+            </div>
+            <button class="btn btn-primary" onclick="addAccount()"><i class="ti ti-plus"></i> 追加</button>
+          </div>
+        </div>
+        <div class="card" style="padding:0;overflow:hidden"><div id="acc-list" style="overflow-x:auto"></div></div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+/* ===== Google Sheets 連携 ===== */
+const GAPI_CLIENT_ID = '400063538015-fjrfaovnmbgrbmnortilm43vkv312nkn.apps.googleusercontent.com';
+const SPREADSHEET_ID = '1fdJhfEmOB1kwOBCm3NCxQqSvN6VLvOSjzweruxqnQp0';
+const SCOPES = 'https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/drive.file';
+
+let tokenClient = null;
+let gapiInited = false;
+let gisInited = false;
+let isSignedIn = false;
+
+// GAPI初期化
+function gapiLoaded() {
+  gapi.load('client', async () => {
+    await gapi.client.init({
+      discoveryDocs: ['https://sheets.googleapis.com/$discovery/rest?version=v4'],
+    });
+    gapiInited = true;
+    maybeEnableAuth();
+  });
+}
+
+// GIS初期化
+function gisLoaded() {
+  tokenClient = google.accounts.oauth2.initTokenClient({
+    client_id: GAPI_CLIENT_ID,
+    scope: SCOPES,
+    callback: async (resp) => {
+      if (resp.error) { console.error(resp); return; }
+      isSignedIn = true;
+      updateAuthUI(true);
+      await syncFromSheets();
+    },
+  });
+  gisInited = true;
+  maybeEnableAuth();
+}
+
+function maybeEnableAuth() {
+  if (gapiInited && gisInited) {
+    document.getElementById('gauth-btn').disabled = false;
+  }
+}
+
+function handleAuthClick() {
+  if (!isSignedIn) {
+    tokenClient.requestAccessToken({ prompt: 'consent' });
+  } else {
+    google.accounts.oauth2.revoke(gapi.client.getToken().access_token, () => {
+      gapi.client.setToken('');
+      isSignedIn = false;
+      updateAuthUI(false);
+    });
+  }
+}
+
+function updateAuthUI(connected) {
+  const bar = document.getElementById('gauth-bar');
+  const msg = document.getElementById('gauth-msg');
+  const btn = document.getElementById('gauth-btn');
+  if (connected) {
+    bar.className = 'gauth-bar connected';
+    msg.textContent = '✅ Google Sheetsと接続中 - 変更は自動保存されます';
+    btn.textContent = 'ログアウト';
+  } else {
+    bar.className = 'gauth-bar';
+    msg.textContent = '📊 Google Sheetsと連携してデータをクラウド保存できます';
+    btn.textContent = 'Googleでログイン';
+  }
+}
+
+function setSyncStatus(msg) {
+  document.getElementById('sync-status').textContent = msg;
+  if (msg) setTimeout(() => { document.getElementById('sync-status').textContent = ''; }, 3000);
+}
+
+// シートにデータを書き込む
+async function syncToSheets() {
+  if (!isSignedIn) return;
+  try {
+    setSyncStatus('⏳ 保存中...');
+    const data = { version: 2, savedAt: new Date().toISOString(), accounts, journals, pettyEntries, nextJId, nextPId };
+    const jsonStr = JSON.stringify(data);
+    // A1セルにJSONを保存
+    await gapi.client.sheets.spreadsheets.values.update({
+      spreadsheetId: SPREADSHEET_ID,
+      range: 'Sheet1!A1',
+      valueInputOption: 'RAW',
+      resource: { values: [[jsonStr]] },
+    });
+    setClean();
+    setSyncStatus('✅ 保存しました');
+  } catch (err) {
+    console.error('Sheets書き込みエラー:', err);
+    setSyncStatus('❌ 保存失敗');
+  }
+}
+
+// シートからデータを読み込む
+async function syncFromSheets() {
+  if (!isSignedIn) return;
+  try {
+    setSyncStatus('⏳ 読み込み中...');
+    const resp = await gapi.client.sheets.spreadsheets.values.get({
+      spreadsheetId: SPREADSHEET_ID,
+      range: 'Sheet1!A1',
+    });
+    const rows = resp.result.values;
+    if (rows && rows[0] && rows[0][0]) {
+      const data = JSON.parse(rows[0][0]);
+      if (data.accounts && data.journals) {
+        accounts = data.accounts;
+        journals = data.journals;
+        pettyEntries = data.pettyEntries || [];
+        nextJId = data.nextJId || journals.reduce((m, j) => Math.max(m, j.id), 0) + 1;
+        nextPId = data.nextPId || pettyEntries.reduce((m, p) => Math.max(m, p.id), 0) + 1;
+        buildAllSelects(); renderJMetrics(); renderJList(); setClean();
+        setSyncStatus(`✅ 読み込み完了（仕訳${journals.length}件）`);
+      }
+    } else {
+      setSyncStatus('📋 新規シートです');
+    }
+  } catch (err) {
+    console.error('Sheets読み込みエラー:', err);
+    setSyncStatus('❌ 読み込み失敗');
+  }
+}
+
+const TYPE_JA={asset:'資産',liability:'負債',equity:'純資産',revenue:'収益',expense:'費用'};
+const TYPE_BADGE={asset:'b-asset',liability:'b-liability',equity:'b-equity',revenue:'b-revenue',expense:'b-expense'};
+const NORMAL_SIDE={asset:'debit',liability:'credit',equity:'credit',revenue:'credit',expense:'debit'};
+const DEPT_LABEL={hq:'本社',shop:'店舗',agri:'農業',common:'共通','':`全社`};
+const DEPT_BADGE={hq:'b-hq',shop:'b-shop',agri:'b-agri',common:'b-exempt'};
+const TAX_TYPES=[
+  {code:'taxable10',label:'課税10%',rate:0.10,badge:'b-taxable'},
+  {code:'taxable8',label:'軽減8%',rate:0.08,badge:'b-taxable-r'},
+  {code:'exempt',label:'非課税',rate:0,badge:'b-exempt'},
+  {code:'nontax',label:'不課税',rate:0,badge:'b-nontax'},
+  {code:'zerotax',label:'免税（輸出）',rate:0,badge:'b-zerotax'},
+];
+
+let accounts=[
+  {code:'1110',name:'現金',type:'asset'},{code:'1111',name:'小口現金',type:'asset'},
+  {code:'1120',name:'普通預金',type:'asset'},{code:'1130',name:'売掛金',type:'asset'},
+  {code:'1200',name:'商品',type:'asset'},{code:'1510',name:'備品',type:'asset'},
+  {code:'1520',name:'仮払消費税',type:'asset'},{code:'2110',name:'買掛金',type:'liability'},
+  {code:'2120',name:'未払金',type:'liability'},{code:'2130',name:'未払消費税',type:'liability'},
+  {code:'2200',name:'借入金',type:'liability'},{code:'2300',name:'仮受消費税',type:'liability'},
+  {code:'3110',name:'資本金',type:'equity'},{code:'3200',name:'繰越利益剰余金',type:'equity'},
+  {code:'4110',name:'売上高',type:'revenue'},{code:'4120',name:'受取利息',type:'revenue'},
+  {code:'5110',name:'仕入高',type:'expense'},{code:'5210',name:'給料手当',type:'expense'},
+  {code:'5220',name:'地代家賃',type:'expense'},{code:'5230',name:'通信費',type:'expense'},
+  {code:'5240',name:'消耗品費',type:'expense'},{code:'5250',name:'接待交際費',type:'expense'},
+  {code:'5260',name:'旅費交通費',type:'expense'},{code:'5270',name:'水道光熱費',type:'expense'},
+  {code:'5280',name:'支払利息',type:'expense'},{code:'5290',name:'雑費',type:'expense'},
+  {code:'4210',name:'農産物売上高',type:'revenue'},{code:'4220',name:'農業補助金収入',type:'revenue'},
+  {code:'6110',name:'種苗費',type:'expense'},{code:'6120',name:'肥料費',type:'expense'},
+  {code:'6130',name:'農薬費',type:'expense'},{code:'6140',name:'農業用消耗品費',type:'expense'},
+  {code:'6150',name:'農機具費',type:'expense'},{code:'6160',name:'農地地代',type:'expense'},
+  {code:'6170',name:'農業水道光熱費',type:'expense'},{code:'6180',name:'農業雑費',type:'expense'},
+];
+let journals=[];
+let pettyEntries=[];
+let nextJId=1, nextPId=1;
+let isDirty=false;
+let tempReceiptJ=null, tempReceiptP=null;
+
+function setDirty(){isDirty=true;const el=document.getElementById('save-status');el.className='save-status unsaved';el.innerHTML='<i class="ti ti-circle-dot"></i> 未保存の変更あり';if(isSignedIn)syncToSheets();}
+function setClean(){isDirty=false;const el=document.getElementById('save-status');el.className='save-status saved';el.innerHTML='<i class="ti ti-circle-check"></i> 保存済み';}
+
+function saveToFile(){
+  if(isSignedIn){
+    syncToSheets();
+    showAlert('j-alert-ok','Google Sheetsに保存しました！');
+    return;
+  }
+  const data={version:2,savedAt:new Date().toISOString(),accounts,journals,pettyEntries,nextJId,nextPId};
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;a.download='bookkeeping_data.json';a.click();
+  URL.revokeObjectURL(url);setClean();
+  showAlert('j-alert-ok','保存しました。Google Driveに上書きアップロードしてください。');
+}
+
+function loadFromFile(e){
+  const file=e.target.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=function(ev){
+    try{
+      const data=JSON.parse(ev.target.result);
+      if(!data.accounts||!data.journals)throw new Error('フォーマットが不正です');
+      accounts=data.accounts;journals=data.journals;
+      pettyEntries=data.pettyEntries||[];
+      nextJId=data.nextJId||journals.reduce((m,j)=>Math.max(m,j.id),0)+1;
+      nextPId=data.nextPId||pettyEntries.reduce((m,p)=>Math.max(m,p.id),0)+1;
+      buildAllSelects();renderJMetrics();renderJList();setClean();
+      showAlert('j-alert-ok',`読み込みました（仕訳${journals.length}件、小口${pettyEntries.length}件 / 最終保存：${new Date(data.savedAt).toLocaleString('ja-JP')}）`);
+    }catch(err){showAlert('j-alert-ng','読み込み失敗：'+err.message);}
+  };
+  reader.readAsText(file);e.target.value='';
+}
+
+function showAlert(id,msg){
+  const el=document.getElementById(id);if(!el)return;
+  el.textContent=msg;el.style.display='block';
+  setTimeout(()=>{el.style.display='none';},5000);
+}
+
+function fmt(n){return n===0?'-':'¥'+Math.round(n).toLocaleString('ja-JP')}
+function fmtN(n){return '¥'+Math.round(n).toLocaleString('ja-JP')}
+function accByCode(c){return accounts.find(a=>a.code===c)}
+function accName(c){const a=accByCode(c);return a?a.name:c}
+function accType(c){const a=accByCode(c);return a?a.type:''}
+function taxInfo(code){return TAX_TYPES.find(t=>t.code===code)||TAX_TYPES[3]}
+
+function calcTax(side){
+  const amt=parseInt(document.getElementById('j-'+side+'-amt').value)||0;
+  const taxCode=document.getElementById('j-'+side+'-tax').value;
+  const ti=taxInfo(taxCode);
+  document.getElementById('j-'+side+'-taxamt').value=ti.rate>0?Math.floor(amt*ti.rate):'';
+}
+
+function previewReceipt(inputId,previewId){
+  const file=document.getElementById(inputId).files[0];
+  const preview=document.getElementById(previewId);
+  if(!file){preview.innerHTML='';return;}
+  const reader=new FileReader();
+  reader.onload=function(e){
+    const data=e.target.result;
+    if(inputId==='j-receipt')tempReceiptJ=data;
+    else tempReceiptP=data;
+    preview.innerHTML=`<img src="${data}" style="width:48px;height:48px;object-fit:cover;border-radius:6px;border:1px solid #e0e0dc;cursor:pointer" onclick="openModal('<img src=\\'${data}\\' style=\\'max-width:70vw;max-height:70vh;border-radius:8px\\'>','')">
+    <span style="font-size:11px;color:#888">${file.name}</span>`;
+  };
+  reader.readAsDataURL(file);
+}
+
+function buildAllSelects(){
+  const sorted=[...accounts].sort((a,b)=>a.code.localeCompare(b.code));
+  const opts=sorted.map(a=>`<option value="${a.code}">${a.code} ${a.name}</option>`).join('');
+  ['j-d-acc','j-c-acc','l-acc'].forEach(id=>{
+    const s=document.getElementById(id);if(!s)return;
+    const prev=s.value;s.innerHTML=opts;if(prev)s.value=prev;
+  });
+  const taxOpts=TAX_TYPES.map(t=>`<option value="${t.code}">${t.label}</option>`).join('');
+  ['j-d-tax','j-c-tax','p-tax'].forEach(id=>{
+    const s=document.getElementById(id);if(!s)return;
+    const prev=s.value;s.innerHTML=taxOpts;if(prev)s.value=prev;
+  });
+  const expOpts=sorted.filter(a=>a.type==='expense').map(a=>`<option value="${a.code}">${a.code} ${a.name}</option>`).join('');
+  const pAcc=document.getElementById('p-acc');
+  if(pAcc){const prev=pAcc.value;pAcc.innerHTML=expOpts;if(prev)pAcc.value=prev;}
+}
+
+function calcBalances(deptFilter){
+  const bal={};
+  accounts.forEach(a=>{bal[a.code]={debitTotal:0,creditTotal:0}});
+  journals.filter(j=>!deptFilter||j.dept===deptFilter).forEach(j=>{
+    if(!bal[j.dAcc])bal[j.dAcc]={debitTotal:0,creditTotal:0};
+    if(!bal[j.cAcc])bal[j.cAcc]={debitTotal:0,creditTotal:0};
+    bal[j.dAcc].debitTotal+=(j.dAmt||0)+(j.dTaxAmt||0);
+    bal[j.cAcc].creditTotal+=(j.cAmt||0)+(j.cTaxAmt||0);
+  });
+  return bal;
+}
+
+function getBalance(code,bal){
+  const b=bal[code]||{debitTotal:0,creditTotal:0};
+  const ns=NORMAL_SIDE[accType(code)];
+  return ns==='debit'?b.debitTotal-b.creditTotal:b.creditTotal-b.debitTotal;
+}
+
+function sw(t){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
+  document.getElementById('tab-'+t).classList.add('active');
+  const tabs=['journal','ledger','trial','pl','bs','tax','petty','accounts'];
+  document.querySelectorAll('.tab')[tabs.indexOf(t)].classList.add('active');
+  if(t==='journal'){renderJMetrics();renderJList();}
+  else if(t==='ledger'){buildAllSelects();renderLedger();}
+  else if(t==='trial')renderTrial();
+  else if(t==='pl')renderPL();
+  else if(t==='bs')renderBS();
+  else if(t==='tax')renderTax();
+  else if(t==='petty'){buildAllSelects();renderPetty();}
+  else if(t==='accounts')renderAccounts();
+}
+
+function renderJMetrics(){
+  const bal=calcBalances();
+  const revenue=accounts.filter(a=>a.type==='revenue').reduce((s,a)=>s+getBalance(a.code,bal),0);
+  const expense=accounts.filter(a=>a.type==='expense').reduce((s,a)=>s+getBalance(a.code,bal),0);
+  const ni=revenue-expense;
+  const assets=accounts.filter(a=>a.type==='asset').reduce((s,a)=>s+getBalance(a.code,bal),0);
+  const tc=calcTaxSummary();
+  const netTax=tc.totalTaxSales-tc.totalTaxPurchase;
+  const pettyBal=calcPettyBalance();
+  document.getElementById('j-metrics').innerHTML=`
+    <div class="metric"><div class="metric-label">総資産</div><div class="metric-value">${fmtN(assets)}</div></div>
+    <div class="metric"><div class="metric-label">収益合計</div><div class="metric-value">${fmtN(revenue)}</div></div>
+    <div class="metric"><div class="metric-label">費用合計</div><div class="metric-value">${fmtN(expense)}</div></div>
+    <div class="metric"><div class="metric-label">当期純利益</div><div class="metric-value" style="color:${ni>=0?'#3B6D11':'#A32D2D'}">${fmtN(ni)}</div></div>
+    <div class="metric"><div class="metric-label">消費税納付見込</div><div class="metric-value" style="color:#185FA5">${fmtN(netTax)}</div></div>
+    <div class="metric"><div class="metric-label">小口現金残高</div><div class="metric-value" style="color:${pettyBal<3000?'#A32D2D':'#185FA5'}">${fmtN(pettyBal)}</div></div>
+  `;
+}
+
+function taxBadge(code){const t=taxInfo(code);return `<span class="badge ${t.badge}">${t.label}</span>`;}
+function deptBadge(d){return `<span class="badge ${DEPT_BADGE[d]||'b-exempt'}">${DEPT_LABEL[d]||d}</span>`;}
+
+function addJournal(){
+  const date=document.getElementById('j-date').value;
+  const dept=document.getElementById('j-dept').value;
+  const desc=document.getElementById('j-desc').value.trim();
+  const dAcc=document.getElementById('j-d-acc').value;
+  const dTax=document.getElementById('j-d-tax').value;
+  const dAmt=parseInt(document.getElementById('j-d-amt').value)||0;
+  const dTaxAmt=parseInt(document.getElementById('j-d-taxamt').value)||0;
+  const cAcc=document.getElementById('j-c-acc').value;
+  const cTax=document.getElementById('j-c-tax').value;
+  const cAmt=parseInt(document.getElementById('j-c-amt').value)||0;
+  const cTaxAmt=parseInt(document.getElementById('j-c-taxamt').value)||0;
+  if(!date||!desc){showAlert('j-alert-ng','日付と摘要を入力してください');return}
+  const dTotal=dAmt+dTaxAmt,cTotal=cAmt+cTaxAmt;
+  if(dTotal<=0||cTotal<=0){showAlert('j-alert-ng','金額を入力してください');return}
+  if(dTotal!==cTotal){showAlert('j-alert-ng',`借方合計(${fmtN(dTotal)})と貸方合計(${fmtN(cTotal)})が一致しません`);return}
+  if(dAcc===cAcc){showAlert('j-alert-ng','借方と貸方に同じ勘定科目は使えません');return}
+  journals.push({id:nextJId++,date,dept,desc,dAcc,dTax,dAmt,dTaxAmt,cAcc,cTax,cAmt,cTaxAmt,receipt:tempReceiptJ||null});
+  journals.sort((a,b)=>a.date.localeCompare(b.date));
+  document.getElementById('j-d-amt').value='';document.getElementById('j-d-taxamt').value='';
+  document.getElementById('j-c-amt').value='';document.getElementById('j-c-taxamt').value='';
+  document.getElementById('j-desc').value='';
+  document.getElementById('j-receipt').value='';
+  document.getElementById('j-receipt-preview').innerHTML='';
+  tempReceiptJ=null;
+  setDirty();showAlert('j-alert-ok','仕訳を追加しました');
+  renderJMetrics();renderJList();
+}
+
+function deleteJournal(id){
+  if(!confirm('この仕訳を削除しますか？'))return;
+  journals=journals.filter(j=>j.id!==id);
+  setDirty();renderJMetrics();renderJList();
+}
+
+function renderJList(){
+  const el=document.getElementById('j-list');
+  const deptF=document.getElementById('j-filter-dept').value;
+  const list=deptF?journals.filter(j=>j.dept===deptF):journals;
+  if(!list.length){el.innerHTML='<div class="empty">仕訳データがありません</div>';return}
+  el.innerHTML=`<table>
+    <thead><tr>
+      <th style="width:88px">日付</th><th style="width:55px">部門</th>
+      <th style="width:100px">借方科目</th><th style="width:68px">税区分</th>
+      <th class="num" style="width:85px">税抜</th><th class="num" style="width:68px">消費税</th>
+      <th style="width:100px">貸方科目</th><th style="width:68px">税区分</th>
+      <th class="num" style="width:85px">税抜</th><th class="num" style="width:68px">消費税</th>
+      <th>摘要</th><th style="width:32px">証</th><th style="width:32px"></th>
+    </tr></thead>
+    <tbody>${list.map(j=>`<tr>
+      <td>${j.date}</td><td>${deptBadge(j.dept)}</td>
+      <td><span class="badge b-debit">${accName(j.dAcc)}</span></td>
+      <td>${taxBadge(j.dTax)}</td>
+      <td class="num">${j.dAmt?fmtN(j.dAmt):'-'}</td>
+      <td class="num" style="color:#185FA5">${j.dTaxAmt?fmtN(j.dTaxAmt):'-'}</td>
+      <td><span class="badge b-credit">${accName(j.cAcc)}</span></td>
+      <td>${taxBadge(j.cTax)}</td>
+      <td class="num">${j.cAmt?fmtN(j.cAmt):'-'}</td>
+      <td class="num" style="color:#185FA5">${j.cTaxAmt?fmtN(j.cTaxAmt):'-'}</td>
+      <td>${j.desc}</td>
+      <td>${j.receipt?`<img src="${j.receipt}" class="receipt-thumb" onclick="openModal('<img src=\\'${j.receipt}\\' style=\\'max-width:70vw;max-height:70vh;border-radius:8px\\'>', '${j.date} ${j.desc}')" title="レシートを表示">`:'<span style="color:#ddd;font-size:13px"><i class="ti ti-photo-off"></i></span>'}</td>
+      <td><button class="del-btn" onclick="deleteJournal(${j.id})" title="削除"><i class="ti ti-trash"></i></button></td>
+    </tr>`).join('')}</tbody>
+  </table>`;
+}
+
+function renderLedger(){
+  const code=document.getElementById('l-acc').value;if(!code)return;
+  const deptF=document.getElementById('l-dept').value;
+  const acc=accByCode(code);
+  const rows=journals.filter(j=>(j.dAcc===code||j.cAcc===code)&&(!deptF||j.dept===deptF)).sort((a,b)=>a.date.localeCompare(b.date));
+  let running=0;const ns=NORMAL_SIDE[acc?acc.type:'asset'];
+  const html=rows.map(j=>{
+    const isD=j.dAcc===code;
+    const dAmt=isD?((j.dAmt||0)+(j.dTaxAmt||0)):0;
+    const cAmt=isD?0:((j.cAmt||0)+(j.cTaxAmt||0));
+    if(ns==='debit')running+=dAmt-cAmt;else running+=cAmt-dAmt;
+    return `<tr><td>${j.date}</td><td>${deptBadge(j.dept)}</td><td>${j.desc}</td>
+      <td>${isD?accName(j.cAcc):accName(j.dAcc)}</td>
+      <td class="num">${dAmt?fmtN(dAmt):'-'}</td><td class="num">${cAmt?fmtN(cAmt):'-'}</td>
+      <td class="num" style="font-weight:500">${fmtN(running)}</td></tr>`;
+  }).join('');
+  document.getElementById('l-content').innerHTML=`
+    <div style="font-size:14px;font-weight:500;margin-bottom:.75rem;padding-bottom:.75rem;border-bottom:1px solid #e0e0dc">${acc?acc.code+' '+acc.name:code} <span class="badge ${acc?TYPE_BADGE[acc.type]:''}">${acc?TYPE_JA[acc.type]:''}</span></div>
+    ${rows.length?`<table>
+      <thead><tr><th style="width:88px">日付</th><th style="width:55px">部門</th><th>摘要</th><th style="width:110px">相手科目</th><th class="num" style="width:95px">借方</th><th class="num" style="width:95px">貸方</th><th class="num" style="width:105px">残高</th></tr></thead>
+      <tbody>${html}</tbody></table>`:'<div class="empty">この科目の仕訳はありません</div>'}`;
+}
+
+function renderTrial(){
+  const deptF=document.getElementById('trial-dept').value;
+  const bal=calcBalances(deptF||null);
+  const sorted=[...accounts].sort((a,b)=>a.code.localeCompare(b.code));
+  let totalD=0,totalC=0,totalDB=0,totalCB=0;
+  const rows=sorted.map(a=>{
+    const b=bal[a.code]||{debitTotal:0,creditTotal:0};
+    if(b.debitTotal===0&&b.creditTotal===0)return'';
+    totalD+=b.debitTotal;totalC+=b.creditTotal;
+    const balance=getBalance(a.code,bal);const ns=NORMAL_SIDE[a.type];
+    const dBal=ns==='debit'?Math.max(0,balance):0;const cBal=ns==='credit'?Math.max(0,balance):0;
+    totalDB+=dBal;totalCB+=cBal;
+    return `<tr><td style="width:65px">${a.code}</td><td>${a.name}</td>
+      <td style="width:68px"><span class="badge ${TYPE_BADGE[a.type]}">${TYPE_JA[a.type]}</span></td>
+      <td class="num" style="width:105px">${fmt(b.debitTotal)}</td><td class="num" style="width:105px">${fmt(b.creditTotal)}</td>
+      <td class="num" style="width:105px">${fmt(dBal)}</td><td class="num" style="width:105px">${fmt(cBal)}</td></tr>`;
+  }).join('');
+  document.getElementById('trial-content').innerHTML=`<table>
+    <thead><tr><th style="width:65px">コード</th><th>科目名</th><th style="width:68px">種別</th>
+    <th class="num" style="width:105px">合計借方</th><th class="num" style="width:105px">合計貸方</th>
+    <th class="num" style="width:105px">残高借方</th><th class="num" style="width:105px">残高貸方</th></tr></thead>
+    <tbody>${rows}</tbody>
+    <tfoot><tr class="tfoot-row"><td colspan="3" style="padding:8px">合計</td>
+    <td class="num">${fmtN(totalD)}</td><td class="num">${fmtN(totalC)}</td>
+    <td class="num">${fmtN(totalDB)}</td><td class="num">${fmtN(totalCB)}</td></tr></tfoot></table>`;
+}
+
+function renderPL(){
+  const deptF=document.getElementById('pl-dept').value;
+  const bal=calcBalances(deptF||null);
+  const revenues=accounts.filter(a=>a.type==='revenue');
+  const expenses=accounts.filter(a=>a.type==='expense');
+  const totalRev=revenues.reduce((s,a)=>s+getBalance(a.code,bal),0);
+  const totalExp=expenses.reduce((s,a)=>s+getBalance(a.code,bal),0);
+  const ni=totalRev-totalExp;
+  const revRows=revenues.filter(a=>getBalance(a.code,bal)!==0).map(a=>`<div class="bs-row"><span>${a.name}</span><span>${fmtN(getBalance(a.code,bal))}</span></div>`).join('');
+  const expRows=expenses.filter(a=>getBalance(a.code,bal)!==0).map(a=>`<div class="bs-row"><span>${a.name}</span><span>${fmtN(getBalance(a.code,bal))}</span></div>`).join('');
+  document.getElementById('pl-content').innerHTML=`<div class="card">
+    <div style="margin-bottom:1rem"><div class="bs-head">収益</div>${revRows||'<div class="empty">データなし</div>'}<div class="bs-total"><span>収益合計</span><span>${fmtN(totalRev)}</span></div></div>
+    <div><div class="bs-head">費用</div>${expRows||'<div class="empty">データなし</div>'}<div class="bs-total"><span>費用合計</span><span>${fmtN(totalExp)}</span></div></div>
+    <div class="bs-total" style="font-size:15px;padding:10px;margin-top:8px;border-top:1px solid #d0d0cc"><span>当期純利益</span><span style="color:${ni>=0?'#3B6D11':'#A32D2D'}">${fmtN(ni)}</span></div>
+  </div>`;
+}
+
+function renderBS(){
+  const bal=calcBalances();
+  const assets=accounts.filter(a=>a.type==='asset');
+  const liabilities=accounts.filter(a=>a.type==='liability');
+  const equities=accounts.filter(a=>a.type==='equity');
+  const revenues=accounts.filter(a=>a.type==='revenue');
+  const expenses=accounts.filter(a=>a.type==='expense');
+  const totalA=assets.reduce((s,a)=>s+getBalance(a.code,bal),0);
+  const totalL=liabilities.reduce((s,a)=>s+getBalance(a.code,bal),0);
+  const totalE=equities.reduce((s,a)=>s+getBalance(a.code,bal),0);
+  const ni=revenues.reduce((s,a)=>s+getBalance(a.code,bal),0)-expenses.reduce((s,a)=>s+getBalance(a.code,bal),0);
+  const totalLE=totalL+totalE+ni;
+  const mkRows=list=>list.filter(a=>getBalance(a.code,bal)!==0).map(a=>`<div class="bs-row"><span>${a.name}</span><span>${fmtN(getBalance(a.code,bal))}</span></div>`).join('');
+  document.getElementById('bs-content').innerHTML=`<div class="two-col">
+    <div class="card"><div class="bs-head">資産の部</div>${mkRows(assets)||'<div class="empty">データなし</div>'}<div class="bs-total"><span>資産合計</span><span>${fmtN(totalA)}</span></div></div>
+    <div class="card">
+      <div style="margin-bottom:1rem"><div class="bs-head">負債の部</div>${mkRows(liabilities)||'<div class="empty">データなし</div>'}<div class="bs-total"><span>負債合計</span><span>${fmtN(totalL)}</span></div></div>
+      <div><div class="bs-head">純資産の部</div>${mkRows(equities)}<div class="bs-row"><span>当期純利益</span><span style="color:${ni>=0?'#3B6D11':'#A32D2D'}">${fmtN(ni)}</span></div><div class="bs-total"><span>純資産合計</span><span>${fmtN(totalE+ni)}</span></div></div>
+      <div class="bs-total" style="font-size:14px;margin-top:8px;border-top:1px solid #d0d0cc"><span>負債・純資産合計</span><span style="color:${Math.abs(totalA-totalLE)<1?'#3B6D11':'#A32D2D'}">${fmtN(totalLE)}</span></div>
+    </div>
+  </div>
+  <div style="text-align:center;font-size:12px;color:#aaa;margin-top:.5rem">${Math.abs(totalA-totalLE)<1?'✓ 貸借一致':'⚠ 貸借不一致（差額: '+fmtN(Math.abs(totalA-totalLE))+'）'}</div>`;
+}
+
+function calcTaxSummary(){
+  let sales10=0,sales8=0,salesZero=0,tax10Sales=0,tax8Sales=0;
+  let purchase10=0,purchase8=0,tax10Purchase=0,tax8Purchase=0;
+  journals.forEach(j=>{
+    if(j.cTax==='taxable10'){sales10+=j.cAmt||0;tax10Sales+=j.cTaxAmt||0;}
+    if(j.cTax==='taxable8'){sales8+=j.cAmt||0;tax8Sales+=j.cTaxAmt||0;}
+    if(j.cTax==='zerotax')salesZero+=j.cAmt||0;
+    if(j.dTax==='taxable10'){purchase10+=j.dAmt||0;tax10Purchase+=j.dTaxAmt||0;}
+    if(j.dTax==='taxable8'){purchase8+=j.dAmt||0;tax8Purchase+=j.dTaxAmt||0;}
+  });
+  return{sales10,sales8,salesZero,tax10Sales,tax8Sales,purchase10,purchase8,tax10Purchase,tax8Purchase,
+    totalTaxSales:tax10Sales+tax8Sales,totalTaxPurchase:tax10Purchase+tax8Purchase};
+}
+
+function renderTax(){
+  const t=calcTaxSummary();const netTax=t.totalTaxSales-t.totalTaxPurchase;
+  document.getElementById('tax-content').innerHTML=`
+    <div class="card" style="margin-bottom:1rem">
+      <div class="card-title">課税売上（売上側）</div>
+      <div class="tax-box">
+        <div class="tax-row"><span>標準税率10% 課税売上高（税抜）</span><span>${fmtN(t.sales10)}</span></div>
+        <div class="tax-row"><span>軽減税率8% 課税売上高（税抜）</span><span>${fmtN(t.sales8)}</span></div>
+        <div class="tax-row"><span>免税売上高（輸出等）</span><span>${fmtN(t.salesZero)}</span></div>
+        <div class="tax-row" style="font-weight:500"><span>売上消費税額合計</span><span style="color:#185FA5">${fmtN(t.totalTaxSales)}</span></div>
+        <div class="hint">内訳：10% → ${fmtN(t.tax10Sales)}　8% → ${fmtN(t.tax8Sales)}</div>
+      </div>
+    </div>
+    <div class="card" style="margin-bottom:1rem">
+      <div class="card-title">課税仕入（仕入・経費側）</div>
+      <div class="tax-box">
+        <div class="tax-row"><span>標準税率10% 課税仕入高（税抜）</span><span>${fmtN(t.purchase10)}</span></div>
+        <div class="tax-row"><span>軽減税率8% 課税仕入高（税抜）</span><span>${fmtN(t.purchase8)}</span></div>
+        <div class="tax-row" style="font-weight:500"><span>仕入税額控除 合計</span><span style="color:#3B6D11">${fmtN(t.totalTaxPurchase)}</span></div>
+        <div class="hint">内訳：10% → ${fmtN(t.tax10Purchase)}　8% → ${fmtN(t.tax8Purchase)}</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">消費税納付額（原則課税）</div>
+      <div class="tax-box">
+        <div class="tax-row"><span>課税売上消費税額</span><span>${fmtN(t.totalTaxSales)}</span></div>
+        <div class="tax-row"><span>仕入税額控除</span><span>△${fmtN(t.totalTaxPurchase)}</span></div>
+        <div class="tax-total"><span>納付消費税額（見込・国税分）</span><span style="color:${netTax>=0?'#185FA5':'#3B6D11'}">${netTax>=0?fmtN(netTax):'還付 '+fmtN(-netTax)}</span></div>
+      </div>
+      <div class="hint">※ 地方消費税（国税額×22/78）は含まれません。実際の申告時に別途加算してください。<br>※ 非課税売上がある場合の課税売上割合計算は考慮していません。税理士にご相談ください。</div>
+    </div>`;
+}
+
+/* ---------- 小口現金 ---------- */
+function calcPettyBalance(){
+  return pettyEntries.reduce((s,p)=>p.type==='in'?s+p.amt:s-p.amt,0);
+}
+function calcPettyMonthTotal(){
+  const now=new Date();
+  const ym=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+  return pettyEntries.filter(p=>p.type==='out'&&p.date.startsWith(ym)).reduce((s,p)=>s+p.amt,0);
+}
+function togglePettyType(){
+  const t=document.getElementById('p-type').value;
+  document.getElementById('p-out-fields').style.display=t==='out'?'grid':'none';
+  document.getElementById('p-in-fields').style.display=t==='in'?'block':'none';
+}
+function addPetty(){
+  const date=document.getElementById('p-date').value;
+  const type=document.getElementById('p-type').value;
+  const amt=parseInt(document.getElementById('p-amt').value)||0;
+  if(!date||amt<=0){showAlert('petty-alert-ng','日付と金額を入力してください');return}
+  let acc='',taxCode='nontax',desc='';
+  if(type==='out'){
+    acc=document.getElementById('p-acc').value;
+    taxCode=document.getElementById('p-tax').value;
+    desc=document.getElementById('p-desc').value.trim();
+    if(!desc){showAlert('petty-alert-ng','摘要を入力してください');return}
+  }else{
+    desc=document.getElementById('p-in-desc').value.trim()||'補充';
+  }
+  const ti=taxInfo(taxCode);
+  const taxAmt=ti.rate>0?Math.floor(amt/(1+ti.rate)*ti.rate):0;
+  const netAmt=amt-taxAmt;
+  pettyEntries.push({id:nextPId++,date,type,amt,acc,taxCode,taxAmt,netAmt,desc,transferred:false,receipt:tempReceiptP||null});
+  pettyEntries.sort((a,b)=>a.date.localeCompare(b.date));
+  document.getElementById('p-amt').value='';document.getElementById('p-desc').value='';
+  document.getElementById('p-in-desc').value='';
+  document.getElementById('p-receipt').value='';document.getElementById('p-receipt-preview').innerHTML='';
+  tempReceiptP=null;
+  setDirty();showAlert('petty-alert-ok','記録を追加しました');renderPetty();
+}
+function deletePetty(id){
+  if(!confirm('この記録を削除しますか？'))return;
+  pettyEntries=pettyEntries.filter(p=>p.id!==id);
+  setDirty();renderPetty();
+}
+function renderPetty(){
+  const bal=calcPettyBalance();
+  const monthTotal=calcPettyMonthTotal();
+  const balEl=document.getElementById('petty-balance-disp');
+  balEl.textContent=fmtN(bal);
+  balEl.className='petty-balance'+(bal<3000?' low':'');
+  document.getElementById('petty-month-disp').textContent=fmtN(monthTotal);
+  const el=document.getElementById('petty-list');
+  if(!pettyEntries.length){el.innerHTML='<div class="empty">記録がありません</div>';return}
+  let running=0;
+  const rows=pettyEntries.map(p=>{
+    running+=p.type==='in'?p.amt:-p.amt;
+    const inAmt=p.type==='in'?fmtN(p.amt):'-';
+    const outAmt=p.type==='out'?fmtN(p.amt):'-';
+    const transferBadge=p.type==='out'?(p.transferred?'<span class="badge b-revenue">転記済</span>':'<span class="badge b-nontax">未転記</span>'):'';
+    return `<tr>
+      <td>${p.date}</td>
+      <td><span class="badge ${p.type==='in'?'b-asset':'b-expense'}">${p.type==='in'?'入金':'支出'}</span></td>
+      <td>${p.type==='out'?accName(p.acc):'-'}</td>
+      <td>${p.type==='out'?taxBadge(p.taxCode):'-'}</td>
+      <td class="num" style="color:#3B6D11">${inAmt}</td>
+      <td class="num" style="color:#A32D2D">${outAmt}</td>
+      <td class="num" style="font-weight:500">${fmtN(running)}</td>
+      <td>${p.desc}</td>
+      <td>${transferBadge}</td>
+      <td>${p.receipt?`<img src="${p.receipt}" class="receipt-thumb" onclick="openModal('<img src=\\'${p.receipt}\\' style=\\'max-width:70vw;max-height:70vh;border-radius:8px\\'>', '${p.date} ${p.desc}')" title="レシートを表示">`:'<span style="color:#ddd;font-size:13px"><i class="ti ti-photo-off"></i></span>'}</td>
+      <td><button class="del-btn" onclick="deletePetty(${p.id})" title="削除"><i class="ti ti-trash"></i></button></td>
+    </tr>`;
+  }).join('');
+  el.innerHTML=`<table>
+    <thead><tr>
+      <th style="width:88px">日付</th><th style="width:52px">種別</th>
+      <th style="width:90px">経費科目</th><th style="width:68px">税区分</th>
+      <th class="num" style="width:85px">入金</th><th class="num" style="width:85px">支出</th>
+      <th class="num" style="width:90px">残高</th><th>摘要</th>
+      <th style="width:60px">転記</th><th style="width:36px">証</th><th style="width:32px"></th>
+    </tr></thead>
+    <tbody>${rows}</tbody>
+  </table>`;
+}
+
+function openTransferModal(){
+  const untransferred=pettyEntries.filter(p=>p.type==='out'&&!p.transferred);
+  const modal=document.getElementById('transfer-modal');
+  const content=document.getElementById('transfer-content');
+  if(!untransferred.length){
+    content.innerHTML='<div class="empty">未転記の支出はありません</div>';
+    modal.classList.add('open');return;
+  }
+  const totalAmt=untransferred.reduce((s,p)=>s+p.amt,0);
+  const byAcc={};
+  untransferred.forEach(p=>{
+    if(!byAcc[p.acc])byAcc[p.acc]={netAmt:0,taxAmt:0,taxCode:p.taxCode,items:[]};
+    byAcc[p.acc].netAmt+=p.netAmt||p.amt;
+    byAcc[p.acc].taxAmt+=p.taxAmt||0;
+    byAcc[p.acc].items.push(p);
+  });
+  const rows=Object.entries(byAcc).map(([code,v])=>`
+    <div class="bs-row"><span><span class="badge b-expense">${accName(code)}</span> ${taxBadge(v.taxCode)}</span>
+    <span>税抜 ${fmtN(v.netAmt)} / 消費税 ${fmtN(v.taxAmt)}</span></div>`).join('');
+  content.innerHTML=`
+    <div style="font-size:13px;color:#666;margin-bottom:1rem">以下の未転記支出（${untransferred.length}件・合計${fmtN(totalAmt)}）を本帳簿に仕訳転記します。</div>
+    <div class="tax-box" style="margin-bottom:1rem">${rows}
+      <div class="bs-total"><span>合計（税込）</span><span>${fmtN(totalAmt)}</span></div>
+    </div>
+    <div class="row2" style="margin-bottom:12px">
+      <div class="fg"><label>転記日付</label><input type="date" id="transfer-date" value="${new Date().toISOString().split('T')[0]}"></div>
+      <div class="fg"><label>貸方科目（小口現金）</label><select id="transfer-acc">${[...accounts].sort((a,b)=>a.code.localeCompare(b.code)).map(a=>`<option value="${a.code}"${a.code==='1111'?' selected':''}>${a.code} ${a.name}</option>`).join('')}</select></div>
+    </div>
+    <div class="actions">
+      <button class="btn" onclick="closeTransferModal()">キャンセル</button>
+      <button class="btn btn-primary" onclick="doTransfer()"><i class="ti ti-transfer"></i> 転記実行</button>
+    </div>`;
+  modal.classList.add('open');
+}
+
+function doTransfer(){
+  const date=document.getElementById('transfer-date').value;
+  const cAccCode=document.getElementById('transfer-acc').value;
+  if(!date){alert('日付を入力してください');return}
+  const untransferred=pettyEntries.filter(p=>p.type==='out'&&!p.transferred);
+  const byAcc={};
+  untransferred.forEach(p=>{
+    if(!byAcc[p.acc])byAcc[p.acc]={netAmt:0,taxAmt:0,taxCode:p.taxCode};
+    byAcc[p.acc].netAmt+=p.netAmt||p.amt;
+    byAcc[p.acc].taxAmt+=p.taxAmt||0;
+  });
+  Object.entries(byAcc).forEach(([code,v])=>{
+    const total=v.netAmt+v.taxAmt;
+    journals.push({
+      id:nextJId++,date,dept:'shop',
+      desc:`小口現金精算（${accName(code)}）`,
+      dAcc:code,dTax:v.taxCode,dAmt:v.netAmt,dTaxAmt:v.taxAmt,
+      cAcc:cAccCode,cTax:'nontax',cAmt:total,cTaxAmt:0,
+      receipt:null
+    });
+  });
+  journals.sort((a,b)=>a.date.localeCompare(b.date));
+  untransferred.forEach(p=>{p.transferred=true;});
+  setDirty();closeTransferModal();
+  showAlert('j-alert-ok',`${Object.keys(byAcc).length}件の仕訳を本帳簿に転記しました`);
+  renderJMetrics();renderJList();renderPetty();
+  sw('journal');
+}
+
+function closeTransferModal(){document.getElementById('transfer-modal').classList.remove('open');}
+
+function openModal(html,title){
+  document.getElementById('modal-content').innerHTML=(title?`<div style="font-size:13px;color:#888;margin-bottom:.75rem">${title}</div>`:'')+html;
+  document.getElementById('img-modal').classList.add('open');
+}
+function closeModal(){document.getElementById('img-modal').classList.remove('open');}
+
+/* ---------- 勘定科目 ---------- */
+function renderAccounts(){
+  const sorted=[...accounts].sort((a,b)=>a.code.localeCompare(b.code));
+  document.getElementById('acc-list').innerHTML=`<table>
+    <thead><tr><th style="width:80px">コード</th><th>科目名</th><th style="width:78px">種別</th><th style="width:36px"></th></tr></thead>
+    <tbody>${sorted.map(a=>`<tr><td>${a.code}</td><td>${a.name}</td>
+    <td><span class="badge ${TYPE_BADGE[a.type]}">${TYPE_JA[a.type]}</span></td>
+    <td><button class="del-btn" onclick="deleteAccount('${a.code}')" title="削除"><i class="ti ti-trash"></i></button></td></tr>`).join('')}</tbody>
+  </table>`;
+}
+function addAccount(){
+  const code=document.getElementById('a-code').value.trim();
+  const name=document.getElementById('a-name').value.trim();
+  const type=document.getElementById('a-type').value;
+  if(!code||!name){alert('コードと科目名を入力してください');return}
+  if(accounts.find(a=>a.code===code)){alert('このコードは既に存在します');return}
+  accounts.push({code,name,type});accounts.sort((a,b)=>a.code.localeCompare(b.code));
+  document.getElementById('a-code').value='';document.getElementById('a-name').value='';
+  setDirty();buildAllSelects();renderAccounts();
+}
+function deleteAccount(code){
+  if(journals.some(j=>j.dAcc===code||j.cAcc===code)||pettyEntries.some(p=>p.acc===code)){alert('この科目は使用されているため削除できません');return}
+  if(!confirm('科目「'+accName(code)+'」を削除しますか？'))return;
+  accounts=accounts.filter(a=>a.code!==code);
+  setDirty();buildAllSelects();renderAccounts();
+}
+
+/* ---------- CSV ---------- */
+function exportCSV(rows,filename){
+  const csv='\uFEFF'+rows.join('\n');
+  const b=new Blob([csv],{type:'text/csv;charset=utf-8;'});
+  const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download=filename;a.click();URL.revokeObjectURL(u);
+}
+function exportJournalCSV(){
+  const rows=['日付,部門,借方科目,税区分,税抜金額,消費税額,貸方科目,税区分,税抜金額,消費税額,摘要'];
+  journals.forEach(j=>rows.push(`${j.date},${DEPT_LABEL[j.dept]||j.dept},${accName(j.dAcc)},${taxInfo(j.dTax).label},${j.dAmt||0},${j.dTaxAmt||0},${accName(j.cAcc)},${taxInfo(j.cTax).label},${j.cAmt||0},${j.cTaxAmt||0},${j.desc}`));
+  exportCSV(rows,'仕訳帳.csv');
+}
+function exportTrialCSV(){
+  const deptF=document.getElementById('trial-dept').value;
+  const bal=calcBalances(deptF||null);
+  const rows=['科目コード,科目名,種別,合計借方,合計貸方,残高借方,残高貸方'];
+  [...accounts].sort((a,b)=>a.code.localeCompare(b.code)).forEach(a=>{
+    const b=bal[a.code]||{debitTotal:0,creditTotal:0};
+    const balance=getBalance(a.code,bal);const ns=NORMAL_SIDE[a.type];
+    rows.push(`${a.code},${a.name},${TYPE_JA[a.type]},${b.debitTotal},${b.creditTotal},${ns==='debit'?Math.max(0,balance):0},${ns==='credit'?Math.max(0,balance):0}`);
+  });
+  exportCSV(rows,'試算表.csv');
+}
+function exportPLCSV(){
+  const deptF=document.getElementById('pl-dept').value;
+  const bal=calcBalances(deptF||null);
+  const rows=['科目名,種別,金額'];
+  accounts.filter(a=>a.type==='revenue'||a.type==='expense').forEach(a=>{const b=getBalance(a.code,bal);if(b!==0)rows.push(`${a.name},${TYPE_JA[a.type]},${b}`);});
+  exportCSV(rows,'損益計算書.csv');
+}
+function exportBSCSV(){
+  const bal=calcBalances();const rows=['科目名,種別,金額'];
+  accounts.filter(a=>['asset','liability','equity'].includes(a.type)).forEach(a=>{const b=getBalance(a.code,bal);if(b!==0)rows.push(`${a.name},${TYPE_JA[a.type]},${b}`);});
+  exportCSV(rows,'貸借対照表.csv');
+}
+function exportTaxCSV(){
+  const t=calcTaxSummary();const rows=['項目,金額'];
+  [['課税売上10%（税抜）',t.sales10],['売上消費税10%',t.tax10Sales],['課税売上8%（税抜）',t.sales8],['売上消費税8%',t.tax8Sales],['免税売上',t.salesZero],['売上消費税合計',t.totalTaxSales],['課税仕入10%（税抜）',t.purchase10],['仕入税額控除10%',t.tax10Purchase],['課税仕入8%（税抜）',t.purchase8],['仕入税額控除8%',t.tax8Purchase],['仕入税額控除合計',t.totalTaxPurchase],['納付消費税額（国税・見込）',t.totalTaxSales-t.totalTaxPurchase]].forEach(([k,v])=>rows.push(`${k},${v}`));
+  exportCSV(rows,'消費税申告集計.csv');
+}
+function exportPettyCSV(){
+  const rows=['日付,種別,経費科目,税区分,入金,支出,摘要,転記状況'];
+  pettyEntries.forEach(p=>rows.push(`${p.date},${p.type==='in'?'入金':'支出'},${p.type==='out'?accName(p.acc):'-'},${p.type==='out'?taxInfo(p.taxCode).label:'-'},${p.type==='in'?p.amt:0},${p.type==='out'?p.amt:0},${p.desc},${p.transferred?'転記済':'未転記'}`));
+  exportCSV(rows,'小口現金出納帳.csv');
+}
+
+window.addEventListener('beforeunload',function(e){
+  if(isDirty){e.preventDefault();e.returnValue='保存されていない変更があります。ページを離れますか？';}
+});
+
+document.getElementById('j-date').value=new Date().toISOString().split('T')[0];
+document.getElementById('p-date').value=new Date().toISOString().split('T')[0];
+buildAllSelects();renderJMetrics();renderJList();setClean();
+
+// Google API 初期化コールバック（scriptタグのonloadから呼ばれる）
+window.gapiLoaded = gapiLoaded;
+window.gisLoaded = gisLoaded;
+</script>
+</body>
+</html>
