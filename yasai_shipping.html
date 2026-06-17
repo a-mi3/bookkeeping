@@ -7,130 +7,95 @@
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
-  --green-dark:#2D5016;
-  --green-mid:#4A7C2F;
-  --green-light:#7BAE5A;
-  --green-pale:#EEF5E7;
-  --green-bg:#F6FAF1;
-  --earth:#8B5E3C;
-  --earth-pale:#F5EDE4;
-  --text:#1C1C1C;
-  --text-sub:#666;
-  --border:#D8E8CC;
-  --white:#fff;
-  --red:#C0392B;
-  --yellow:#E6A817;
+  --green-dark:#2D5016;--green-mid:#4A7C2F;--green-light:#7BAE5A;
+  --green-pale:#EEF5E7;--green-bg:#F6FAF1;--earth:#8B5E3C;--earth-pale:#F5EDE4;
+  --text:#1C1C1C;--text-sub:#666;--border:#D8E8CC;--white:#fff;--red:#C0392B;
 }
 body{font-family:-apple-system,BlinkMacSystemFont,'Hiragino Sans','Yu Gothic UI',sans-serif;font-size:14px;color:var(--text);background:var(--green-bg);min-height:100vh}
-
-/* 認証バー */
-.auth-bar{background:var(--green-dark);color:#fff;padding:8px 16px;display:flex;align-items:center;justify-content:space-between;font-size:12px}
+.auth-bar{background:var(--green-dark);color:#fff;padding:8px 16px;display:flex;align-items:center;justify-content:space-between;font-size:12px;flex-wrap:wrap;gap:4px}
 .auth-bar button{background:var(--green-light);color:#fff;border:none;border-radius:6px;padding:4px 12px;font-size:11px;cursor:pointer}
 .auth-bar.connected{background:var(--green-mid)}
-#sync-status{font-size:11px;opacity:.85;margin-left:8px}
-
-/* ヘッダー */
-.header{background:var(--green-dark);color:#fff;padding:14px 16px;display:flex;align-items:center;gap:10px}
-.header-icon{font-size:24px}
-.header-title{font-size:18px;font-weight:600;letter-spacing:.02em}
+#sync-status{font-size:11px;opacity:.85;margin-left:6px}
+.header{background:var(--green-dark);color:#fff;padding:12px 16px;display:flex;align-items:center;gap:10px}
+.header-icon{font-size:22px}.header-title{font-size:17px;font-weight:600}
 .header-sub{font-size:11px;opacity:.7;margin-top:1px}
-
-/* タブ */
 .tabs{background:var(--white);border-bottom:1px solid var(--border);display:flex;overflow-x:auto;-webkit-overflow-scrolling:touch}
-.tab{padding:12px 16px;font-size:13px;color:var(--text-sub);cursor:pointer;border:none;background:none;border-bottom:2px solid transparent;white-space:nowrap;font-family:inherit}
+.tab{padding:11px 14px;font-size:13px;color:var(--text-sub);cursor:pointer;border:none;background:none;border-bottom:2px solid transparent;white-space:nowrap;font-family:inherit}
 .tab.active{color:var(--green-dark);border-bottom-color:var(--green-mid);font-weight:600}
-
-/* メイン */
 .main{max-width:680px;margin:0 auto;padding:12px}
 .panel{display:none}.panel.active{display:block}
-
-/* サマリーカード */
 .summary-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:12px}
 .summary-card{background:var(--white);border:1px solid var(--border);border-radius:12px;padding:12px}
-.summary-card.wide{grid-column:1/-1}
 .s-label{font-size:11px;color:var(--text-sub);margin-bottom:4px}
-.s-value{font-size:22px;font-weight:700;color:var(--green-dark)}
+.s-value{font-size:20px;font-weight:700;color:var(--green-dark)}
 .s-sub{font-size:11px;color:var(--text-sub);margin-top:2px}
-
-/* フォームカード */
 .card{background:var(--white);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:12px}
-.card-title{font-size:14px;font-weight:600;color:var(--green-dark);margin-bottom:12px;display:flex;align-items:center;gap:6px}
+.card-title{font-size:14px;font-weight:600;color:var(--green-dark);margin-bottom:12px}
 .fg{display:flex;flex-direction:column;gap:4px;margin-bottom:10px}
 .fg label{font-size:11px;color:var(--text-sub);font-weight:500}
 input,select{width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-size:14px;font-family:inherit;background:var(--white);color:var(--text);-webkit-appearance:none}
 input:focus,select:focus{outline:none;border-color:var(--green-mid);box-shadow:0 0 0 3px rgba(74,124,47,.1)}
 .row2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
-
-/* ボタン */
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:5px;padding:10px 16px;border-radius:8px;font-size:13px;cursor:pointer;border:1px solid var(--border);background:var(--white);color:var(--text);font-family:inherit;font-weight:500}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:5px;padding:9px 16px;border-radius:8px;font-size:13px;cursor:pointer;border:1px solid var(--border);background:var(--white);color:var(--text);font-family:inherit;font-weight:500}
 .btn-primary{background:var(--green-mid);color:#fff;border-color:var(--green-mid)}
 .btn-primary:active{background:var(--green-dark)}
-.btn-danger{color:var(--red);border-color:#f5c6c6;background:var(--white)}
+.btn-danger{color:var(--red);border-color:#f5c6c6}
 .btn-block{width:100%;padding:12px}
 .btn-sm{padding:5px 10px;font-size:12px}
-
-/* アラート */
+.btn-reload{background:var(--green-pale);color:var(--green-dark);border-color:var(--border)}
 .alert{padding:8px 12px;border-radius:8px;font-size:12px;margin-bottom:10px;display:none}
 .alert-ok{background:#EEF5E7;color:var(--green-dark);border:1px solid var(--border)}
 .alert-ng{background:#FDECEA;color:var(--red);border:1px solid #f5c6c6}
-
-/* リスト */
 .list-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-wrap:wrap;gap:6px}
 .list-title{font-size:13px;font-weight:600;color:var(--green-dark)}
-.filter-row{display:flex;gap:6px;flex-wrap:wrap}
+.filter-row{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
 .filter-row select{width:auto;font-size:12px;padding:5px 8px}
-
 .ship-item{background:var(--white);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:8px}
 .ship-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px}
 .ship-veggie{font-size:15px;font-weight:600;color:var(--green-dark)}
-.ship-store{font-size:12px;color:var(--text-sub);margin-top:1px}
+.ship-store{font-size:12px;color:var(--text-sub);margin-top:2px}
 .ship-date{font-size:11px;color:var(--text-sub)}
-.ship-bottom{display:flex;justify-content:space-between;align-items:center}
-.ship-detail{font-size:12px;color:var(--text-sub)}
-.ship-amount{font-size:16px;font-weight:700;color:var(--green-dark)}
-.ship-actions{display:flex;gap:4px;margin-top:8px}
-
-/* バッジ */
+.ship-nums{display:flex;gap:12px;margin-top:4px;flex-wrap:wrap}
+.ship-num-item{font-size:12px}
+.ship-num-label{color:var(--text-sub);font-size:11px}
+.ship-num-val{font-weight:600;color:var(--green-dark)}
+.ship-num-val.income{color:#1a6b3c}
 .badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:600}
 .badge-veggie{background:var(--green-pale);color:var(--green-dark)}
 .badge-store{background:var(--earth-pale);color:var(--earth)}
-
-/* 集計テーブル */
+.badge-tax{background:#FFF8E1;color:#8B6914;font-size:9px;padding:1px 5px;border-radius:3px;margin-left:3px}
 .agg-table{width:100%;border-collapse:collapse;font-size:13px}
 .agg-table th{text-align:left;padding:8px 10px;font-size:11px;color:var(--text-sub);border-bottom:1px solid var(--border);background:var(--green-bg)}
 .agg-table td{padding:9px 10px;border-bottom:1px solid var(--green-bg);vertical-align:middle}
 .agg-table tr:last-child td{border-bottom:none}
-.agg-table .num{text-align:right;font-variant-numeric:tabular-nums;font-weight:600;color:var(--green-dark)}
+.agg-table .num{text-align:right;font-weight:600;color:var(--green-dark)}
+.agg-table .num-income{text-align:right;font-weight:600;color:#1a6b3c}
 .agg-table tfoot td{font-weight:700;border-top:1px solid var(--border);background:var(--green-pale)}
-
-/* グラフバー */
-.bar-wrap{background:var(--green-bg);border-radius:4px;height:8px;flex:1;margin:0 8px;overflow:hidden}
-.bar-fill{height:100%;background:var(--green-light);border-radius:4px;transition:width .3s}
-
-/* 空状態 */
 .empty{text-align:center;padding:32px;color:var(--text-sub);font-size:13px}
 .empty-icon{font-size:36px;margin-bottom:8px}
-
-/* 設定 */
 .tag-list{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
 .tag-item{background:var(--green-pale);border:1px solid var(--border);border-radius:20px;padding:4px 10px;font-size:12px;display:flex;align-items:center;gap:5px;color:var(--green-dark)}
-.tag-del{background:none;border:none;cursor:pointer;color:var(--text-sub);font-size:14px;padding:0;line-height:1}
+.tag-del{background:none;border:none;cursor:pointer;color:var(--text-sub);font-size:14px;padding:0}
 .tag-del:hover{color:var(--red)}
+.income-preview{background:var(--green-pale);border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin-bottom:10px;font-size:13px;display:none}
+.income-preview .label{color:var(--text-sub);font-size:11px}
+.income-preview .value{font-size:18px;font-weight:700;color:#1a6b3c}
+.fee-row{display:grid;grid-template-columns:1fr auto auto;gap:8px;align-items:center;margin-bottom:6px}
+.fee-name{font-size:13px;font-weight:500}
+.fee-input{width:80px;text-align:right}
 </style>
 </head>
 <body>
 
-<!-- 認証バー -->
 <div class="auth-bar" id="auth-bar">
   <span id="auth-msg">📊 Google Sheetsと連携してデータを保存できます</span>
-  <div style="display:flex;align-items:center">
+  <div style="display:flex;align-items:center;gap:6px">
     <span id="sync-status"></span>
     <button onclick="handleAuth()" id="auth-btn">Googleでログイン</button>
   </div>
 </div>
 
-<!-- ヘッダー -->
 <div class="header">
   <div class="header-icon">🥬</div>
   <div>
@@ -139,13 +104,12 @@ input:focus,select:focus{outline:none;border-color:var(--green-mid);box-shadow:0
   </div>
 </div>
 
-<!-- タブ -->
 <div class="tabs">
   <button class="tab active" onclick="sw('record')">📝 出荷記録</button>
   <button class="tab" onclick="sw('list')">📋 履歴</button>
   <button class="tab" onclick="sw('store')">🏪 店舗別</button>
   <button class="tab" onclick="sw('veggie')">🥦 野菜別</button>
-  <button class="tab" onclick="sw('monthly')">📅 月次集計</button>
+  <button class="tab" onclick="sw('monthly')">📅 月次</button>
   <button class="tab" onclick="sw('settings')">⚙️ 設定</button>
 </div>
 
@@ -160,17 +124,17 @@ input:focus,select:focus{outline:none;border-color:var(--green-mid);box-shadow:0
       <div id="alert-ng" class="alert alert-ng"></div>
       <div class="fg"><label>出荷日</label><input type="date" id="r-date"></div>
       <div class="row2">
-        <div class="fg"><label>店舗</label>
-          <select id="r-store"><option value="">選択してください</option></select>
-        </div>
-        <div class="fg"><label>野菜</label>
-          <select id="r-veggie"><option value="">選択してください</option></select>
-        </div>
+        <div class="fg"><label>店舗</label><select id="r-store" onchange="onStoreChange()"><option value="">選択してください</option></select></div>
+        <div class="fg"><label>野菜</label><select id="r-veggie"><option value="">選択してください</option></select></div>
       </div>
       <div class="row3">
-        <div class="fg"><label>個数</label><input type="number" id="r-qty" placeholder="0" min="1"></div>
-        <div class="fg"><label>単価（円）</label><input type="number" id="r-price" placeholder="0" min="0" oninput="calcTotal()"></div>
-        <div class="fg"><label>合計金額（円）</label><input type="number" id="r-total" placeholder="自動計算" min="0"></div>
+        <div class="fg"><label>個数</label><input type="number" id="r-qty" placeholder="0" min="1" oninput="calcIncome()"></div>
+        <div class="fg"><label>売値（税込・円）<span class="badge-tax">税込</span></label><input type="number" id="r-price" placeholder="0" min="0" oninput="calcIncome()"></div>
+        <div class="fg"><label>手数料率（%）</label><input type="number" id="r-fee" placeholder="0" min="0" max="100" step="0.1" oninput="calcIncome()"></div>
+      </div>
+      <div class="income-preview" id="income-preview">
+        <div class="label">入金予定額（税込売値 × 個数 × (1 - 手数料率)）</div>
+        <div class="value" id="income-value">¥0</div>
       </div>
       <div class="fg"><label>メモ（任意）</label><input type="text" id="r-memo" placeholder="例：Lサイズのみ"></div>
       <button class="btn btn-primary btn-block" onclick="addRecord()">＋ 出荷を記録する</button>
@@ -182,6 +146,7 @@ input:focus,select:focus{outline:none;border-color:var(--green-mid);box-shadow:0
     <div class="list-header">
       <span class="list-title">出荷履歴</span>
       <div class="filter-row">
+        <button class="btn btn-reload btn-sm" onclick="reloadData()">🔄 最新データ</button>
         <select id="f-store" onchange="renderList()"><option value="">全店舗</option></select>
         <select id="f-veggie" onchange="renderList()"><option value="">全野菜</option></select>
         <button class="btn btn-sm" onclick="exportCSV()">CSV</button>
@@ -194,11 +159,12 @@ input:focus,select:focus{outline:none;border-color:var(--green-mid);box-shadow:0
   <div id="tab-store" class="panel">
     <div class="list-header">
       <span class="list-title">店舗別集計</span>
-      <select id="store-period" onchange="renderStore()" style="font-size:12px;padding:5px 8px;border:1px solid var(--border);border-radius:6px">
-        <option value="all">全期間</option>
-        <option value="thismonth">今月</option>
-        <option value="lastmonth">先月</option>
-      </select>
+      <div class="filter-row">
+        <button class="btn btn-reload btn-sm" onclick="reloadData()">🔄 最新データ</button>
+        <select id="store-period" onchange="renderStore()" style="font-size:12px;padding:5px 8px;border:1px solid var(--border);border-radius:6px">
+          <option value="all">全期間</option><option value="thismonth">今月</option><option value="lastmonth">先月</option>
+        </select>
+      </div>
     </div>
     <div id="store-content"></div>
   </div>
@@ -207,19 +173,21 @@ input:focus,select:focus{outline:none;border-color:var(--green-mid);box-shadow:0
   <div id="tab-veggie" class="panel">
     <div class="list-header">
       <span class="list-title">野菜別集計</span>
-      <select id="veggie-period" onchange="renderVeggie()" style="font-size:12px;padding:5px 8px;border:1px solid var(--border);border-radius:6px">
-        <option value="all">全期間</option>
-        <option value="thismonth">今月</option>
-        <option value="lastmonth">先月</option>
-      </select>
+      <div class="filter-row">
+        <button class="btn btn-reload btn-sm" onclick="reloadData()">🔄 最新データ</button>
+        <select id="veggie-period" onchange="renderVeggie()" style="font-size:12px;padding:5px 8px;border:1px solid var(--border);border-radius:6px">
+          <option value="all">全期間</option><option value="thismonth">今月</option><option value="lastmonth">先月</option>
+        </select>
+      </div>
     </div>
     <div id="veggie-content"></div>
   </div>
 
-  <!-- 月次集計 -->
+  <!-- 月次 -->
   <div id="tab-monthly" class="panel">
     <div class="list-header">
       <span class="list-title">月次集計</span>
+      <button class="btn btn-reload btn-sm" onclick="reloadData()">🔄 最新データ</button>
     </div>
     <div id="monthly-content"></div>
   </div>
@@ -227,12 +195,14 @@ input:focus,select:focus{outline:none;border-color:var(--green-mid);box-shadow:0
   <!-- 設定 -->
   <div id="tab-settings" class="panel">
     <div class="card">
-      <div class="card-title">🏪 店舗の管理</div>
-      <div class="row2" style="margin-bottom:8px">
-        <input type="text" id="new-store" placeholder="店舗名を入力">
+      <div class="card-title">🏪 店舗・手数料率の管理</div>
+      <div style="font-size:11px;color:var(--text-sub);margin-bottom:10px">手数料率を設定しておくと出荷記録時に自動入力されます</div>
+      <div id="fee-list"></div>
+      <div style="display:grid;grid-template-columns:1fr auto auto;gap:8px;align-items:end;margin-top:8px">
+        <input type="text" id="new-store" placeholder="店舗名">
+        <input type="number" id="new-store-fee" placeholder="手数料%" min="0" max="100" step="0.1" style="width:80px;text-align:right">
         <button class="btn btn-primary" onclick="addStore()">追加</button>
       </div>
-      <div class="tag-list" id="store-tags"></div>
     </div>
     <div class="card">
       <div class="card-title">🥦 野菜の管理</div>
@@ -246,445 +216,324 @@ input:focus,select:focus{outline:none;border-color:var(--green-mid);box-shadow:0
 
 </div>
 
-<!-- Google API -->
 <script src="https://accounts.google.com/gsi/client" onload="gisLoaded()" async defer></script>
 <script src="https://apis.google.com/js/api.js" onload="gapiLoaded()" async defer></script>
-
 <script>
-/* ===== 定数 ===== */
 const GAPI_CLIENT_ID = '400063538015-fjrfaovnmbgrbmnortilm43vkv312nkn.apps.googleusercontent.com';
 const SPREADSHEET_ID = '1fdJhfEmOB1kwOBCm3NCxQqSvN6VLvOSjzweruxqnQp0';
-const SHEET_NAME = '出荷管理';
 const SCOPES = 'https://www.googleapis.com/auth/spreadsheets';
 
-/* ===== データ ===== */
-let stores = ['加波山市場', 'グランテラス筑西', 'さわやか直売所', 'グラントマト下妻', 'きらいち筑西', 'たいらや真壁'];
+// 店舗は {name, fee} のオブジェクト配列
+let stores = [
+  {name:'加波山市場',fee:20},{name:'グランテラス筑西',fee:20},
+  {name:'さわやか直売所',fee:15},{name:'グラントマト下妻',fee:20},
+  {name:'きらいち筑西',fee:20},{name:'たいらや真壁',fee:20}
+];
 let veggies = ['ズッキーニ','オクラ','ミニトマト','ピーマン','トウモロコシ','ナス','キュウリ','里芋','春菊','大根','ほうれん草','ブロッコリー','サツマイモ','唐辛子','パプリカ','ジャガイモ','たまねぎ','にんにく','七味唐辛子','みかん塩','うま味だし塩','ゆず塩'];
 let records = [];
 let nextId = 1;
 
-/* ===== Google Sheets連携 ===== */
-let tokenClient = null, gapiInited = false, gisInited = false, isSignedIn = false;
+/* ===== Google Sheets ===== */
+let tokenClient=null,gapiInited=false,gisInited=false,isSignedIn=false;
+function gapiLoaded(){gapi.load('client',async()=>{await gapi.client.init({discoveryDocs:['https://sheets.googleapis.com/$discovery/rest?version=v4']});gapiInited=true;maybeEnableAuth();});}
+function gisLoaded(){tokenClient=google.accounts.oauth2.initTokenClient({client_id:GAPI_CLIENT_ID,scope:SCOPES,callback:async(resp)=>{if(resp.error)return;isSignedIn=true;updateAuthUI(true);await syncFromSheets();}});gisInited=true;maybeEnableAuth();}
+function maybeEnableAuth(){if(gapiInited&&gisInited)document.getElementById('auth-btn').disabled=false;}
+function handleAuth(){if(!isSignedIn){tokenClient.requestAccessToken({prompt:'consent'});}else{google.accounts.oauth2.revoke(gapi.client.getToken().access_token,()=>{gapi.client.setToken('');isSignedIn=false;updateAuthUI(false);});}}
+function updateAuthUI(connected){const bar=document.getElementById('auth-bar'),msg=document.getElementById('auth-msg'),btn=document.getElementById('auth-btn');if(connected){bar.className='auth-bar connected';msg.textContent='✅ Google Sheetsと接続中 · 自動保存有効';btn.textContent='ログアウト';}else{bar.className='auth-bar';msg.textContent='📊 Google Sheetsと連携してデータを保存できます';btn.textContent='Googleでログイン';}}
+function setSyncStatus(msg){document.getElementById('sync-status').textContent=msg;if(msg)setTimeout(()=>{document.getElementById('sync-status').textContent='';},3000);}
 
-function gapiLoaded() {
-  gapi.load('client', async () => {
-    await gapi.client.init({ discoveryDocs: ['https://sheets.googleapis.com/$discovery/rest?version=v4'] });
-    gapiInited = true; maybeEnableAuth();
-  });
-}
-function gisLoaded() {
-  tokenClient = google.accounts.oauth2.initTokenClient({
-    client_id: GAPI_CLIENT_ID, scope: SCOPES,
-    callback: async (resp) => {
-      if (resp.error) return;
-      isSignedIn = true; updateAuthUI(true); await syncFromSheets();
-    },
-  });
-  gisInited = true; maybeEnableAuth();
-}
-function maybeEnableAuth() {
-  if (gapiInited && gisInited) document.getElementById('auth-btn').disabled = false;
-}
-function handleAuth() {
-  if (!isSignedIn) { tokenClient.requestAccessToken({ prompt: 'consent' }); }
-  else {
-    google.accounts.oauth2.revoke(gapi.client.getToken().access_token, () => {
-      gapi.client.setToken(''); isSignedIn = false; updateAuthUI(false);
-    });
-  }
-}
-function updateAuthUI(connected) {
-  const bar = document.getElementById('auth-bar');
-  const msg = document.getElementById('auth-msg');
-  const btn = document.getElementById('auth-btn');
-  if (connected) {
-    bar.className = 'auth-bar connected';
-    msg.textContent = '✅ Google Sheetsと接続中 · 自動保存有効';
-    btn.textContent = 'ログアウト';
-  } else {
-    bar.className = 'auth-bar';
-    msg.textContent = '📊 Google Sheetsと連携してデータを保存できます';
-    btn.textContent = 'Googleでログイン';
-  }
-}
-function setSyncStatus(msg) {
-  document.getElementById('sync-status').textContent = msg;
-  if (msg) setTimeout(() => { document.getElementById('sync-status').textContent = ''; }, 3000);
+async function ensureSheets(sheetNames){
+  const needed=['出荷データ','設定','月次集計','店舗別集計','野菜別集計'];
+  const toAdd=needed.filter(n=>!sheetNames.includes(n));
+  if(!toAdd.length)return;
+  await gapi.client.sheets.spreadsheets.batchUpdate({spreadsheetId:SPREADSHEET_ID,resource:{requests:toAdd.map(title=>({addSheet:{properties:{title}}}))}});
 }
 
-// 必要なシートを全て確保する
-async function ensureSheets(sheetNames) {
-  const needed = ['出荷データ', '設定', '月次集計', '店舗別集計', '野菜別集計'];
-  const toAdd = needed.filter(n => !sheetNames.includes(n));
-  if (!toAdd.length) return;
-  await gapi.client.sheets.spreadsheets.batchUpdate({
-    spreadsheetId: SPREADSHEET_ID,
-    resource: { requests: toAdd.map(title => ({ addSheet: { properties: { title } } })) }
-  });
-}
-
-// 出荷データを行形式で保存
-async function syncToSheets() {
-  if (!isSignedIn) return;
-  try {
+// 追記方式：新しい1件だけ追加
+async function appendRecord(r){
+  if(!isSignedIn)return;
+  try{
     setSyncStatus('⏳');
-    // 出荷データシート：ヘッダー＋全レコード
-    const header = [['ID','日付','店舗','野菜','個数','単価','合計金額','メモ']];
-    const rows = records.map(r => [r.id, r.date, r.store, r.veggie, r.qty, r.price||0, r.total||0, r.memo||'']);
-    await gapi.client.sheets.spreadsheets.values.update({
-      spreadsheetId: SPREADSHEET_ID, range: '出荷データ!A1',
-      valueInputOption: 'RAW', resource: { values: [...header, ...rows] },
+    await gapi.client.sheets.spreadsheets.values.append({
+      spreadsheetId:SPREADSHEET_ID,range:'出荷データ!A1',
+      valueInputOption:'RAW',insertDataOption:'INSERT_ROWS',
+      resource:{values:[[r.id,r.date,r.store,r.veggie,r.qty,r.price||0,r.total||0,r.fee||0,r.income||0,r.memo||'']]}
     });
-    // 設定シート：店舗・野菜リスト
-    const settingRows = [['店舗リスト','野菜リスト'], ...Array.from({length: Math.max(stores.length, veggies.length)}, (_, i) => [stores[i]||'', veggies[i]||''])];
-    await gapi.client.sheets.spreadsheets.values.update({
-      spreadsheetId: SPREADSHEET_ID, range: '設定!A1',
-      valueInputOption: 'RAW', resource: { values: settingRows },
-    });
-    // 集計シートを更新
     await updateAggSheets();
     setSyncStatus('✅ 保存');
-  } catch (e) { setSyncStatus('❌'); console.error(e); }
+  }catch(e){setSyncStatus('❌');console.error(e);}
 }
 
-// 集計シートを自動生成
-async function updateAggSheets() {
-  // 月次集計
-  const byMonth = {};
-  records.forEach(r => {
-    const ym = r.date.substring(0,7);
-    if (!byMonth[ym]) byMonth[ym] = {total:0, qty:0, count:0};
-    byMonth[ym].total += r.total||0; byMonth[ym].qty += r.qty||0; byMonth[ym].count++;
-  });
-  const monthRows = [['年月','件数','個数合計','売上合計'], ...Object.entries(byMonth).sort((a,b)=>b[0].localeCompare(a[0])).map(([ym,v])=>[ym.replace('-','年')+'月', v.count, v.qty, v.total])];
-  await gapi.client.sheets.spreadsheets.values.update({
-    spreadsheetId: SPREADSHEET_ID, range: '月次集計!A1',
-    valueInputOption: 'RAW', resource: { values: monthRows },
-  });
-  // 店舗別集計
-  const byStore = {};
-  records.forEach(r => {
-    if (!byStore[r.store]) byStore[r.store] = {total:0, qty:0, count:0};
-    byStore[r.store].total += r.total||0; byStore[r.store].qty += r.qty||0; byStore[r.store].count++;
-  });
-  const storeRows = [['店舗','件数','個数合計','売上合計'], ...Object.entries(byStore).sort((a,b)=>b[1].total-a[1].total).map(([s,v])=>[s, v.count, v.qty, v.total])];
-  await gapi.client.sheets.spreadsheets.values.update({
-    spreadsheetId: SPREADSHEET_ID, range: '店舗別集計!A1',
-    valueInputOption: 'RAW', resource: { values: storeRows },
-  });
-  // 野菜別集計
-  const byVeggie = {};
-  records.forEach(r => {
-    if (!byVeggie[r.veggie]) byVeggie[r.veggie] = {total:0, qty:0, count:0};
-    byVeggie[r.veggie].total += r.total||0; byVeggie[r.veggie].qty += r.qty||0; byVeggie[r.veggie].count++;
-  });
-  const veggieRows = [['野菜','件数','個数合計','売上合計'], ...Object.entries(byVeggie).sort((a,b)=>b[1].total-a[1].total).map(([v,d])=>[v, d.count, d.qty, d.total])];
-  await gapi.client.sheets.spreadsheets.values.update({
-    spreadsheetId: SPREADSHEET_ID, range: '野菜別集計!A1',
-    valueInputOption: 'RAW', resource: { values: veggieRows },
-  });
+// 設定のみ保存（店舗・野菜リスト）
+async function saveSettings(){
+  if(!isSignedIn)return;
+  try{
+    const rows=[['店舗名','手数料率(%)','野菜リスト'],...Array.from({length:Math.max(stores.length,veggies.length)},(_,i)=>[stores[i]?stores[i].name:'',stores[i]?stores[i].fee:'',veggies[i]||''])];
+    await gapi.client.sheets.spreadsheets.values.update({spreadsheetId:SPREADSHEET_ID,range:'設定!A1',valueInputOption:'RAW',resource:{values:rows}});
+  }catch(e){console.error(e);}
 }
 
-async function syncFromSheets() {
-  if (!isSignedIn) return;
-  try {
+async function updateAggSheets(){
+  // 月次
+  const byMonth={};
+  records.forEach(r=>{const ym=r.date.substring(0,7);if(!byMonth[ym])byMonth[ym]={total:0,income:0,qty:0,count:0};byMonth[ym].total+=r.total||0;byMonth[ym].income+=r.income||0;byMonth[ym].qty+=r.qty||0;byMonth[ym].count++;});
+  const mRows=[['年月','件数','個数','売値合計(税込)','入金額合計'],...Object.entries(byMonth).sort((a,b)=>b[0].localeCompare(a[0])).map(([ym,v])=>[ym.replace('-','年')+'月',v.count,v.qty,v.total,v.income])];
+  await gapi.client.sheets.spreadsheets.values.update({spreadsheetId:SPREADSHEET_ID,range:'月次集計!A1',valueInputOption:'RAW',resource:{values:mRows}});
+  // 店舗別
+  const byStore={};
+  records.forEach(r=>{if(!byStore[r.store])byStore[r.store]={total:0,income:0,qty:0,count:0};byStore[r.store].total+=r.total||0;byStore[r.store].income+=r.income||0;byStore[r.store].qty+=r.qty||0;byStore[r.store].count++;});
+  const sRows=[['店舗','件数','個数','売値合計(税込)','入金額合計'],...Object.entries(byStore).sort((a,b)=>b[1].income-a[1].income).map(([s,v])=>[s,v.count,v.qty,v.total,v.income])];
+  await gapi.client.sheets.spreadsheets.values.update({spreadsheetId:SPREADSHEET_ID,range:'店舗別集計!A1',valueInputOption:'RAW',resource:{values:sRows}});
+  // 野菜別
+  const byVeggie={};
+  records.forEach(r=>{if(!byVeggie[r.veggie])byVeggie[r.veggie]={total:0,income:0,qty:0,count:0};byVeggie[r.veggie].total+=r.total||0;byVeggie[r.veggie].income+=r.income||0;byVeggie[r.veggie].qty+=r.qty||0;byVeggie[r.veggie].count++;});
+  const vRows=[['野菜','件数','個数','売値合計(税込)','入金額合計'],...Object.entries(byVeggie).sort((a,b)=>b[1].total-a[1].total).map(([v,d])=>[v,d.count,d.qty,d.total,d.income])];
+  await gapi.client.sheets.spreadsheets.values.update({spreadsheetId:SPREADSHEET_ID,range:'野菜別集計!A1',valueInputOption:'RAW',resource:{values:vRows}});
+}
+
+async function syncFromSheets(){
+  if(!isSignedIn)return;
+  try{
     setSyncStatus('⏳ 読込中');
-    const sheetMeta = await gapi.client.sheets.spreadsheets.get({ spreadsheetId: SPREADSHEET_ID });
-    const sheetNames = sheetMeta.result.sheets.map(s => s.properties.title);
-    await ensureSheets(sheetNames);
-    // 出荷データ読み込み
-    const dataResp = await gapi.client.sheets.spreadsheets.values.get({
-      spreadsheetId: SPREADSHEET_ID, range: '出荷データ!A2:H'
-    });
-    const rows = dataResp.result.values || [];
-    records = rows.filter(r => r[0]).map(r => ({
-      id: parseInt(r[0]), date: r[1], store: r[2], veggie: r[3],
-      qty: parseInt(r[4])||0, price: parseInt(r[5])||0, total: parseInt(r[6])||0, memo: r[7]||''
-    }));
-    nextId = records.reduce((m, r) => Math.max(m, r.id), 0) + 1;
-    // 設定読み込み
-    const settingResp = await gapi.client.sheets.spreadsheets.values.get({
-      spreadsheetId: SPREADSHEET_ID, range: '設定!A2:B'
-    });
-    const settingRows = settingResp.result.values || [];
-    const loadedStores = settingRows.map(r => r[0]).filter(Boolean);
-    const loadedVeggies = settingRows.map(r => r[1]).filter(Boolean);
-    if (loadedStores.length) stores = loadedStores;
-    if (loadedVeggies.length) veggies = loadedVeggies;
-    buildSelects(); renderSummary(); setSyncStatus(`✅ ${records.length}件`);
-  } catch (e) { setSyncStatus('❌ 読込失敗'); console.error(e); }
+    const meta=await gapi.client.sheets.spreadsheets.get({spreadsheetId:SPREADSHEET_ID});
+    await ensureSheets(meta.result.sheets.map(s=>s.properties.title));
+    // 出荷データ
+    const dr=await gapi.client.sheets.spreadsheets.values.get({spreadsheetId:SPREADSHEET_ID,range:'出荷データ!A2:J'});
+    const rows=dr.result.values||[];
+    records=rows.filter(r=>r[0]).map(r=>({id:parseInt(r[0]),date:r[1],store:r[2],veggie:r[3],qty:parseInt(r[4])||0,price:parseInt(r[5])||0,total:parseInt(r[6])||0,fee:parseFloat(r[7])||0,income:parseInt(r[8])||0,memo:r[9]||''}));
+    nextId=records.reduce((m,r)=>Math.max(m,r.id),0)+1;
+    // 設定
+    const sr=await gapi.client.sheets.spreadsheets.values.get({spreadsheetId:SPREADSHEET_ID,range:'設定!A2:C'});
+    const srows=sr.result.values||[];
+    const ls=srows.map(r=>r[0]&&({name:r[0],fee:parseFloat(r[1])||0})).filter(Boolean);
+    const lv=srows.map(r=>r[2]).filter(Boolean);
+    if(ls.length)stores=ls;
+    if(lv.length)veggies=lv;
+    buildSelects();renderSummary();setSyncStatus(`✅ ${records.length}件`);
+  }catch(e){setSyncStatus('❌ 読込失敗');console.error(e);}
+}
+
+async function reloadData(){
+  setSyncStatus('⏳ 更新中...');
+  await syncFromSheets();
+  const t=document.querySelector('.tab.active').textContent;
+  if(t.includes('履歴'))renderList();
+  else if(t.includes('店舗'))renderStore();
+  else if(t.includes('野菜'))renderVeggie();
+  else if(t.includes('月次'))renderMonthly();
 }
 
 /* ===== UI ===== */
-function sw(t) {
-  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
-  document.getElementById('tab-' + t).classList.add('active');
-  const tabs = ['record','list','store','veggie','monthly','settings'];
+function sw(t){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
+  document.getElementById('tab-'+t).classList.add('active');
+  const tabs=['record','list','store','veggie','monthly','settings'];
   document.querySelectorAll('.tab')[tabs.indexOf(t)].classList.add('active');
-  if (t === 'record') { renderSummary(); }
-  else if (t === 'list') renderList();
-  else if (t === 'store') renderStore();
-  else if (t === 'veggie') renderVeggie();
-  else if (t === 'monthly') renderMonthly();
-  else if (t === 'settings') renderSettings();
+  if(t==='record')renderSummary();
+  else if(t==='list')renderList();
+  else if(t==='store')renderStore();
+  else if(t==='veggie')renderVeggie();
+  else if(t==='monthly')renderMonthly();
+  else if(t==='settings')renderSettings();
 }
 
-function buildSelects() {
-  const storeOpts = stores.map(s => `<option value="${s}">${s}</option>`).join('');
-  const veggieOpts = veggies.map(v => `<option value="${v}">${v}</option>`).join('');
-  ['r-store','f-store'].forEach(id => {
-    const el = document.getElementById(id);
-    const prev = el.value;
-    el.innerHTML = (id.startsWith('f') ? '<option value="">全店舗</option>' : '<option value="">選択してください</option>') + storeOpts;
-    if (prev) el.value = prev;
-  });
-  ['r-veggie','f-veggie'].forEach(id => {
-    const el = document.getElementById(id);
-    const prev = el.value;
-    el.innerHTML = (id.startsWith('f') ? '<option value="">全野菜</option>' : '<option value="">選択してください</option>') + veggieOpts;
-    if (prev) el.value = prev;
-  });
+function buildSelects(){
+  const storeOpts=stores.map(s=>`<option value="${s.name}">${s.name}</option>`).join('');
+  const veggieOpts=veggies.map(v=>`<option value="${v}">${v}</option>`).join('');
+  ['r-store','f-store'].forEach(id=>{const el=document.getElementById(id);const prev=el.value;el.innerHTML=(id.startsWith('f')?'<option value="">全店舗</option>':'<option value="">選択してください</option>')+storeOpts;if(prev)el.value=prev;});
+  ['r-veggie','f-veggie'].forEach(id=>{const el=document.getElementById(id);const prev=el.value;el.innerHTML=(id.startsWith('f')?'<option value="">全野菜</option>':'<option value="">選択してください</option>')+veggieOpts;if(prev)el.value=prev;});
 }
 
-function calcTotal() {
-  const qty = parseInt(document.getElementById('r-qty').value) || 0;
-  const price = parseInt(document.getElementById('r-price').value) || 0;
-  if (qty > 0 && price > 0) document.getElementById('r-total').value = qty * price;
+function onStoreChange(){
+  const name=document.getElementById('r-store').value;
+  const s=stores.find(x=>x.name===name);
+  if(s)document.getElementById('r-fee').value=s.fee||'';
+  else document.getElementById('r-fee').value='';
+  calcIncome();
 }
 
-function fmt(n) { return '¥' + Math.round(n).toLocaleString('ja-JP'); }
-function fmtN(n) { return Math.round(n).toLocaleString('ja-JP'); }
-
-function showAlert(id, msg) {
-  const el = document.getElementById(id); if (!el) return;
-  el.textContent = msg; el.style.display = 'block';
-  setTimeout(() => { el.style.display = 'none'; }, 4000);
+function calcIncome(){
+  const qty=parseInt(document.getElementById('r-qty').value)||0;
+  const price=parseInt(document.getElementById('r-price').value)||0;
+  const fee=parseFloat(document.getElementById('r-fee').value)||0;
+  const preview=document.getElementById('income-preview');
+  if(qty>0&&price>0){
+    const total=qty*price;
+    const income=Math.floor(total*(1-fee/100));
+    document.getElementById('income-value').textContent=fmt(income)+'（売値合計'+fmt(total)+'）';
+    preview.style.display='block';
+  }else{preview.style.display='none';}
 }
 
-/* ===== 出荷記録 ===== */
-function addRecord() {
-  const date = document.getElementById('r-date').value;
-  const store = document.getElementById('r-store').value;
-  const veggie = document.getElementById('r-veggie').value;
-  const qty = parseInt(document.getElementById('r-qty').value) || 0;
-  const price = parseInt(document.getElementById('r-price').value) || 0;
-  const total = parseInt(document.getElementById('r-total').value) || qty * price;
-  const memo = document.getElementById('r-memo').value.trim();
-  if (!date || !store || !veggie) { showAlert('alert-ng', '日付・店舗・野菜を選択してください'); return; }
-  if (qty <= 0) { showAlert('alert-ng', '個数を入力してください'); return; }
-  records.push({ id: nextId++, date, store, veggie, qty, price, total, memo });
-  records.sort((a, b) => b.date.localeCompare(a.date));
-  document.getElementById('r-qty').value = '';
-  document.getElementById('r-price').value = '';
-  document.getElementById('r-total').value = '';
-  document.getElementById('r-memo').value = '';
-  showAlert('alert-ok', `✅ ${veggie}を${store}に出荷記録しました`);
+function fmt(n){return'¥'+Math.round(n).toLocaleString('ja-JP');}
+function fmtN(n){return Math.round(n).toLocaleString('ja-JP');}
+function showAlert(id,msg){const el=document.getElementById(id);if(!el)return;el.textContent=msg;el.style.display='block';setTimeout(()=>{el.style.display='none';},4000);}
+
+function addRecord(){
+  const date=document.getElementById('r-date').value;
+  const store=document.getElementById('r-store').value;
+  const veggie=document.getElementById('r-veggie').value;
+  const qty=parseInt(document.getElementById('r-qty').value)||0;
+  const price=parseInt(document.getElementById('r-price').value)||0;
+  const fee=parseFloat(document.getElementById('r-fee').value)||0;
+  const memo=document.getElementById('r-memo').value.trim();
+  if(!date||!store||!veggie){showAlert('alert-ng','日付・店舗・野菜を選択してください');return;}
+  if(qty<=0){showAlert('alert-ng','個数を入力してください');return;}
+  const total=qty*price;
+  const income=Math.floor(total*(1-fee/100));
+  const rec={id:nextId++,date,store,veggie,qty,price,total,fee,income,memo};
+  records.unshift(rec);
+  document.getElementById('r-qty').value='';
+  document.getElementById('r-price').value='';
+  document.getElementById('r-memo').value='';
+  document.getElementById('income-preview').style.display='none';
+  showAlert('alert-ok',`✅ ${veggie}を${store}に記録しました（入金予定：${fmt(income)}）`);
   renderSummary();
-  if (isSignedIn) syncToSheets();
+  if(isSignedIn)appendRecord(rec);
 }
 
-function renderSummary() {
-  const now = new Date();
-  const ym = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
-  const thisMonth = records.filter(r => r.date.startsWith(ym));
-  const totalSales = records.reduce((s, r) => s + (r.total || 0), 0);
-  const monthSales = thisMonth.reduce((s, r) => s + (r.total || 0), 0);
-  const monthCount = thisMonth.length;
-  const storeCount = new Set(records.map(r => r.store)).size;
-  document.getElementById('summary-cards').innerHTML = `
-    <div class="summary-card"><div class="s-label">今月の売上</div><div class="s-value">${fmt(monthSales)}</div><div class="s-sub">${monthCount}件の出荷</div></div>
-    <div class="summary-card"><div class="s-label">累計売上</div><div class="s-value">${fmt(totalSales)}</div><div class="s-sub">全${records.length}件</div></div>
-  `;
+function renderSummary(){
+  const now=new Date();
+  const ym=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+  const tm=records.filter(r=>r.date.startsWith(ym));
+  const monthIncome=tm.reduce((s,r)=>s+(r.income||0),0);
+  const monthSales=tm.reduce((s,r)=>s+(r.total||0),0);
+  document.getElementById('summary-cards').innerHTML=`
+    <div class="summary-card"><div class="s-label">今月の入金予定額</div><div class="s-value" style="color:#1a6b3c">${fmt(monthIncome)}</div><div class="s-sub">売値合計 ${fmt(monthSales)}（税込）</div></div>
+    <div class="summary-card"><div class="s-label">今月の出荷件数</div><div class="s-value">${tm.length}件</div><div class="s-sub">累計 ${records.length}件</div></div>`;
 }
 
-/* ===== 履歴 ===== */
-function renderList() {
-  const sf = document.getElementById('f-store').value;
-  const vf = document.getElementById('f-veggie').value;
-  let list = records.filter(r => (!sf || r.store === sf) && (!vf || r.veggie === vf));
-  const el = document.getElementById('ship-list');
-  if (!list.length) { el.innerHTML = '<div class="empty"><div class="empty-icon">🌱</div>出荷記録がありません</div>'; return; }
-  el.innerHTML = list.map(r => `
+function renderList(){
+  const sf=document.getElementById('f-store').value;
+  const vf=document.getElementById('f-veggie').value;
+  const list=records.filter(r=>(!sf||r.store===sf)&&(!vf||r.veggie===vf));
+  const el=document.getElementById('ship-list');
+  if(!list.length){el.innerHTML='<div class="empty"><div class="empty-icon">🌱</div>出荷記録がありません</div>';return;}
+  el.innerHTML=list.map(r=>`
     <div class="ship-item">
       <div class="ship-top">
         <div>
           <div class="ship-veggie">${r.veggie} <span class="badge badge-store">${r.store}</span></div>
-          <div class="ship-store">${r.memo || ''}</div>
+          <div class="ship-store">${r.memo||''}</div>
         </div>
         <div class="ship-date">${r.date}</div>
       </div>
-      <div class="ship-bottom">
-        <div class="ship-detail">${fmtN(r.qty)}個 ${r.price ? '× '+fmt(r.price) : ''}</div>
-        <div class="ship-amount">${r.total ? fmt(r.total) : '-'}</div>
+      <div class="ship-nums">
+        <div class="ship-num-item"><div class="ship-num-label">個数</div><div class="ship-num-val">${fmtN(r.qty)}個</div></div>
+        <div class="ship-num-item"><div class="ship-num-label">売値合計<span class="badge-tax">税込</span></div><div class="ship-num-val">${r.total?fmt(r.total):'-'}</div></div>
+        <div class="ship-num-item"><div class="ship-num-label">手数料率</div><div class="ship-num-val">${r.fee||0}%</div></div>
+        <div class="ship-num-item"><div class="ship-num-label">入金予定額</div><div class="ship-num-val income">${r.income?fmt(r.income):'-'}</div></div>
       </div>
-      <div class="ship-actions">
-        <button class="btn btn-danger btn-sm" onclick="deleteRecord(${r.id})">削除</button>
-      </div>
-    </div>
-  `).join('');
+      <div style="margin-top:8px"><button class="btn btn-danger btn-sm" onclick="deleteRecord(${r.id})">削除</button></div>
+    </div>`).join('');
 }
 
-function deleteRecord(id) {
-  if (!confirm('この出荷記録を削除しますか？')) return;
-  records = records.filter(r => r.id !== id);
-  renderList(); renderSummary();
-  if (isSignedIn) syncToSheets();
+function deleteRecord(id){
+  if(!confirm('この出荷記録を削除しますか？\n※Sheetsのデータは手動で削除してください'))return;
+  records=records.filter(r=>r.id!==id);
+  renderList();renderSummary();
 }
 
-/* ===== 店舗別 ===== */
-function filterByPeriod(list, period) {
-  const now = new Date();
-  const ym = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
-  const lm = new Date(now.getFullYear(), now.getMonth()-1, 1);
-  const lmStr = `${lm.getFullYear()}-${String(lm.getMonth()+1).padStart(2,'0')}`;
-  if (period === 'thismonth') return list.filter(r => r.date.startsWith(ym));
-  if (period === 'lastmonth') return list.filter(r => r.date.startsWith(lmStr));
+function filterByPeriod(list,period){
+  const now=new Date();
+  const ym=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+  const lm=new Date(now.getFullYear(),now.getMonth()-1,1);
+  const lmStr=`${lm.getFullYear()}-${String(lm.getMonth()+1).padStart(2,'0')}`;
+  if(period==='thismonth')return list.filter(r=>r.date.startsWith(ym));
+  if(period==='lastmonth')return list.filter(r=>r.date.startsWith(lmStr));
   return list;
 }
 
-function renderStore() {
-  const period = document.getElementById('store-period').value;
-  const list = filterByPeriod(records, period);
-  const byStore = {};
-  list.forEach(r => {
-    if (!byStore[r.store]) byStore[r.store] = { total: 0, qty: 0, count: 0 };
-    byStore[r.store].total += r.total || 0;
-    byStore[r.store].qty += r.qty || 0;
-    byStore[r.store].count++;
-  });
-  const sorted = Object.entries(byStore).sort((a, b) => b[1].total - a[1].total);
-  const maxTotal = sorted[0]?.[1].total || 1;
-  const el = document.getElementById('store-content');
-  if (!sorted.length) { el.innerHTML = '<div class="empty"><div class="empty-icon">🏪</div>データがありません</div>'; return; }
-  el.innerHTML = `<div class="card" style="padding:0;overflow:hidden">
-    <table class="agg-table">
-      <thead><tr><th>店舗</th><th>件数</th><th class="num">個数</th><th class="num">売上合計</th></tr></thead>
-      <tbody>${sorted.map(([store, v]) => `
-        <tr>
-          <td><span class="badge badge-store">${store}</span></td>
-          <td style="color:var(--text-sub)">${v.count}件</td>
-          <td class="num">${fmtN(v.qty)}個</td>
-          <td class="num">${fmt(v.total)}</td>
-        </tr>`).join('')}
-      </tbody>
-      <tfoot><tr>
-        <td colspan="2" style="padding:9px 10px;font-weight:700">合計</td>
-        <td class="num">${fmtN(sorted.reduce((s,[,v])=>s+v.qty,0))}個</td>
-        <td class="num">${fmt(sorted.reduce((s,[,v])=>s+v.total,0))}</td>
-      </tr></tfoot>
-    </table>
-  </div>`;
+function renderStore(){
+  const period=document.getElementById('store-period').value;
+  const list=filterByPeriod(records,period);
+  const byStore={};
+  list.forEach(r=>{if(!byStore[r.store])byStore[r.store]={total:0,income:0,qty:0,count:0};byStore[r.store].total+=r.total||0;byStore[r.store].income+=r.income||0;byStore[r.store].qty+=r.qty||0;byStore[r.store].count++;});
+  const sorted=Object.entries(byStore).sort((a,b)=>b[1].income-a[1].income);
+  const el=document.getElementById('store-content');
+  if(!sorted.length){el.innerHTML='<div class="empty"><div class="empty-icon">🏪</div>データがありません</div>';return;}
+  el.innerHTML=`<div class="card" style="padding:0;overflow:hidden"><table class="agg-table">
+    <thead><tr><th>店舗</th><th class="num">件数</th><th class="num">売値合計<br><small style="font-weight:400;color:#aaa">税込</small></th><th class="num-income">入金額合計</th></tr></thead>
+    <tbody>${sorted.map(([s,v])=>`<tr><td><span class="badge badge-store">${s}</span></td><td class="num">${v.count}件</td><td class="num">${fmt(v.total)}</td><td class="num-income">${fmt(v.income)}</td></tr>`).join('')}</tbody>
+    <tfoot><tr><td colspan="2" style="padding:9px 10px;font-weight:700">合計</td><td class="num">${fmt(sorted.reduce((s,[,v])=>s+v.total,0))}</td><td class="num-income">${fmt(sorted.reduce((s,[,v])=>s+v.income,0))}</td></tr></tfoot>
+  </table></div>`;
 }
 
-/* ===== 野菜別 ===== */
-function renderVeggie() {
-  const period = document.getElementById('veggie-period').value;
-  const list = filterByPeriod(records, period);
-  const byVeggie = {};
-  list.forEach(r => {
-    if (!byVeggie[r.veggie]) byVeggie[r.veggie] = { total: 0, qty: 0, count: 0 };
-    byVeggie[r.veggie].total += r.total || 0;
-    byVeggie[r.veggie].qty += r.qty || 0;
-    byVeggie[r.veggie].count++;
-  });
-  const sorted = Object.entries(byVeggie).sort((a, b) => b[1].total - a[1].total);
-  const maxTotal = sorted[0]?.[1].total || 1;
-  const el = document.getElementById('veggie-content');
-  if (!sorted.length) { el.innerHTML = '<div class="empty"><div class="empty-icon">🥦</div>データがありません</div>'; return; }
-  el.innerHTML = `<div class="card" style="padding:0;overflow:hidden">
-    <table class="agg-table">
-      <thead><tr><th>野菜</th><th>件数</th><th class="num">個数</th><th class="num">売上合計</th></tr></thead>
-      <tbody>${sorted.map(([veggie, v]) => `
-        <tr>
-          <td><span class="badge badge-veggie">${veggie}</span></td>
-          <td style="color:var(--text-sub)">${v.count}件</td>
-          <td class="num">${fmtN(v.qty)}個</td>
-          <td class="num">${fmt(v.total)}</td>
-        </tr>`).join('')}
-      </tbody>
-      <tfoot><tr>
-        <td colspan="2" style="padding:9px 10px;font-weight:700">合計</td>
-        <td class="num">${fmtN(sorted.reduce((s,[,v])=>s+v.qty,0))}個</td>
-        <td class="num">${fmt(sorted.reduce((s,[,v])=>s+v.total,0))}</td>
-      </tr></tfoot>
-    </table>
-  </div>`;
+function renderVeggie(){
+  const period=document.getElementById('veggie-period').value;
+  const list=filterByPeriod(records,period);
+  const byV={};
+  list.forEach(r=>{if(!byV[r.veggie])byV[r.veggie]={total:0,income:0,qty:0,count:0};byV[r.veggie].total+=r.total||0;byV[r.veggie].income+=r.income||0;byV[r.veggie].qty+=r.qty||0;byV[r.veggie].count++;});
+  const sorted=Object.entries(byV).sort((a,b)=>b[1].total-a[1].total);
+  const el=document.getElementById('veggie-content');
+  if(!sorted.length){el.innerHTML='<div class="empty"><div class="empty-icon">🥦</div>データがありません</div>';return;}
+  el.innerHTML=`<div class="card" style="padding:0;overflow:hidden"><table class="agg-table">
+    <thead><tr><th>野菜</th><th class="num">個数</th><th class="num">売値合計<br><small style="font-weight:400;color:#aaa">税込</small></th><th class="num-income">入金額合計</th></tr></thead>
+    <tbody>${sorted.map(([v,d])=>`<tr><td><span class="badge badge-veggie">${v}</span></td><td class="num">${fmtN(d.qty)}個</td><td class="num">${fmt(d.total)}</td><td class="num-income">${fmt(d.income)}</td></tr>`).join('')}</tbody>
+    <tfoot><tr><td colspan="2" style="padding:9px 10px;font-weight:700">合計</td><td class="num">${fmt(sorted.reduce((s,[,v])=>s+v.total,0))}</td><td class="num-income">${fmt(sorted.reduce((s,[,v])=>s+v.income,0))}</td></tr></tfoot>
+  </table></div>`;
 }
 
-/* ===== 月次集計 ===== */
-function renderMonthly() {
-  const byMonth = {};
-  records.forEach(r => {
-    const ym = r.date.substring(0, 7);
-    if (!byMonth[ym]) byMonth[ym] = { total: 0, qty: 0, count: 0 };
-    byMonth[ym].total += r.total || 0;
-    byMonth[ym].qty += r.qty || 0;
-    byMonth[ym].count++;
-  });
-  const sorted = Object.entries(byMonth).sort((a, b) => b[0].localeCompare(a[0]));
-  const el = document.getElementById('monthly-content');
-  if (!sorted.length) { el.innerHTML = '<div class="empty"><div class="empty-icon">📅</div>データがありません</div>'; return; }
-  el.innerHTML = `<div class="card" style="padding:0;overflow:hidden">
-    <table class="agg-table">
-      <thead><tr><th>年月</th><th>件数</th><th class="num">個数</th><th class="num">売上合計</th></tr></thead>
-      <tbody>${sorted.map(([ym, v]) => `
-        <tr>
-          <td style="font-weight:600">${ym.replace('-','年')}月</td>
-          <td style="color:var(--text-sub)">${v.count}件</td>
-          <td class="num">${fmtN(v.qty)}個</td>
-          <td class="num">${fmt(v.total)}</td>
-        </tr>`).join('')}
-      </tbody>
-    </table>
-  </div>`;
+function renderMonthly(){
+  const byMonth={};
+  records.forEach(r=>{const ym=r.date.substring(0,7);if(!byMonth[ym])byMonth[ym]={total:0,income:0,qty:0,count:0};byMonth[ym].total+=r.total||0;byMonth[ym].income+=r.income||0;byMonth[ym].qty+=r.qty||0;byMonth[ym].count++;});
+  const sorted=Object.entries(byMonth).sort((a,b)=>b[0].localeCompare(a[0]));
+  const el=document.getElementById('monthly-content');
+  if(!sorted.length){el.innerHTML='<div class="empty"><div class="empty-icon">📅</div>データがありません</div>';return;}
+  el.innerHTML=`<div class="card" style="padding:0;overflow:hidden"><table class="agg-table">
+    <thead><tr><th>年月</th><th class="num">件数</th><th class="num">売値合計<br><small style="font-weight:400;color:#aaa">税込</small></th><th class="num-income">入金額合計</th></tr></thead>
+    <tbody>${sorted.map(([ym,v])=>`<tr><td style="font-weight:600">${ym.replace('-','年')}月</td><td class="num">${v.count}件</td><td class="num">${fmt(v.total)}</td><td class="num-income">${fmt(v.income)}</td></tr>`).join('')}</tbody>
+  </table></div>`;
 }
 
-/* ===== 設定 ===== */
-function renderSettings() {
-  document.getElementById('store-tags').innerHTML = stores.map(s =>
-    `<div class="tag-item">${s}<button class="tag-del" onclick="delStore('${s}')">×</button></div>`).join('');
-  document.getElementById('veggie-tags').innerHTML = veggies.map(v =>
-    `<div class="tag-item">${v}<button class="tag-del" onclick="delVeggie('${v}')">×</button></div>`).join('');
-}
-function addStore() {
-  const v = document.getElementById('new-store').value.trim();
-  if (!v || stores.includes(v)) return;
-  stores.push(v); document.getElementById('new-store').value = '';
-  buildSelects(); renderSettings(); if (isSignedIn) syncToSheets();
-}
-function delStore(s) {
-  if (!confirm(`「${s}」を削除しますか？`)) return;
-  stores = stores.filter(x => x !== s); buildSelects(); renderSettings(); if (isSignedIn) syncToSheets();
-}
-function addVeggie() {
-  const v = document.getElementById('new-veggie').value.trim();
-  if (!v || veggies.includes(v)) return;
-  veggies.push(v); document.getElementById('new-veggie').value = '';
-  buildSelects(); renderSettings(); if (isSignedIn) syncToSheets();
-}
-function delVeggie(v) {
-  if (!confirm(`「${v}」を削除しますか？`)) return;
-  veggies = veggies.filter(x => x !== v); buildSelects(); renderSettings(); if (isSignedIn) syncToSheets();
+function renderSettings(){
+  const fl=document.getElementById('fee-list');
+  fl.innerHTML=stores.map((s,i)=>`
+    <div class="fee-row">
+      <div class="fee-name"><span class="badge badge-store">${s.name}</span></div>
+      <input type="number" class="fee-input" value="${s.fee||0}" min="0" max="100" step="0.1" onchange="updateFee(${i},this.value)" style="width:80px;text-align:right">
+      <button class="btn btn-danger btn-sm" onclick="delStore(${i})">削除</button>
+    </div>`).join('');
+  document.getElementById('veggie-tags').innerHTML=veggies.map(v=>`<div class="tag-item">${v}<button class="tag-del" onclick="delVeggie('${v}')">×</button></div>`).join('');
 }
 
-/* ===== CSV出力 ===== */
-function exportCSV() {
-  const rows = ['日付,店舗,野菜,個数,単価,合計,メモ'];
-  records.forEach(r => rows.push(`${r.date},${r.store},${r.veggie},${r.qty},${r.price||0},${r.total||0},${r.memo||''}`));
-  const csv = '\uFEFF' + rows.join('\n');
-  const b = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-  const u = URL.createObjectURL(b);
-  const a = document.createElement('a'); a.href = u; a.download = '出荷記録.csv'; a.click(); URL.revokeObjectURL(u);
+function updateFee(i,val){stores[i].fee=parseFloat(val)||0;if(isSignedIn)saveSettings();}
+function addStore(){
+  const name=document.getElementById('new-store').value.trim();
+  const fee=parseFloat(document.getElementById('new-store-fee').value)||0;
+  if(!name||stores.find(s=>s.name===name))return;
+  stores.push({name,fee});
+  document.getElementById('new-store').value='';document.getElementById('new-store-fee').value='';
+  buildSelects();renderSettings();if(isSignedIn)saveSettings();
+}
+function delStore(i){
+  if(!confirm(`「${stores[i].name}」を削除しますか？`))return;
+  stores.splice(i,1);buildSelects();renderSettings();if(isSignedIn)saveSettings();
+}
+function addVeggie(){
+  const v=document.getElementById('new-veggie').value.trim();
+  if(!v||veggies.includes(v))return;
+  veggies.push(v);document.getElementById('new-veggie').value='';
+  buildSelects();renderSettings();if(isSignedIn)saveSettings();
+}
+function delVeggie(v){
+  if(!confirm(`「${v}」を削除しますか？`))return;
+  veggies=veggies.filter(x=>x!==v);buildSelects();renderSettings();if(isSignedIn)saveSettings();
 }
 
-/* ===== 初期化 ===== */
-document.getElementById('r-date').value = new Date().toISOString().split('T')[0];
-document.getElementById('r-qty').addEventListener('input', calcTotal);
-buildSelects();
-renderSummary();
-window.gapiLoaded = gapiLoaded;
-window.gisLoaded = gisLoaded;
+function exportCSV(){
+  const rows=['日付,店舗,野菜,個数,売値(税込),手数料率(%),入金予定額,メモ'];
+  records.forEach(r=>rows.push(`${r.date},${r.store},${r.veggie},${r.qty},${r.total||0},${r.fee||0},${r.income||0},${r.memo||''}`));
+  const csv='\uFEFF'+rows.join('\n');
+  const b=new Blob([csv],{type:'text/csv;charset=utf-8;'});
+  const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download='出荷記録.csv';a.click();URL.revokeObjectURL(u);
+}
+
+document.getElementById('r-date').value=new Date().toISOString().split('T')[0];
+document.getElementById('r-qty').addEventListener('input',calcIncome);
+buildSelects();renderSummary();
+window.gapiLoaded=gapiLoaded;window.gisLoaded=gisLoaded;
 </script>
 </body>
 </html>
