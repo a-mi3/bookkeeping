@@ -236,9 +236,38 @@ let nextId = 1;
 /* ===== Google Sheets ===== */
 let tokenClient=null,gapiInited=false,gisInited=false,isSignedIn=false;
 function gapiLoaded(){gapi.load('client',async()=>{await gapi.client.init({discoveryDocs:['https://sheets.googleapis.com/$discovery/rest?version=v4']});gapiInited=true;maybeEnableAuth();});}
-function gisLoaded(){tokenClient=google.accounts.oauth2.initTokenClient({client_id:GAPI_CLIENT_ID,scope:SCOPES,callback:async(resp)=>{if(resp.error)return;isSignedIn=true;updateAuthUI(true);await syncFromSheets();}});gisInited=true;maybeEnableAuth();}
-function maybeEnableAuth(){if(gapiInited&&gisInited)document.getElementById('auth-btn').disabled=false;}
-function handleAuth(){if(!isSignedIn){tokenClient.requestAccessToken({prompt:'consent'});}else{google.accounts.oauth2.revoke(gapi.client.getToken().access_token,()=>{gapi.client.setToken('');isSignedIn=false;updateAuthUI(false);});}}
+function gisLoaded(){
+  tokenClient=google.accounts.oauth2.initTokenClient({
+    client_id:GAPI_CLIENT_ID,scope:SCOPES,
+    callback:async(resp)=>{
+      if(resp.error)return;
+      isSignedIn=true;
+      localStorage.setItem('yasai_autologin','1');
+      updateAuthUI(true);await syncFromSheets();
+    }
+  });
+  gisInited=true;maybeEnableAuth();
+}
+function maybeEnableAuth(){
+  if(!gapiInited||!gisInited)return;
+  document.getElementById('auth-btn').disabled=false;
+  // 前回ログイン済みなら自動でサイレントログイン
+  if(localStorage.getItem('yasai_autologin')==='1'){
+    setSyncStatus('⏳ 自動ログイン中...');
+    tokenClient.requestAccessToken({prompt:''});
+  }
+}
+function handleAuth(){
+  if(!isSignedIn){
+    tokenClient.requestAccessToken({prompt:'consent'});
+  }else{
+    google.accounts.oauth2.revoke(gapi.client.getToken().access_token,()=>{
+      gapi.client.setToken('');isSignedIn=false;
+      localStorage.removeItem('yasai_autologin');
+      updateAuthUI(false);
+    });
+  }
+}
 function updateAuthUI(connected){const bar=document.getElementById('auth-bar'),msg=document.getElementById('auth-msg'),btn=document.getElementById('auth-btn');if(connected){bar.className='auth-bar connected';msg.textContent='✅ Google Sheetsと接続中 · 自動保存有効';btn.textContent='ログアウト';}else{bar.className='auth-bar';msg.textContent='📊 Google Sheetsと連携してデータを保存できます';btn.textContent='Googleでログイン';}}
 function setSyncStatus(msg){document.getElementById('sync-status').textContent=msg;if(msg)setTimeout(()=>{document.getElementById('sync-status').textContent='';},3000);}
 
