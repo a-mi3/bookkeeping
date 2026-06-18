@@ -241,29 +241,47 @@ function gisLoaded(){
     client_id:GAPI_CLIENT_ID,scope:SCOPES,
     callback:async(resp)=>{
       if(resp.error)return;
+      // トークンをlocalStorageに保存（有効期限付き）
+      const expiry=Date.now()+((resp.expires_in||3600)-60)*1000;
       isSignedIn=true;
-      localStorage.setItem('yasai_autologin','1');
-      updateAuthUI(true);await syncFromSheets();
+      localStorage.setItem('yasai_token',JSON.stringify({token:resp.access_token,expiry}));
+      gapi.client.setToken(resp);
+      updateAuthUI(true);await syncFromSheets(true); // ← ローカルデータをマージ
     }
   });
   gisInited=true;maybeEnableAuth();
 }
-function maybeEnableAuth(){
+async function maybeEnableAuth(){
   if(!gapiInited||!gisInited)return;
   document.getElementById('auth-btn').disabled=false;
-  // 前回ログイン済みなら自動でサイレントログイン
-  if(localStorage.getItem('yasai_autologin')==='1'){
-    setSyncStatus('⏳ 自動ログイン中...');
-    tokenClient.requestAccessToken({prompt:''});
+  // 保存済みトークンがあれば自動復元
+  const saved=localStorage.getItem('yasai_token');
+  if(saved){
+    try{
+      const {token,expiry}=JSON.parse(saved);
+      if(Date.now()<expiry){
+        // まだ有効なトークン → そのまま使う
+        gapi.client.setToken({access_token:token});
+        isSignedIn=true;updateAuthUI(true);
+        setSyncStatus('⏳ データ読込中...');
+        await syncFromSheets();
+        return;
+      }else{
+        // 期限切れ → サイレントで再取得
+        localStorage.removeItem('yasai_token');
+        setSyncStatus('⏳ 自動ログイン中...');
+        tokenClient.requestAccessToken({prompt:''});
+      }
+    }catch(e){localStorage.removeItem('yasai_token');}
   }
 }
 function handleAuth(){
   if(!isSignedIn){
-    tokenClient.requestAccessToken({prompt:'consent'});
+    tokenClient.requestAccessToken({prompt:'select_account'});
   }else{
     google.accounts.oauth2.revoke(gapi.client.getToken().access_token,()=>{
       gapi.client.setToken('');isSignedIn=false;
-      localStorage.removeItem('yasai_autologin');
+      localStorage.removeItem('yasai_token');
       updateAuthUI(false);
     });
   }
@@ -320,16 +338,36 @@ async function updateAggSheets(){
   await gapi.client.sheets.spreadsheets.values.update({spreadsheetId:SPREADSHEET_ID,range:'野菜別集計!A1',valueInputOption:'RAW',resource:{values:vRows}});
 }
 
-async function syncFromSheets(){
+async function syncFromSheets(mergeLocal=false){
   if(!isSignedIn)return;
   try{
     setSyncStatus('⏳ 読込中');
+    // ログイン前のローカルデータを退避
+    const localRecords=mergeLocal?[...records]:[];
     const meta=await gapi.client.sheets.spreadsheets.get({spreadsheetId:SPREADSHEET_ID});
     await ensureSheets(meta.result.sheets.map(s=>s.properties.title));
     // 出荷データ
     const dr=await gapi.client.sheets.spreadsheets.values.get({spreadsheetId:SPREADSHEET_ID,range:'出荷データ!A2:J'});
     const rows=dr.result.values||[];
-    records=rows.filter(r=>r[0]).map(r=>({id:parseInt(r[0]),date:r[1],store:r[2],veggie:r[3],qty:parseInt(r[4])||0,price:parseInt(r[5])||0,total:parseInt(r[6])||0,fee:parseFloat(r[7])||0,income:parseInt(r[8])||0,memo:r[9]||''}));
+    const sheetRecords=rows.filter(r=>r[0]).map(r=>({id:parseInt(r[0]),date:r[1],store:r[2],veggie:r[3],qty:parseInt(r[4])||0,price:parseInt(r[5])||0,total:parseInt(r[6])||0,fee:parseFloat(r[7])||0,income:parseInt(r[8])||0,memo:r[9]||''}));
+    // ローカルデータをマージ（Sheetsにないものだけ追加）
+    if(mergeLocal&&localRecords.length>0){
+      const sheetIds=new Set(sheetRecords.map(r=>r.id));
+      const toMerge=localRecords.filter(r=>!sheetIds.has(r.id));
+      if(toMerge.length>0){
+        setSyncStatus(`⏳ ローカルデータ${toMerge.length}件を保存中...`);
+        for(const r of toMerge){
+          await gapi.client.sheets.spreadsheets.values.append({
+            spreadsheetId:SPREADSHEET_ID,range:'出荷データ!A1',
+            valueInputOption:'RAW',insertDataOption:'INSERT_ROWS',
+            resource:{values:[[r.id,r.date,r.store,r.veggie,r.qty,r.price||0,r.total||0,r.fee||0,r.income||0,r.memo||'']]}
+          });
+        }
+        sheetRecords.push(...toMerge);
+        await updateAggSheets();
+      }
+    }
+    records=sheetRecords.sort((a,b)=>b.date.localeCompare(a.date));
     nextId=records.reduce((m,r)=>Math.max(m,r.id),0)+1;
     // 設定
     const sr=await gapi.client.sheets.spreadsheets.values.get({spreadsheetId:SPREADSHEET_ID,range:'設定!A2:C'});
@@ -338,7 +376,9 @@ async function syncFromSheets(){
     const lv=srows.map(r=>r[2]).filter(Boolean);
     if(ls.length)stores=ls;
     if(lv.length)veggies=lv;
-    buildSelects();renderSummary();setSyncStatus(`✅ ${records.length}件`);
+    buildSelects();renderSummary();
+    const msg=mergeLocal&&localRecords.length>0?`✅ ${records.length}件（ローカル分もマージ済み）`:`✅ ${records.length}件`;
+    setSyncStatus(msg);
   }catch(e){setSyncStatus('❌ 読込失敗');console.error(e);}
 }
 
