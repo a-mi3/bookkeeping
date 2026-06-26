@@ -339,6 +339,18 @@ async function appendRecord(r){
   }catch(e){setSyncStatus('❌');console.error(e);}
 }
 
+// 出荷データシートを新しい順にヘッダー付きで全書き換え
+async function rewriteDataSheet(){
+  if(!isSignedIn||!records.length)return;
+  try{
+    const header=['ID','日付','店舗','野菜','個数','単価(税込)','合計金額(税込)','手数料率(%)','入金額','メモ'];
+    const rows=[header,...records.map(r=>[r.id,r.date,r.store,r.veggie,r.qty,r.price||0,r.total||0,r.fee||0,r.income||0,r.memo||''])];
+    // シートをクリアしてから書き込み（古いデータが残らないように）
+    await gapi.client.sheets.spreadsheets.values.clear({spreadsheetId:SPREADSHEET_ID,range:'出荷データ!A:J'});
+    await gapi.client.sheets.spreadsheets.values.update({spreadsheetId:SPREADSHEET_ID,range:'出荷データ!A1',valueInputOption:'RAW',resource:{values:rows}});
+  }catch(e){console.error('rewriteDataSheet error:',e);}
+}
+
 // 設定のみ保存（店舗・野菜リスト）
 async function saveSettings(){
   if(!isSignedIn)return;
@@ -406,8 +418,13 @@ async function syncFromSheets(mergeLocal=false){
         await updateAggSheets();
       }
     }
-    records=sheetRecords.sort((a,b)=>b.date.localeCompare(a.date));
+    records=sheetRecords.sort((a,b)=>{
+      const d=b.date.localeCompare(a.date);
+      return d!==0?d:b.id-a.id;
+    });
     nextId=records.reduce((m,r)=>Math.max(m,r.id),0)+1;
+    // 出荷データシートを新しい順に書き直す
+    await rewriteDataSheet();
     // 設定
     const sr=await gapi.client.sheets.spreadsheets.values.get({spreadsheetId:SPREADSHEET_ID,range:'設定!A2:C'});
     const srows=sr.result.values||[];
