@@ -84,6 +84,13 @@ input:focus,select:focus{outline:none;border-color:var(--green-mid);box-shadow:0
 .fee-row{display:grid;grid-template-columns:1fr auto auto;gap:8px;align-items:center;margin-bottom:6px}
 .fee-name{font-size:13px;font-weight:500}
 .fee-input{width:80px;text-align:right}
+.store-detail{background:var(--green-pale);margin:0 8px 12px;border-radius:0 0 10px 10px;border:1px solid var(--border);border-top:none;overflow:hidden}
+.store-detail table{width:100%;border-collapse:collapse;font-size:12px}
+.store-detail th{text-align:left;padding:5px 10px;font-size:10px;color:var(--text-sub);background:rgba(0,0,0,.03)}
+.store-detail td{padding:5px 10px;border-bottom:1px solid rgba(0,0,0,.05)}
+.store-detail tr:last-child td{border-bottom:none}
+.store-toggle{cursor:pointer;user-select:none}
+.store-toggle:hover{background:var(--green-bg)}
 </style>
 </head>
 <body>
@@ -225,9 +232,11 @@ const SCOPES = 'https://www.googleapis.com/auth/spreadsheets';
 
 // 店舗は {name, fee} のオブジェクト配列
 let stores = [
-  {name:'加波山市場',fee:20},{name:'グランテラス筑西',fee:20},
-  {name:'さわやか直売所',fee:15},{name:'グラントマト下妻',fee:20},
-  {name:'きらいち筑西',fee:20},{name:'たいらや真壁',fee:20}
+  {name:'加波山市場',fee:18},{name:'グランテラス筑西',fee:33},
+  {name:'さわやか直売所',fee:17},{name:'グラントマト下妻',fee:23},
+  {name:'きらいち筑西',fee:17},{name:'たいらや真壁',fee:28},
+  {name:'道の駅下妻（生鮮）',fee:25},{name:'道の駅下妻（加工）',fee:33},
+  {name:'ふらっと',fee:2}
 ];
 let veggies = ['ズッキーニ','オクラ','ミニトマト','ピーマン','トウモロコシ','ナス','キュウリ','里芋','春菊','大根','ほうれん草','ブロッコリー','サツマイモ','唐辛子','パプリカ','ジャガイモ','たまねぎ','にんにく','七味唐辛子','みかん塩','うま味だし塩','ゆず塩'];
 let records = [];
@@ -241,15 +250,27 @@ function gisLoaded(){
     client_id:GAPI_CLIENT_ID,scope:SCOPES,
     callback:async(resp)=>{
       if(resp.error)return;
-      // トークンをlocalStorageに保存（有効期限付き）
       const expiry=Date.now()+((resp.expires_in||3600)-60)*1000;
       isSignedIn=true;
       localStorage.setItem('yasai_token',JSON.stringify({token:resp.access_token,expiry}));
       gapi.client.setToken(resp);
-      updateAuthUI(true);await syncFromSheets(true); // ← ローカルデータをマージ
+      scheduleTokenRefresh();
+      updateAuthUI(true);await syncFromSheets(true);
     }
   });
   gisInited=true;maybeEnableAuth();
+}
+// トークンが切れる前に自動で再取得するタイマー
+let refreshTimer=null;
+function scheduleTokenRefresh(){
+  clearTimeout(refreshTimer);
+  const saved=localStorage.getItem('yasai_token');
+  if(!saved)return;
+  try{
+    const {expiry}=JSON.parse(saved);
+    const ms=expiry-Date.now()-120000; // 期限の2分前に更新
+    if(ms>0){refreshTimer=setTimeout(()=>{tokenClient.requestAccessToken({prompt:''});},ms);}
+  }catch(e){}
 }
 async function maybeEnableAuth(){
   if(!gapiInited||!gisInited)return;
@@ -263,6 +284,7 @@ async function maybeEnableAuth(){
         // まだ有効なトークン → そのまま使う
         gapi.client.setToken({access_token:token});
         isSignedIn=true;updateAuthUI(true);
+        scheduleTokenRefresh();
         setSyncStatus('⏳ データ読込中...');
         await syncFromSheets();
         return;
@@ -301,9 +323,15 @@ async function appendRecord(r){
   if(!isSignedIn)return;
   try{
     setSyncStatus('⏳');
-    await gapi.client.sheets.spreadsheets.values.append({
-      spreadsheetId:SPREADSHEET_ID,range:'出荷データ!A1',
-      valueInputOption:'RAW',insertDataOption:'INSERT_ROWS',
+    const meta=await gapi.client.sheets.spreadsheets.get({spreadsheetId:SPREADSHEET_ID});
+    const sheet=meta.result.sheets.find(s=>s.properties.title==='出荷データ');
+    const sheetId=sheet?sheet.properties.sheetId:0;
+    await gapi.client.sheets.spreadsheets.batchUpdate({spreadsheetId:SPREADSHEET_ID,resource:{requests:[
+      {insertDimension:{range:{sheetId,dimension:'ROWS',startIndex:1,endIndex:2},inheritFromBefore:false}}
+    ]}});
+    await gapi.client.sheets.spreadsheets.values.update({
+      spreadsheetId:SPREADSHEET_ID,range:'出荷データ!A2:J2',
+      valueInputOption:'RAW',
       resource:{values:[[r.id,r.date,r.store,r.veggie,r.qty,r.price||0,r.total||0,r.fee||0,r.income||0,r.memo||'']]}
     });
     await updateAggSheets();
@@ -326,10 +354,21 @@ async function updateAggSheets(){
   records.forEach(r=>{const ym=r.date.substring(0,7);if(!byMonth[ym])byMonth[ym]={total:0,income:0,qty:0,count:0};byMonth[ym].total+=r.total||0;byMonth[ym].income+=r.income||0;byMonth[ym].qty+=r.qty||0;byMonth[ym].count++;});
   const mRows=[['年月','件数','個数','売値合計(税込)','入金額合計'],...Object.entries(byMonth).sort((a,b)=>b[0].localeCompare(a[0])).map(([ym,v])=>[ym.replace('-','年')+'月',v.count,v.qty,v.total,v.income])];
   await gapi.client.sheets.spreadsheets.values.update({spreadsheetId:SPREADSHEET_ID,range:'月次集計!A1',valueInputOption:'RAW',resource:{values:mRows}});
-  // 店舗別
-  const byStore={};
-  records.forEach(r=>{if(!byStore[r.store])byStore[r.store]={total:0,income:0,qty:0,count:0};byStore[r.store].total+=r.total||0;byStore[r.store].income+=r.income||0;byStore[r.store].qty+=r.qty||0;byStore[r.store].count++;});
-  const sRows=[['店舗','件数','個数','売値合計(税込)','入金額合計'],...Object.entries(byStore).sort((a,b)=>b[1].income-a[1].income).map(([s,v])=>[s,v.count,v.qty,v.total,v.income])];
+  // 店舗別（野菜内訳付き）
+  const byStore2={};
+  records.forEach(r=>{
+    if(!byStore2[r.store])byStore2[r.store]={total:0,income:0,qty:0,count:0,veggies:{}};
+    byStore2[r.store].total+=r.total||0;byStore2[r.store].income+=r.income||0;byStore2[r.store].qty+=r.qty||0;byStore2[r.store].count++;
+    if(!byStore2[r.store].veggies[r.veggie])byStore2[r.store].veggies[r.veggie]={qty:0,total:0,income:0};
+    byStore2[r.store].veggies[r.veggie].qty+=r.qty||0;byStore2[r.store].veggies[r.veggie].total+=r.total||0;byStore2[r.store].veggies[r.veggie].income+=r.income||0;
+  });
+  const sRows=[['店舗','野菜','件数','個数','売値合計(税込)','入金額合計']];
+  Object.entries(byStore2).sort((a,b)=>b[1].income-a[1].income).forEach(([s,v])=>{
+    sRows.push([s,'【小計】',v.count,v.qty,v.total,v.income]);
+    Object.entries(v.veggies).sort((a,b)=>b[1].total-a[1].total).forEach(([vn,vd])=>{
+      sRows.push(['','　'+vn,'',vd.qty,vd.total,vd.income]);
+    });
+  });
   await gapi.client.sheets.spreadsheets.values.update({spreadsheetId:SPREADSHEET_ID,range:'店舗別集計!A1',valueInputOption:'RAW',resource:{values:sRows}});
   // 野菜別
   const byVeggie={};
@@ -518,15 +557,39 @@ function renderStore(){
   const period=document.getElementById('store-period').value;
   const list=filterByPeriod(records,period);
   const byStore={};
-  list.forEach(r=>{if(!byStore[r.store])byStore[r.store]={total:0,income:0,qty:0,count:0};byStore[r.store].total+=r.total||0;byStore[r.store].income+=r.income||0;byStore[r.store].qty+=r.qty||0;byStore[r.store].count++;});
+  list.forEach(r=>{
+    if(!byStore[r.store])byStore[r.store]={total:0,income:0,qty:0,count:0,veggies:{}};
+    byStore[r.store].total+=r.total||0;byStore[r.store].income+=r.income||0;byStore[r.store].qty+=r.qty||0;byStore[r.store].count++;
+    if(!byStore[r.store].veggies[r.veggie])byStore[r.store].veggies[r.veggie]={qty:0,total:0,income:0};
+    byStore[r.store].veggies[r.veggie].qty+=r.qty||0;
+    byStore[r.store].veggies[r.veggie].total+=r.total||0;
+    byStore[r.store].veggies[r.veggie].income+=r.income||0;
+  });
   const sorted=Object.entries(byStore).sort((a,b)=>b[1].income-a[1].income);
   const el=document.getElementById('store-content');
   if(!sorted.length){el.innerHTML='<div class="empty"><div class="empty-icon">🏪</div>データがありません</div>';return;}
-  el.innerHTML=`<div class="card" style="padding:0;overflow:hidden"><table class="agg-table">
-    <thead><tr><th>店舗</th><th class="num">件数</th><th class="num">売値合計<br><small style="font-weight:400;color:#aaa">税込</small></th><th class="num-income">入金額合計</th></tr></thead>
-    <tbody>${sorted.map(([s,v])=>`<tr><td><span class="badge badge-store">${s}</span></td><td class="num">${v.count}件</td><td class="num">${fmt(v.total)}</td><td class="num-income">${fmt(v.income)}</td></tr>`).join('')}</tbody>
-    <tfoot><tr><td colspan="2" style="padding:9px 10px;font-weight:700">合計</td><td class="num">${fmt(sorted.reduce((s,[,v])=>s+v.total,0))}</td><td class="num-income">${fmt(sorted.reduce((s,[,v])=>s+v.income,0))}</td></tr></tfoot>
-  </table></div>`;
+  let html='';
+  sorted.forEach(([s,v],i)=>{
+    const veggiesSorted=Object.entries(v.veggies).sort((a,b)=>b[1].total-a[1].total);
+    html+=`<div class="card" style="padding:0;overflow:hidden;margin-bottom:8px">
+      <div class="store-toggle" onclick="document.getElementById('sd-${i}').style.display=document.getElementById('sd-${i}').style.display==='none'?'':'none'" style="padding:12px;display:flex;justify-content:space-between;align-items:center">
+        <div><span class="badge badge-store">${s}</span> <span style="font-size:12px;color:var(--text-sub);margin-left:6px">${v.count}件・${fmtN(v.qty)}個</span></div>
+        <div style="text-align:right"><div style="font-size:11px;color:var(--text-sub)">売値 ${fmt(v.total)}（税込）</div><div style="font-weight:700;color:#1a6b3c">${fmt(v.income)}</div></div>
+      </div>
+      <div id="sd-${i}" class="store-detail">
+        <table><thead><tr><th>野菜</th><th style="text-align:right">個数</th><th style="text-align:right">売値(税込)</th><th style="text-align:right">入金額</th></tr></thead>
+        <tbody>${veggiesSorted.map(([vn,vd])=>`<tr><td><span class="badge badge-veggie">${vn}</span></td><td style="text-align:right">${fmtN(vd.qty)}個</td><td style="text-align:right">${fmt(vd.total)}</td><td style="text-align:right;color:#1a6b3c;font-weight:600">${fmt(vd.income)}</td></tr>`).join('')}</tbody>
+        </table>
+      </div>
+    </div>`;
+  });
+  const grandTotal=sorted.reduce((s,[,v])=>s+v.total,0);
+  const grandIncome=sorted.reduce((s,[,v])=>s+v.income,0);
+  html+=`<div class="card" style="padding:12px;display:flex;justify-content:space-between;align-items:center;background:var(--green-pale)">
+    <div style="font-weight:700">合計</div>
+    <div style="text-align:right"><div style="font-size:11px;color:var(--text-sub)">売値 ${fmt(grandTotal)}（税込）</div><div style="font-weight:700;color:#1a6b3c;font-size:18px">${fmt(grandIncome)}</div></div>
+  </div>`;
+  el.innerHTML=html;
 }
 
 function renderVeggie(){
