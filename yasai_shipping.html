@@ -373,52 +373,19 @@ async function updateAggSheets(){
   records.forEach(r=>{const ym=r.date.substring(0,7);if(!byMonth[ym])byMonth[ym]={total:0,income:0,qty:0,count:0};byMonth[ym].total+=r.total||0;byMonth[ym].income+=r.income||0;byMonth[ym].qty+=r.qty||0;byMonth[ym].count++;});
   const mRows=[['年月','件数','個数','売値合計(税込)','入金額合計'],...Object.entries(byMonth).sort((a,b)=>b[0].localeCompare(a[0])).map(([ym,v])=>[ym.replace('-','年')+'月',v.count,v.qty,v.total,v.income])];
   await gapi.client.sheets.spreadsheets.values.update({spreadsheetId:SPREADSHEET_ID,range:'月次集計!A1',valueInputOption:'RAW',resource:{values:mRows}});
-  // 店舗別（総合サマリー → 店舗ごとの月別集計 → 明細）
-  const storeNames=[...new Set(records.map(r=>r.store))];
-  const allMonths=[...new Set(records.map(r=>r.date.substring(0,7)))].sort((a,b)=>b.localeCompare(a));
-  const sRows=[];
-  // ── 総合サマリー ──
-  sRows.push(['═══ 全店舗サマリー ═══','','','','','']);
-  sRows.push(['店舗','件数','個数','金額(税込)','入金予定額','手数料率']);
-  let allTotal=0,allIncome=0,allQty=0;
-  const storeData={};
-  storeNames.forEach(sn=>{
-    const items=records.filter(r=>r.store===sn);
-    const st={count:items.length,qty:items.reduce((s,r)=>s+(r.qty||0),0),total:items.reduce((s,r)=>s+(r.total||0),0),income:items.reduce((s,r)=>s+(r.income||0),0),fee:items[0]?items[0].fee:0,items};
-    storeData[sn]=st;allTotal+=st.total;allIncome+=st.income;allQty+=st.qty;
+  // 店舗別サマリー（シンプル版。詳細は「絞り込み」シートで）
+  const sRows=[['店舗','件数','個数','金額(税込)','入金予定額','手数料率']];
+  let allTotal=0,allIncome=0,allQty=0,allCount=0;
+  const byStore2={};
+  records.forEach(r=>{
+    if(!byStore2[r.store])byStore2[r.store]={total:0,income:0,qty:0,count:0,fee:r.fee||0};
+    byStore2[r.store].total+=r.total||0;byStore2[r.store].income+=r.income||0;byStore2[r.store].qty+=r.qty||0;byStore2[r.store].count++;
   });
-  Object.entries(storeData).sort((a,b)=>b[1].income-a[1].income).forEach(([sn,st])=>{
+  Object.entries(byStore2).sort((a,b)=>b[1].income-a[1].income).forEach(([sn,st])=>{
     sRows.push([sn,st.count,st.qty,st.total,st.income,st.fee+'%']);
+    allTotal+=st.total;allIncome+=st.income;allQty+=st.qty;allCount+=st.count;
   });
-  sRows.push(['合計','',allQty,allTotal,allIncome,'']);
-  sRows.push([]);
-  // ── 店舗ごとの詳細 ──
-  Object.entries(storeData).sort((a,b)=>b[1].income-a[1].income).forEach(([storeName,st])=>{
-    sRows.push(['═══ '+storeName+' ═══','','件数:'+st.count,'個数:'+st.qty,'金額:'+st.total,'入金:'+st.income]);
-    // 月別集計
-    sRows.push(['【月別集計】','','','','','']);
-    sRows.push(['','月','個数','金額(税込)','入金予定額','']);
-    const byMon={};
-    st.items.forEach(r=>{const ym=r.date.substring(0,7);if(!byMon[ym])byMon[ym]={qty:0,total:0,income:0,count:0};byMon[ym].qty+=r.qty||0;byMon[ym].total+=r.total||0;byMon[ym].income+=r.income||0;byMon[ym].count++;});
-    Object.entries(byMon).sort((a,b)=>b[0].localeCompare(a[0])).forEach(([ym,v])=>{
-      sRows.push(['',ym.replace('-','年')+'月',v.qty,v.total,v.income,'']);
-    });
-    // 商品別集計
-    sRows.push(['【商品別集計】','','','','','']);
-    sRows.push(['','商品','個数','金額(税込)','入金予定額','']);
-    const byVeg={};
-    st.items.forEach(r=>{if(!byVeg[r.veggie])byVeg[r.veggie]={qty:0,total:0,income:0};byVeg[r.veggie].qty+=r.qty||0;byVeg[r.veggie].total+=r.total||0;byVeg[r.veggie].income+=r.income||0;});
-    Object.entries(byVeg).sort((a,b)=>b[1].total-a[1].total).forEach(([vn,vd])=>{
-      sRows.push(['',vn,vd.qty,vd.total,vd.income,'']);
-    });
-    // 明細
-    sRows.push(['【明細】','','','','','']);
-    sRows.push(['','日付','商品','個数','金額(税込)','入金予定額']);
-    st.items.sort((a,b)=>b.date.localeCompare(a.date)).forEach(r=>{
-      sRows.push(['',r.date,r.veggie,r.qty,r.total||0,r.income||0]);
-    });
-    sRows.push([]);
-  });
+  sRows.push(['合計',allCount,allQty,allTotal,allIncome,'']);
   await gapi.client.sheets.spreadsheets.values.clear({spreadsheetId:SPREADSHEET_ID,range:'店舗別集計!A:F'});
   await gapi.client.sheets.spreadsheets.values.update({spreadsheetId:SPREADSHEET_ID,range:'店舗別集計!A1',valueInputOption:'RAW',resource:{values:sRows}});
   // 野菜別
