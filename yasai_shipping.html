@@ -351,7 +351,13 @@ async function rewriteDataSheet(){
   if(!isSignedIn||!records.length)return;
   try{
     const header=['ID','日付','店舗','野菜','個数','単価(税込)','合計金額(税込)','手数料率(%)','入金額','メモ'];
-    const rows=[header,...records.map(r=>[r.id,r.date,r.store,r.veggie,r.qty,r.price||0,r.total||0,r.fee||0,r.income||0,r.memo||''])];
+    const sorted=[...records].sort((a,b)=>{
+      const s=a.store.localeCompare(b.store,'ja');
+      if(s!==0)return s;
+      const d=b.date.localeCompare(a.date);
+      return d!==0?d:b.id-a.id;
+    });
+    const rows=[header,...sorted.map(r=>[r.id,r.date,r.store,r.veggie,r.qty,r.price||0,r.total||0,r.fee||0,r.income||0,r.memo||''])];
     // シートをクリアしてから書き込み（古いデータが残らないように）
     await gapi.client.sheets.spreadsheets.values.clear({spreadsheetId:SPREADSHEET_ID,range:'出荷データ!A:J'});
     await gapi.client.sheets.spreadsheets.values.update({spreadsheetId:SPREADSHEET_ID,range:'出荷データ!A1',valueInputOption:'RAW',resource:{values:rows}});
@@ -409,11 +415,10 @@ async function buildFilterSheet(){
     const storeList=[...new Set(records.map(r=>r.store))];
     // 値を書き込み
     const vals=[
-      ['【月選択】',currentYm,'','【店舗選択】','店舗名','チェック'],
+      ['【月選択】',currentYm,'【店舗選択】',''],
     ];
-    storeList.forEach((s,i)=>{
-      if(i===0)vals.push(['','','',''  ,s,true]);
-      else vals.push(['','','','',s,true]);
+    storeList.forEach(s=>{
+      vals.push(['','',s,true]);
     });
     // 空行を埋める（最低12行確保）
     while(vals.length<13)vals.push([]);
@@ -429,9 +434,9 @@ async function buildFilterSheet(){
     // チェックボックスをF2:F{n}に設定 + 月プルダウンをB1に設定
     const lastCheckRow=1+storeList.length;
     const requests=[
-      // チェックボックス
+      // チェックボックス（D列=index3）
       {repeatCell:{
-        range:{sheetId:filterSheetId,startRowIndex:1,endRowIndex:lastCheckRow,startColumnIndex:5,endColumnIndex:6},
+        range:{sheetId:filterSheetId,startRowIndex:1,endRowIndex:lastCheckRow,startColumnIndex:3,endColumnIndex:4},
         cell:{dataValidation:{condition:{type:'BOOLEAN'}}},
         fields:'dataValidation'
       }},
@@ -445,7 +450,7 @@ async function buildFilterSheet(){
     // FILTER数式を書き込み
     const fRange=`絞り込み!A${formulaRow+1}`;
     const lastStoreRow=lastCheckRow;
-    const formula=`=IFERROR(FILTER(出荷データ!A2:I,TEXT(出荷データ!B2:B,"yyyy-mm")=B1,ISNUMBER(MATCH(出荷データ!C2:C,FILTER(E2:E${lastStoreRow},F2:F${lastStoreRow}=TRUE),0))),"該当データなし")`;
+    const formula=`=IFERROR(FILTER(出荷データ!A2:I,TEXT(出荷データ!B2:B,"yyyy-mm")=B1,ISNUMBER(MATCH(出荷データ!C2:C,FILTER(C2:C${lastStoreRow},D2:D${lastStoreRow}=TRUE),0))),"該当データなし")`;
     await gapi.client.sheets.spreadsheets.values.update({
       spreadsheetId:SPREADSHEET_ID,range:fRange,
       valueInputOption:'USER_ENTERED',resource:{values:[[formula]]}
