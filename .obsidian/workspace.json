@@ -1,0 +1,235 @@
+{
+  "main": {
+    "id": "7f9c3dcb12d731a7",
+    "type": "split",
+    "children": [
+      {
+        "id": "b3d88139466130bc",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "359bf8f40bea833b",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "00ボイスメモ.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "00ボイスメモ"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "vertical"
+  },
+  "left": {
+    "id": "825b5dd9fa11e27d",
+    "type": "split",
+    "children": [
+      {
+        "id": "7e1b31c7474c693b",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "47fec645c29a0347",
+            "type": "leaf",
+            "state": {
+              "type": "file-explorer",
+              "state": {
+                "sortOrder": "alphabetical",
+                "autoReveal": true
+              },
+              "icon": "lucide-folder-closed",
+              "title": "ファイルエクスプローラ"
+            }
+          },
+          {
+            "id": "639afe405804e373",
+            "type": "leaf",
+            "state": {
+              "type": "search",
+              "state": {
+                "query": "",
+                "matchingCase": false,
+                "explainSearch": false,
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical"
+              },
+              "icon": "lucide-search",
+              "title": "検索"
+            }
+          },
+          {
+            "id": "ee449c91447b0cd0",
+            "type": "leaf",
+            "state": {
+              "type": "bookmarks",
+              "state": {},
+              "icon": "lucide-bookmark",
+              "title": "ブックマーク"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300
+  },
+  "right": {
+    "id": "77d22d3ae9dda4e7",
+    "type": "split",
+    "children": [
+      {
+        "id": "b303405ab4c1eb8b",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "a4d551bdfc7ca47a",
+            "type": "leaf",
+            "state": {
+              "type": "backlink",
+              "state": {
+                "file": "ようこそ.md",
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical",
+                "showSearch": false,
+                "searchQuery": "",
+                "backlinkCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-coming-in",
+              "title": "ようこそへのバックリンク"
+            }
+          },
+          {
+            "id": "5c0c01c1dbbf1294",
+            "type": "leaf",
+            "state": {
+              "type": "outgoing-link",
+              "state": {
+                "file": "ようこそ.md",
+                "linksCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-going-out",
+              "title": "ようこそからのアウトゴーイングリンク"
+            }
+          },
+          {
+            "id": "07504f2a4a57d9c0",
+            "type": "leaf",
+            "state": {
+              "type": "tag",
+              "state": {
+                "sortOrder": "frequency",
+                "useHierarchy": true,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-tags",
+              "title": "タグ"
+            }
+          },
+          {
+            "id": "0ab609e67fefe20f",
+            "type": "leaf",
+            "state": {
+              "type": "all-properties",
+              "state": {
+                "sortOrder": "frequency",
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-archive",
+              "title": "すべてのプロパティ"
+            }
+          },
+          {
+            "id": "85007b9cbbc3cc12",
+            "type": "leaf",
+            "state": {
+              "type": "outline",
+              "state": {
+                "file": "00ボイスメモ.md",
+                "followCursor": true,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-list",
+              "title": "00ボイスメモのアウトライン"
+            }
+          }
+        ],
+        "currentTab": 4
+      }
+    ],
+    "direction": "horizontal",
+    "width": 297.5
+  },
+  "left-ribbon": {
+    "hiddenItems": {
+      "switcher:クイックスイッチャーを開く": false,
+      "graph:グラフビューを開く": false,
+      "canvas:新規キャンバスを作成": false,
+      "daily-notes:今日のデイリーノートを開く": false,
+      "templates:テンプレートを挿入": false,
+      "command-palette:コマンドパレットを開く": false,
+      "bases:新規ベースを作成": false
+    }
+  },
+  "active": "47fec645c29a0347",
+  "lastOpenFiles": [
+    "sales_counter.html",
+    "sales_counter.html.tmp.17908.d33ac31ff4fd",
+    "yasai_shipping.html.tmp.17908.42396a987918",
+    "yasai_shipping.html.tmp.17908.80dc11e2d7f1",
+    "yasai_shipping.html.tmp.17908.52134adc4ca9",
+    "yasai_shipping.html.tmp.17908.c1066d5f0b25",
+    "yasai_shipping.html.tmp.17908.cfa6501fad2e",
+    "yasai_shipping.html.tmp.17908.cb63f38a20df",
+    "yasai_shipping.html.tmp.17908.88ef2b79c17d",
+    "yasai_shipping.html.tmp.17908.5f9e94992549",
+    "yasai_shipping.html.tmp.17908.f6129eb996d1",
+    "03_加工情報/レコーディング/レコーディング_X投稿_2000字.md",
+    "03_加工情報/レコーディング/レコーディング_X投稿_140字.md",
+    "03_加工情報/レコーディング/レコーディング_インフォグラフィック_プロンプト.md",
+    "03_加工情報/レコーディング/レコーディング_小学生向け解説.md",
+    "03_加工情報/ピーマン質問/ピーマン質問_X投稿_2000字.md",
+    "03_加工情報/ピーマン質問/ピーマン質問_X投稿_140字.md",
+    "03_加工情報/ピーマン質問/ピーマン質問_インフォグラフィック_プロンプト.md",
+    "03_加工情報/ピーマン質問/ピーマン質問_小学生向け解説.md",
+    "03_加工情報/キュウリマルチ/キュウリマルチ_X投稿_2000字.md",
+    "03_加工情報/キュウリマルチ/キュウリマルチ_X投稿_140字.md",
+    "03_加工情報/キュウリマルチ/キュウリマルチ_インフォグラフィック_プロンプト.md",
+    "03_加工情報/キュウリマルチ/キュウリマルチ_小学生向け解説.md",
+    "02_ブログ記事/レコーディング/レコーディング.md",
+    "02_ブログ記事/ピーマン質問/ピーマン質問.md",
+    "02_ブログ記事/キュウリマルチ/キュウリマルチ.md",
+    "01_一時ファイル/レコーディング.md",
+    "01_一時ファイル/ピーマン質問.md",
+    "01_一時ファイル/キュウリマルチ.md",
+    "01文字起こし.md",
+    "00ボイスメモ.md",
+    "01文字起こし/ピーマン質問_note.md",
+    "99_アーカイブ/03_加工情報/ピーマン質問_小学生向け解説.md",
+    "99_アーカイブ/03_加工情報/ピーマン質問_インフォグラフィック_プロンプト.md",
+    "99_アーカイブ/03_加工情報/ピーマン質問_X投稿_2000字.md",
+    "99_アーカイブ/03_加工情報/ピーマン質問_X投稿_140字.md",
+    "vivant_frames/frame_0016.jpg",
+    "vivant_frames/frame_0015.jpg",
+    "vivant_frames/frame_0014.jpg",
+    "vivant_frames/frame_0013.jpg",
+    "vivant_frames/frame_0012.jpg",
+    "vivant_frames/frame_0011.jpg",
+    "vivant_frames/frame_0010.jpg",
+    "vivant_frames/frame_0009.jpg",
+    "vivant_frames/frame_0008.jpg",
+    "vivant_frames/frame_0007.jpg"
+  ]
+}

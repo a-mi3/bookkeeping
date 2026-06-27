@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>売上カウンター - やさい日和</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --green-dark:#2D5016;--green-mid:#4A7C2F;--green-light:#7BAE5A;
+  --green-pale:#EEF5E7;--green-bg:#F6FAF1;--earth:#8B5E3C;--earth-pale:#F5EDE4;
+  --text:#1C1C1C;--text-sub:#666;--border:#D8E8CC;--white:#fff;--red:#C0392B;
+  --blue:#2563EB;--blue-pale:#EFF6FF;
+}
+body{font-family:-apple-system,BlinkMacSystemFont,'Hiragino Sans','Yu Gothic UI',sans-serif;font-size:14px;color:var(--text);background:var(--green-bg);min-height:100vh}
+.auth-bar{background:var(--green-dark);color:#fff;padding:8px 16px;display:flex;align-items:center;justify-content:space-between;font-size:12px;flex-wrap:wrap;gap:4px}
+.auth-bar button{background:var(--green-light);color:#fff;border:none;border-radius:6px;padding:4px 12px;font-size:11px;cursor:pointer}
+.auth-bar.connected{background:var(--green-mid)}
+#sync-status{font-size:11px;opacity:.85;margin-left:6px}
+.header{background:var(--green-dark);color:#fff;padding:12px 16px;display:flex;align-items:center;gap:10px}
+.header-icon{font-size:22px}.header-title{font-size:17px;font-weight:600}
+.header-sub{font-size:11px;opacity:.7;margin-top:1px}
+.tabs{background:var(--white);border-bottom:1px solid var(--border);display:flex;overflow-x:auto;-webkit-overflow-scrolling:touch}
+.tab{padding:11px 14px;font-size:13px;color:var(--text-sub);cursor:pointer;border:none;background:none;border-bottom:2px solid transparent;white-space:nowrap;font-family:inherit}
+.tab.active{color:var(--green-dark);border-bottom-color:var(--green-mid);font-weight:600}
+.main{max-width:720px;margin:0 auto;padding:12px}
+.panel{display:none}.panel.active{display:block}
+.card{background:var(--white);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:12px}
+.card-title{font-size:14px;font-weight:600;color:var(--green-dark);margin-bottom:12px}
+.summary-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
+.summary-card{background:var(--white);border:1px solid var(--border);border-radius:12px;padding:12px}
+.s-label{font-size:11px;color:var(--text-sub);margin-bottom:4px}
+.s-value{font-size:20px;font-weight:700;color:var(--green-dark)}
+.s-sub{font-size:11px;color:var(--text-sub);margin-top:2px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:5px;padding:9px 16px;border-radius:8px;font-size:13px;cursor:pointer;border:1px solid var(--border);background:var(--white);color:var(--text);font-family:inherit;font-weight:500}
+.btn-primary{background:var(--green-mid);color:#fff;border-color:var(--green-mid)}
+.btn-primary:active{background:var(--green-dark)}
+.btn-block{width:100%;padding:12px}
+.btn-sm{padding:5px 10px;font-size:12px}
+.filter-row{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:10px}
+.filter-row select{font-size:12px;padding:5px 8px;border:1px solid var(--border);border-radius:6px;font-family:inherit}
+.agg-table{width:100%;border-collapse:collapse;font-size:13px}
+.agg-table th{text-align:left;padding:8px 10px;font-size:11px;color:var(--text-sub);border-bottom:1px solid var(--border);background:var(--green-bg)}
+.agg-table td{padding:9px 10px;border-bottom:1px solid var(--green-bg);vertical-align:middle}
+.agg-table tr:last-child td{border-bottom:none}
+.agg-table .num{text-align:right;font-weight:600;color:var(--green-dark)}
+.agg-table tfoot td{font-weight:700;border-top:1px solid var(--border);background:var(--green-pale)}
+.badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:600}
+.badge-store{background:var(--earth-pale);color:var(--earth)}
+.badge-veggie{background:var(--green-pale);color:var(--green-dark)}
+.badge-skip{background:#FEE2E2;color:var(--red);font-size:9px}
+.empty{text-align:center;padding:32px;color:var(--text-sub);font-size:13px}
+.empty-icon{font-size:36px;margin-bottom:8px}
+.mail-item{background:var(--white);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:8px}
+.mail-from{font-size:11px;color:var(--text-sub)}
+.mail-store{font-size:14px;font-weight:600;color:var(--green-dark);margin:4px 0}
+.mail-date{font-size:12px;color:var(--text-sub)}
+.mail-products{margin-top:8px}
+.mail-product{display:flex;justify-content:space-between;padding:4px 0;font-size:13px;border-bottom:1px solid var(--green-bg)}
+.mail-product:last-child{border-bottom:none}
+.loading{text-align:center;padding:40px;color:var(--text-sub)}
+.loading-spinner{display:inline-block;width:24px;height:24px;border:3px solid var(--border);border-top-color:var(--green-mid);border-radius:50%;animation:spin .8s linear infinite;margin-bottom:8px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.progress{background:var(--border);border-radius:4px;height:6px;margin:8px 0;overflow:hidden}
+.progress-bar{background:var(--green-mid);height:100%;border-radius:4px;transition:width .3s}
+</style>
+</head>
+<body>
+
+<div class="auth-bar" id="auth-bar">
+  <span id="auth-msg">📧 Gmailから売上メールを自動取得します</span>
+  <div style="display:flex;align-items:center;gap:6px">
+    <span id="sync-status"></span>
+    <button onclick="handleAuth()" id="auth-btn" disabled>Googleでログイン</button>
+  </div>
+</div>
+
+<div class="header">
+  <div class="header-icon">📊</div>
+  <div>
+    <div class="header-title">売上カウンター</div>
+    <div class="header-sub">やさい日和 · See-EN</div>
+  </div>
+</div>
+
+<div class="tabs">
+  <button class="tab active" onclick="sw('summary')">📊 集計</button>
+  <button class="tab" onclick="sw('store')">🏪 店舗別</button>
+  <button class="tab" onclick="sw('product')">🥦 商品別</button>
+  <button class="tab" onclick="sw('mails')">📧 メール一覧</button>
+</div>
+
+<div class="main">
+
+  <!-- 集計 -->
+  <div id="tab-summary" class="panel active">
+    <div class="filter-row">
+      <select id="sum-period" onchange="renderSummary()"></select>
+      <button class="btn btn-primary btn-sm" onclick="fetchMails()">📧 メール取得</button>
+    </div>
+    <div id="summary-cards" class="summary-grid"></div>
+    <div id="summary-content"></div>
+  </div>
+
+  <!-- 店舗別 -->
+  <div id="tab-store" class="panel">
+    <div class="filter-row">
+      <select id="store-period" onchange="renderStoreTab()"></select>
+    </div>
+    <div id="store-content"></div>
+  </div>
+
+  <!-- 商品別 -->
+  <div id="tab-product" class="panel">
+    <div class="filter-row">
+      <select id="product-period" onchange="renderProductTab()"></select>
+    </div>
+    <div id="product-content"></div>
+  </div>
+
+  <!-- メール一覧 -->
+  <div id="tab-mails" class="panel">
+    <div class="filter-row">
+      <select id="mail-period" onchange="renderMails()"></select>
+      <select id="mail-store" onchange="renderMails()"><option value="">全店舗</option></select>
+    </div>
+    <div id="mail-list"></div>
+  </div>
+
+</div>
+
+<script src="https://accounts.google.com/gsi/client" onload="gisLoaded()" async defer></script>
+<script src="https://apis.google.com/js/api.js" onload="gapiLoaded()" async defer></script>
+<script>
+const CLIENT_ID='400063538015-fjrfaovnmbgrbmnortilm43vkv312nkn.apps.googleusercontent.com';
+const SCOPES='https://www.googleapis.com/auth/gmail.readonly';
+
+let tokenClient=null,gapiInited=false,gisInited=false,isSignedIn=false;
+let salesData=[];// {date,store,products:[{name,price,qty,amount}],total,totalQty,isSpeed}
+
+// 送信元→店舗名マッピング
+const SENDER_MAP={
+  'kabasanichiba0814@himesan.com':'加波山市場',
+  'route-50-station0823@himesan.com':'道の駅グランテラス筑西',
+  'sanchoku@grantomato.jp':'グラントマト下妻',
+  'sanchoku-announcer@netdoa-nx.jp':null,// 本文から判定
+};
+
+function gapiLoaded(){gapi.load('client',async()=>{await gapi.client.init({discoveryDocs:['https://gmail.googleapis.com/$discovery/rest?version=v1']});gapiInited=true;maybeEnable();});}
+function gisLoaded(){
+  tokenClient=google.accounts.oauth2.initTokenClient({
+    client_id:CLIENT_ID,scope:SCOPES,
+    callback:async(resp)=>{
+      if(resp.error)return;
+      isSignedIn=true;
+      const expiry=Date.now()+((resp.expires_in||3600)-60)*1000;
+      localStorage.setItem('sales_token',JSON.stringify({token:resp.access_token,expiry}));
+      updateAuthUI(true);
+      fetchMails();
+    }
+  });
+  gisInited=true;maybeEnable();
+}
+async function maybeEnable(){
+  if(!gapiInited||!gisInited)return;
+  document.getElementById('auth-btn').disabled=false;
+  const saved=localStorage.getItem('sales_token');
+  if(saved){
+    try{
+      const{token,expiry}=JSON.parse(saved);
+      if(Date.now()<expiry){
+        gapi.client.setToken({access_token:token});
+        isSignedIn=true;updateAuthUI(true);
+        fetchMails();
+        return;
+      }else{
+        localStorage.removeItem('sales_token');
+        tokenClient.requestAccessToken({prompt:''});
+      }
+    }catch(e){localStorage.removeItem('sales_token');}
+  }
+}
+function handleAuth(){
+  if(!isSignedIn)tokenClient.requestAccessToken({prompt:'select_account'});
+  else{
+    google.accounts.oauth2.revoke(gapi.client.getToken().access_token,()=>{
+      gapi.client.setToken('');isSignedIn=false;
+      localStorage.removeItem('sales_token');
+      updateAuthUI(false);
+    });
+  }
+}
+function updateAuthUI(c){
+  const bar=document.getElementById('auth-bar'),msg=document.getElementById('auth-msg'),btn=document.getElementById('auth-btn');
+  if(c){bar.className='auth-bar connected';msg.textContent='✅ Gmail接続中';btn.textContent='ログアウト';}
+  else{bar.className='auth-bar';msg.textContent='📧 Gmailから売上メールを自動取得します';btn.textContent='Googleでログイン';}
+}
+function setSyncStatus(msg){document.getElementById('sync-status').textContent=msg;if(msg)setTimeout(()=>{document.getElementById('sync-status').textContent='';},5000);}
+
+/* ===== メール取得 ===== */
+async function fetchMails(){
+  if(!isSignedIn)return;
+  setSyncStatus('📧 メール取得中...');
+  try{
+    // 売上情報メールを検索（過去90日）
+    const query='subject:売上情報 OR subject:売上のご連絡 newer_than:90d';
+    let allMsgs=[];
+    let pageToken=null;
+    do{
+      const res=await gapi.client.gmail.users.messages.list({userId:'me',q:query,maxResults:100,pageToken});
+      if(res.result.messages)allMsgs.push(...res.result.messages);
+      pageToken=res.result.nextPageToken;
+    }while(pageToken);
+
+    if(!allMsgs.length){setSyncStatus('メールが見つかりません');return;}
+    setSyncStatus(`📧 ${allMsgs.length}件を解析中...`);
+
+    salesData=[];
+    for(let i=0;i<allMsgs.length;i++){
+      const msg=await gapi.client.gmail.users.messages.get({userId:'me',id:allMsgs[i].id,format:'full'});
+      const parsed=parseEmail(msg.result);
+      if(parsed)salesData.push(parsed);
+    }
+    // 速報を除外（同じ店舗・同じ日付で確定がある場合）
+    salesData=filterFinalOnly(salesData);
+    salesData.sort((a,b)=>b.date.localeCompare(a.date));
+
+    buildPeriodSelects();
+    renderSummary();
+    setSyncStatus(`✅ ${salesData.length}件の売上データを取得`);
+  }catch(e){
+    console.error(e);
+    setSyncStatus('❌ 取得失敗');
+  }
+}
+
+function parseEmail(msg){
+  const headers=msg.payload.headers;
+  const from=(headers.find(h=>h.name.toLowerCase()==='from')||{}).value||'';
+  const subject=(headers.find(h=>h.name.toLowerCase()==='subject')||{}).value||'';
+  const body=getBody(msg.payload);
+  if(!body)return null;
+
+  // 速報判定
+  const isSpeed=body.includes('売上速報')||body.includes('現在営業中');
+
+  // 日付抽出
+  const dateMatch=body.match(/(\d{4})年(\d{2})月(\d{2})日/);
+  if(!dateMatch)return null;
+  const date=`${dateMatch[1]}-${dateMatch[2]}-${dateMatch[3]}`;
+
+  // 送信元からメールアドレス抽出
+  const emailMatch=from.match(/<([^>]+)>/)||[null,from];
+  const senderEmail=(emailMatch[1]||'').toLowerCase().trim();
+
+  // 店舗名判定
+  let store=SENDER_MAP[senderEmail];
+  if(store===undefined){
+    // マッピングにないメールアドレス→本文から推測
+    store=guessStore(body);
+  }
+  if(store===null){
+    // netDoA系→本文の「店舗名：」から取得
+    const storeMatch=body.match(/店舗名[：:](.+)/);
+    if(storeMatch)store=storeMatch[1].trim();
+    else{
+      const titleMatch=subject.match(/】(.+)/);
+      if(titleMatch)store=titleMatch[1].trim();
+      else store='不明';
+    }
+  }
+
+  // 商品解析
+  const products=parseProducts(body,senderEmail);
+
+  const totalQty=products.reduce((s,p)=>s+p.qty,0);
+  const total=products.reduce((s,p)=>s+p.amount,0);
+
+  return{date,store,products,total,totalQty,isSpeed,from:senderEmail,subject};
+}
+
+function getBody(payload){
+  if(payload.body&&payload.body.data){
+    return decodeBase64(payload.body.data);
+  }
+  if(payload.parts){
+    for(const part of payload.parts){
+      if(part.mimeType==='text/plain'&&part.body&&part.body.data){
+        return decodeBase64(part.body.data);
+      }
+    }
+    for(const part of payload.parts){
+      const result=getBody(part);
+      if(result)return result;
+    }
+  }
+  return null;
+}
+
+function decodeBase64(data){
+  const str=data.replace(/-/g,'+').replace(/_/g,'/');
+  try{return decodeURIComponent(escape(atob(str)));}
+  catch(e){try{return atob(str);}catch(e2){return null;}}
+}
+
+function guessStore(body){
+  const storePatterns=[
+    [/加波山市場/,'加波山市場'],
+    [/道の駅グランテラス筑西/,'道の駅グランテラス筑西'],
+    [/グラントマト|フードマート下妻/,'グラントマト下妻'],
+    [/さわやか直売所|真壁さわやか/,'さわやか直売所'],
+    [/きらいち筑西/,'きらいち筑西'],
+    [/たいらや真壁/,'たいらや真壁'],
+    [/道の駅下妻/,'道の駅下妻'],
+    [/ふらっと/,'ふらっと'],
+  ];
+  for(const[re,name]of storePatterns){
+    if(re.test(body))return name;
+  }
+  return '不明';
+}
+
+function parseProducts(body,sender){
+  const products=[];
+  const lines=body.split(/\r?\n/).map(l=>l.trim()).filter(Boolean);
+
+  // パターン1: 加波山市場（テーブル形式: 商品名 価格円 点数 金額円）
+  if(sender.includes('kabasanichiba')){
+    for(const line of lines){
+      const m=line.match(/^(.+?)\s+(\d+)円\s+(\d+)\s+(\d[\d,]*)円$/);
+      if(m&&!['計','合計','商品'].includes(m[1].trim())){
+        products.push({name:m[1].trim(),price:parseInt(m[2]),qty:parseInt(m[3]),amount:parseInt(m[4].replace(/,/g,''))});
+      }
+    }
+  }
+  // パターン2: グラントマト（商品名の次行に金額、その次に点数）
+  else if(sender.includes('grantomato')){
+    for(let i=0;i<lines.length;i++){
+      const priceLine=lines[i+1]||'';
+      const qtyLine=lines[i+2]||'';
+      if(priceLine.match(/^\d+円$/)&&qtyLine.match(/^\d+点/)){
+        const name=lines[i];
+        if(name&&!['合計','計'].includes(name)&&!name.includes('売上')&&!name.includes('お知らせ')&&!name.includes('尾崎')&&!name.includes('配信')){
+          const price=parseInt(priceLine);
+          const qm=qtyLine.match(/(\d+)点\s+(\d[\d,]*)円/);
+          if(qm)products.push({name,price,qty:parseInt(qm[1]),amount:parseInt(qm[2].replace(/,/g,''))});
+        }
+      }
+    }
+  }
+  // パターン3: 道の駅グランテラス筑西（himesan.com, route-50）
+  else if(sender.includes('route-50')){
+    let inProducts=false;
+    for(let i=0;i<lines.length;i++){
+      if(lines[i].includes('道の駅グランテラス筑西')&&!lines[i].includes('より')){inProducts=true;continue;}
+      if(lines[i]==='計'||lines[i]==='合計'){break;}
+      if(inProducts){
+        const priceLine=lines[i+1]||'';
+        const qtyLine=lines[i+2]||'';
+        if(priceLine.match(/^\d+円$/)&&qtyLine.match(/\d+点/)){
+          const name=lines[i];
+          const price=parseInt(priceLine);
+          const qm=qtyLine.match(/(\d+)点\s+(\d[\d,]*)円/);
+          if(qm)products.push({name,price,qty:parseInt(qm[1]),amount:parseInt(qm[2].replace(/,/g,''))});
+          i+=2;
+        }
+      }
+    }
+  }
+  // パターン4: netDoA産直（さわやか直売所等）
+  else if(sender.includes('netdoa')){
+    for(const line of lines){
+      const m=line.match(/^(.+?)(?:（単価\d+円）)?\s+(\d+)点\s+(\d[\d,]*)円$/);
+      if(m&&!m[1].includes('合計')){
+        const rawName=m[1].trim();
+        // 「ズッキーニ/音ファーム」→「ズッキーニ」
+        const name=rawName.replace(/\/.*$/,'').replace(/（.*$/,'').trim();
+        products.push({name,price:Math.round(parseInt(m[3].replace(/,/g,''))/parseInt(m[2])),qty:parseInt(m[2]),amount:parseInt(m[3].replace(/,/g,''))});
+      }
+    }
+  }
+  // 汎用パターン
+  else{
+    for(const line of lines){
+      const m=line.match(/^(.+?)\s+(\d+)円\s+(\d+)\s+(\d[\d,]*)円$/);
+      if(m&&!['計','合計','商品'].includes(m[1].trim())){
+        products.push({name:m[1].trim(),price:parseInt(m[2]),qty:parseInt(m[3]),amount:parseInt(m[4].replace(/,/g,''))});
+      }
+    }
+  }
+  return products;
+}
+
+function filterFinalOnly(data){
+  // 同じ店舗・同じ日付で速報と確定がある場合、確定のみ残す
+  const finalMap={};
+  data.forEach(d=>{
+    const key=`${d.date}_${d.store}`;
+    if(!finalMap[key])finalMap[key]=[];
+    finalMap[key].push(d);
+  });
+  const result=[];
+  Object.values(finalMap).forEach(group=>{
+    const finals=group.filter(d=>!d.isSpeed);
+    if(finals.length>0){
+      // 確定があれば確定のみ（最後の1件）
+      result.push(finals[finals.length-1]);
+    }else{
+      // 速報しかない場合はそれを使う（最後の1件）
+      result.push(group[group.length-1]);
+    }
+  });
+  return result;
+}
+
+/* ===== UI ===== */
+function sw(t){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
+  document.getElementById('tab-'+t).classList.add('active');
+  const tabs=['summary','store','product','mails'];
+  document.querySelectorAll('.tab')[tabs.indexOf(t)].classList.add('active');
+  if(t==='summary')renderSummary();
+  else if(t==='store')renderStoreTab();
+  else if(t==='product')renderProductTab();
+  else if(t==='mails')renderMails();
+}
+
+function fmt(n){return'¥'+Math.round(n).toLocaleString('ja-JP');}
+function fmtN(n){return Math.round(n).toLocaleString('ja-JP');}
+
+function buildPeriodSelects(){
+  const months=new Set();
+  salesData.forEach(d=>{if(d.date)months.add(d.date.substring(0,7));});
+  const now=new Date();
+  const currentYm=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+  const opts='<option value="all">全期間</option>'+
+    [...months].sort((a,b)=>b.localeCompare(a)).map(ym=>`<option value="${ym}">${ym.replace('-','年')}月</option>`).join('');
+  ['sum-period','store-period','product-period','mail-period'].forEach(id=>{
+    const el=document.getElementById(id);
+    el.innerHTML=opts;
+    el.value=currentYm;
+  });
+  // 店舗フィルター
+  const storeNames=[...new Set(salesData.map(d=>d.store))].sort();
+  document.getElementById('mail-store').innerHTML='<option value="">全店舗</option>'+
+    storeNames.map(s=>`<option value="${s}">${s}</option>`).join('');
+}
+
+function getFiltered(periodId){
+  const period=document.getElementById(periodId).value;
+  if(period==='all')return salesData;
+  return salesData.filter(d=>d.date.startsWith(period));
+}
+
+function renderSummary(){
+  const list=getFiltered('sum-period');
+  const totalSales=list.reduce((s,d)=>s+d.total,0);
+  const totalQty=list.reduce((s,d)=>s+d.totalQty,0);
+  const storeCount=new Set(list.map(d=>d.store)).size;
+
+  document.getElementById('summary-cards').innerHTML=`
+    <div class="summary-card"><div class="s-label">売上合計</div><div class="s-value">${fmt(totalSales)}</div></div>
+    <div class="summary-card"><div class="s-label">販売個数</div><div class="s-value">${fmtN(totalQty)}個</div></div>
+    <div class="summary-card"><div class="s-label">店舗数</div><div class="s-value">${storeCount}店舗</div></div>`;
+
+  // 店舗別サマリー
+  const byStore={};
+  list.forEach(d=>{
+    if(!byStore[d.store])byStore[d.store]={total:0,qty:0,count:0};
+    byStore[d.store].total+=d.total;byStore[d.store].qty+=d.totalQty;byStore[d.store].count++;
+  });
+  const sorted=Object.entries(byStore).sort((a,b)=>b[1].total-a[1].total);
+  const el=document.getElementById('summary-content');
+  if(!sorted.length){el.innerHTML='<div class="empty"><div class="empty-icon">📧</div>「メール取得」ボタンで売上メールを読み込んでください</div>';return;}
+  el.innerHTML=`<div class="card" style="padding:0;overflow:hidden"><table class="agg-table">
+    <thead><tr><th>店舗</th><th class="num">件数</th><th class="num">個数</th><th class="num">売上</th></tr></thead>
+    <tbody>${sorted.map(([s,v])=>`<tr><td><span class="badge badge-store">${s}</span></td><td class="num">${v.count}件</td><td class="num">${fmtN(v.qty)}個</td><td class="num">${fmt(v.total)}</td></tr>`).join('')}</tbody>
+    <tfoot><tr><td>合計</td><td class="num">${list.length}件</td><td class="num">${fmtN(totalQty)}個</td><td class="num">${fmt(totalSales)}</td></tr></tfoot>
+  </table></div>`;
+}
+
+function renderStoreTab(){
+  const list=getFiltered('store-period');
+  const byStore={};
+  list.forEach(d=>{
+    if(!byStore[d.store])byStore[d.store]={total:0,qty:0,records:[],products:{}};
+    byStore[d.store].total+=d.total;byStore[d.store].qty+=d.totalQty;
+    byStore[d.store].records.push(d);
+    d.products.forEach(p=>{
+      if(!byStore[d.store].products[p.name])byStore[d.store].products[p.name]={qty:0,amount:0};
+      byStore[d.store].products[p.name].qty+=p.qty;
+      byStore[d.store].products[p.name].amount+=p.amount;
+    });
+  });
+  const sorted=Object.entries(byStore).sort((a,b)=>b[1].total-a[1].total);
+  const el=document.getElementById('store-content');
+  if(!sorted.length){el.innerHTML='<div class="empty"><div class="empty-icon">🏪</div>データがありません</div>';return;}
+  el.innerHTML=sorted.map(([store,v])=>{
+    const prodSorted=Object.entries(v.products).sort((a,b)=>b[1].amount-a[1].amount);
+    return`<div class="card" style="padding:0;overflow:hidden;margin-bottom:10px">
+      <div style="padding:12px;background:var(--earth-pale);display:flex;justify-content:space-between;align-items:center">
+        <span class="badge badge-store" style="font-size:13px;padding:4px 12px">${store}</span>
+        <div style="text-align:right"><div style="font-weight:700;color:var(--green-dark)">${fmt(v.total)}</div><div style="font-size:11px;color:var(--text-sub)">${fmtN(v.qty)}個</div></div>
+      </div>
+      <table class="agg-table">
+        <thead><tr><th>商品</th><th class="num">個数</th><th class="num">売上</th></tr></thead>
+        <tbody>${prodSorted.map(([name,pd])=>`<tr><td><span class="badge badge-veggie">${name}</span></td><td class="num">${fmtN(pd.qty)}個</td><td class="num">${fmt(pd.amount)}</td></tr>`).join('')}</tbody>
+      </table>
+    </div>`;
+  }).join('');
+}
+
+function renderProductTab(){
+  const list=getFiltered('product-period');
+  const byProduct={};
+  list.forEach(d=>{
+    d.products.forEach(p=>{
+      if(!byProduct[p.name])byProduct[p.name]={qty:0,amount:0,stores:new Set()};
+      byProduct[p.name].qty+=p.qty;
+      byProduct[p.name].amount+=p.amount;
+      byProduct[p.name].stores.add(d.store);
+    });
+  });
+  const sorted=Object.entries(byProduct).sort((a,b)=>b[1].amount-a[1].amount);
+  const el=document.getElementById('product-content');
+  if(!sorted.length){el.innerHTML='<div class="empty"><div class="empty-icon">🥦</div>データがありません</div>';return;}
+  const totalAmount=sorted.reduce((s,[,v])=>s+v.amount,0);
+  const totalQty=sorted.reduce((s,[,v])=>s+v.qty,0);
+  el.innerHTML=`<div class="card" style="padding:0;overflow:hidden"><table class="agg-table">
+    <thead><tr><th>商品</th><th class="num">個数</th><th class="num">売上</th><th>取扱店舗</th></tr></thead>
+    <tbody>${sorted.map(([name,v])=>`<tr><td><span class="badge badge-veggie">${name}</span></td><td class="num">${fmtN(v.qty)}個</td><td class="num">${fmt(v.amount)}</td><td style="font-size:11px;color:var(--text-sub)">${[...v.stores].join('、')}</td></tr>`).join('')}</tbody>
+    <tfoot><tr><td>合計</td><td class="num">${fmtN(totalQty)}個</td><td class="num">${fmt(totalAmount)}</td><td></td></tr></tfoot>
+  </table></div>`;
+}
+
+function renderMails(){
+  const list=getFiltered('mail-period');
+  const storeFilter=document.getElementById('mail-store').value;
+  const filtered=storeFilter?list.filter(d=>d.store===storeFilter):list;
+  const el=document.getElementById('mail-list');
+  if(!filtered.length){el.innerHTML='<div class="empty"><div class="empty-icon">📧</div>メールがありません</div>';return;}
+  el.innerHTML=filtered.map(d=>`
+    <div class="mail-item">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <div>
+          <div class="mail-store">${d.store} ${d.isSpeed?'<span class="badge badge-skip">速報</span>':''}</div>
+          <div class="mail-from">${d.from}</div>
+        </div>
+        <div class="mail-date">${d.date}</div>
+      </div>
+      <div class="mail-products">
+        ${d.products.map(p=>`<div class="mail-product"><span><span class="badge badge-veggie">${p.name}</span> × ${p.qty}個</span><span style="font-weight:600">${fmt(p.amount)}</span></div>`).join('')}
+        <div class="mail-product" style="font-weight:700;border-top:1px solid var(--border);padding-top:6px"><span>合計 ${d.totalQty}個</span><span>${fmt(d.total)}</span></div>
+      </div>
+    </div>`).join('');
+}
+
+window.gapiLoaded=gapiLoaded;window.gisLoaded=gisLoaded;
+</script>
+</body>
+</html>
