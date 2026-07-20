@@ -138,8 +138,8 @@ input:focus,select:focus{outline:none;border-color:var(--green-mid);box-shadow:0
         <div class="fg"><label>野菜</label><select id="r-veggie"><option value="">選択してください</option></select></div>
       </div>
       <div class="row3">
-        <div class="fg"><label>個数</label><input type="number" id="r-qty" placeholder="0" min="1" oninput="calcIncome()"></div>
         <div class="fg"><label>売値（税込・円）<span class="badge-tax">税込</span></label><input type="number" id="r-price" placeholder="0" min="0" oninput="calcIncome()"></div>
+        <div class="fg"><label>個数</label><input type="number" id="r-qty" placeholder="0" min="1" oninput="calcIncome()"></div>
         <div class="fg"><label>手数料率（%）</label><input type="number" id="r-fee" placeholder="0" min="0" max="100" step="0.1" oninput="calcIncome()"></div>
       </div>
       <div class="income-preview" id="income-preview">
@@ -148,6 +148,7 @@ input:focus,select:focus{outline:none;border-color:var(--green-mid);box-shadow:0
       </div>
       <div class="fg"><label>メモ（任意）</label><input type="text" id="r-memo" placeholder="例：Lサイズのみ"></div>
       <button class="btn btn-primary btn-block" onclick="addRecord()">＋ 出荷を記録する</button>
+      <button class="btn btn-block" id="cancel-edit-btn" style="display:none;margin-top:8px" onclick="cancelEdit()">編集をキャンセル</button>
     </div>
   </div>
 
@@ -248,6 +249,7 @@ let stores = [
 let veggies = ['ズッキーニ','オクラ','ミニトマト','ピーマン','トウモロコシ','ナス','キュウリ','里芋','春菊','大根','ほうれん草','ブロッコリー','サツマイモ','唐辛子','パプリカ','ジャガイモ','たまねぎ','にんにく','七味唐辛子','みかん塩','うま味だし塩','ゆず塩'];
 let records = [];
 let nextId = 1;
+let editingId = null; // 編集中の出荷記録ID（nullなら新規追加モード）
 
 /* ===== Google Sheets ===== */
 let tokenClient=null,gapiInited=false,gisInited=false,isSignedIn=false;
@@ -564,7 +566,7 @@ function fmt(n){return'¥'+Math.round(n).toLocaleString('ja-JP');}
 function fmtN(n){return Math.round(n).toLocaleString('ja-JP');}
 function showAlert(id,msg){const el=document.getElementById(id);if(!el)return;el.textContent=msg;el.style.display='block';setTimeout(()=>{el.style.display='none';},4000);}
 
-function addRecord(){
+async function addRecord(){
   const date=document.getElementById('r-date').value;
   const store=document.getElementById('r-store').value;
   const veggie=document.getElementById('r-veggie').value;
@@ -576,12 +578,32 @@ function addRecord(){
   if(qty<=0){showAlert('alert-ng','個数を入力してください');return;}
   const total=qty*price;
   const income=Math.floor(total*(1-fee/100));
+
+  if(editingId){
+    // 既存記録の修正
+    const idx=records.findIndex(r=>r.id===editingId);
+    if(idx!==-1){
+      records[idx]={...records[idx],date,store,veggie,qty,price,total,fee,income,memo};
+      showAlert('alert-ok',`✅ ${veggie}の記録を修正しました（入金予定：${fmt(income)}）`);
+    }
+    editingId=null;
+    resetRecordForm();
+    renderSummary();
+    if(isSignedIn){
+      setSyncStatus('⏳ 修正を保存中...');
+      try{
+        await rewriteDataSheet();
+        await updateAggSheets();
+        setSyncStatus('✅ 保存しました');
+      }catch(e){setSyncStatus('❌ 保存に失敗');console.error(e);}
+    }
+    return;
+  }
+
+  // 新規追加
   const rec={id:nextId++,date,store,veggie,qty,price,total,fee,income,memo};
   records.unshift(rec);
-  document.getElementById('r-qty').value='';
-  document.getElementById('r-price').value='';
-  document.getElementById('r-memo').value='';
-  document.getElementById('income-preview').style.display='none';
+  resetRecordForm();
   showAlert('alert-ok',`✅ ${veggie}を${store}に記録しました（入金予定：${fmt(income)}）`);
   renderSummary();
   if(isSignedIn)appendRecord(rec);
@@ -614,19 +636,65 @@ function renderList(){
         <div class="ship-date">${r.date}</div>
       </div>
       <div class="ship-nums">
-        <div class="ship-num-item"><div class="ship-num-label">個数</div><div class="ship-num-val">${fmtN(r.qty)}個</div></div>
         <div class="ship-num-item"><div class="ship-num-label">売値合計<span class="badge-tax">税込</span></div><div class="ship-num-val">${r.total?fmt(r.total):'-'}</div></div>
+        <div class="ship-num-item"><div class="ship-num-label">個数</div><div class="ship-num-val">${fmtN(r.qty)}個</div></div>
         <div class="ship-num-item"><div class="ship-num-label">手数料率</div><div class="ship-num-val">${r.fee||0}%</div></div>
         <div class="ship-num-item"><div class="ship-num-label">入金予定額</div><div class="ship-num-val income">${r.income?fmt(r.income):'-'}</div></div>
       </div>
-      <div style="margin-top:8px"><button class="btn btn-danger btn-sm" onclick="deleteRecord(${r.id})">削除</button></div>
+      <div style="margin-top:8px;display:flex;gap:6px">
+        <button class="btn btn-sm" onclick="editRecord(${r.id})">✎ 編集</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteRecord(${r.id})">削除</button>
+      </div>
     </div>`).join('');
 }
 
-function deleteRecord(id){
-  if(!confirm('この出荷記録を削除しますか？\n※Sheetsのデータは手動で削除してください'))return;
+function editRecord(id){
+  const r=records.find(x=>x.id===id);
+  if(!r)return;
+  editingId=id;
+  sw('record');
+  document.getElementById('r-date').value=r.date;
+  document.getElementById('r-store').value=r.store;
+  onStoreChange();
+  document.getElementById('r-veggie').value=r.veggie;
+  document.getElementById('r-price').value=r.price||'';
+  document.getElementById('r-qty').value=r.qty||'';
+  document.getElementById('r-fee').value=r.fee||0;
+  document.getElementById('r-memo').value=r.memo||'';
+  calcIncome();
+  document.querySelector('#tab-record .btn-primary').textContent='✎ 修正を保存する';
+  const cb=document.getElementById('cancel-edit-btn');if(cb)cb.style.display='inline-flex';
+  showAlert('alert-ok',`✎ ${r.veggie}（${r.date}）を編集中です`);
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function cancelEdit(){
+  editingId=null;
+  resetRecordForm();
+}
+
+function resetRecordForm(){
+  document.getElementById('r-qty').value='';
+  document.getElementById('r-price').value='';
+  document.getElementById('r-memo').value='';
+  document.getElementById('income-preview').style.display='none';
+  document.querySelector('#tab-record .btn-primary').textContent='＋ 出荷を記録する';
+  const cb=document.getElementById('cancel-edit-btn');if(cb)cb.style.display='none';
+}
+
+async function deleteRecord(id){
+  if(!confirm('この出荷記録を削除しますか？'))return;
   records=records.filter(r=>r.id!==id);
+  if(editingId===id){editingId=null;resetRecordForm();}
   renderList();renderSummary();
+  if(isSignedIn){
+    setSyncStatus('⏳ 削除中...');
+    try{
+      await rewriteDataSheet();
+      await updateAggSheets();
+      setSyncStatus('✅ 削除しました（Sheetsにも反映済み）');
+    }catch(e){setSyncStatus('❌ 削除の反映に失敗');console.error(e);}
+  }
 }
 
 function filterByPeriod(list,period){
@@ -689,9 +757,9 @@ function renderStore(){
         <span style="font-size:12px;color:var(--text-sub);margin-left:8px">${items.length}件・${fmtN(storeQty)}個</span></div>
       </div>
       <table class="agg-table">
-        <thead><tr><th>日付</th><th>商品</th><th class="num">個数</th><th class="num">金額<small style="font-weight:400;color:#aaa">(税込)</small></th><th class="num-income">入金予定</th></tr></thead>
-        <tbody>${items.map(r=>`<tr class="detail-row"><td style="font-size:12px;white-space:nowrap">${r.date}</td><td><span class="badge badge-veggie">${r.veggie}</span></td><td class="num">${fmtN(r.qty)}個</td><td class="num">${fmt(r.total)}</td><td class="num-income">${fmt(r.income)}</td></tr>`).join('')}</tbody>
-        <tfoot><tr><td colspan="2" style="padding:9px 10px;font-weight:700">${storeName} 合計</td><td class="num" style="font-weight:700">${fmtN(storeQty)}個</td><td class="num">${fmt(storeTotal)}</td><td class="num-income">${fmt(storeIncome)}</td></tr></tfoot>
+        <thead><tr><th>日付</th><th>商品</th><th class="num">金額<small style="font-weight:400;color:#aaa">(税込)</small></th><th class="num">個数</th><th class="num-income">入金予定</th></tr></thead>
+        <tbody>${items.map(r=>`<tr class="detail-row"><td style="font-size:12px;white-space:nowrap">${r.date}</td><td><span class="badge badge-veggie">${r.veggie}</span></td><td class="num">${fmt(r.total)}</td><td class="num">${fmtN(r.qty)}個</td><td class="num-income">${fmt(r.income)}</td></tr>`).join('')}</tbody>
+        <tfoot><tr><td colspan="2" style="padding:9px 10px;font-weight:700">${storeName} 合計</td><td class="num">${fmt(storeTotal)}</td><td class="num" style="font-weight:700">${fmtN(storeQty)}個</td><td class="num-income">${fmt(storeIncome)}</td></tr></tfoot>
       </table>
     </div>`;
   });
@@ -713,8 +781,8 @@ function renderVeggie(){
   const el=document.getElementById('veggie-content');
   if(!sorted.length){el.innerHTML='<div class="empty"><div class="empty-icon">🥦</div>データがありません</div>';return;}
   el.innerHTML=`<div class="card" style="padding:0;overflow:hidden"><table class="agg-table">
-    <thead><tr><th>野菜</th><th class="num">個数</th><th class="num">売値合計<br><small style="font-weight:400;color:#aaa">税込</small></th><th class="num-income">入金額合計</th></tr></thead>
-    <tbody>${sorted.map(([v,d])=>`<tr><td><span class="badge badge-veggie">${v}</span></td><td class="num">${fmtN(d.qty)}個</td><td class="num">${fmt(d.total)}</td><td class="num-income">${fmt(d.income)}</td></tr>`).join('')}</tbody>
+    <thead><tr><th>野菜</th><th class="num">売値合計<br><small style="font-weight:400;color:#aaa">税込</small></th><th class="num">個数</th><th class="num-income">入金額合計</th></tr></thead>
+    <tbody>${sorted.map(([v,d])=>`<tr><td><span class="badge badge-veggie">${v}</span></td><td class="num">${fmt(d.total)}</td><td class="num">${fmtN(d.qty)}個</td><td class="num-income">${fmt(d.income)}</td></tr>`).join('')}</tbody>
     <tfoot><tr><td colspan="2" style="padding:9px 10px;font-weight:700">合計</td><td class="num">${fmt(sorted.reduce((s,[,v])=>s+v.total,0))}</td><td class="num-income">${fmt(sorted.reduce((s,[,v])=>s+v.income,0))}</td></tr></tfoot>
   </table></div>`;
 }
@@ -767,8 +835,8 @@ function delVeggie(v){
 }
 
 function exportCSV(){
-  const rows=['日付,店舗,野菜,個数,売値(税込),手数料率(%),入金予定額,メモ'];
-  records.forEach(r=>rows.push(`${r.date},${r.store},${r.veggie},${r.qty},${r.total||0},${r.fee||0},${r.income||0},${r.memo||''}`));
+  const rows=['日付,店舗,野菜,売値(税込),個数,手数料率(%),入金予定額,メモ'];
+  records.forEach(r=>rows.push(`${r.date},${r.store},${r.veggie},${r.total||0},${r.qty},${r.fee||0},${r.income||0},${r.memo||''}`));
   const csv='\uFEFF'+rows.join('\n');
   const b=new Blob([csv],{type:'text/csv;charset=utf-8;'});
   const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download='出荷記録.csv';a.click();URL.revokeObjectURL(u);
