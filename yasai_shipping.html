@@ -116,6 +116,7 @@ input:focus,select:focus{outline:none;border-color:var(--green-mid);box-shadow:0
 
 <div class="tabs">
   <button class="tab active" onclick="sw('record')">📝 出荷記録</button>
+  <button class="tab" onclick="sw('today')">📦 当日出荷</button>
   <button class="tab" onclick="sw('list')">📋 履歴</button>
   <button class="tab" onclick="sw('store')">🏪 店舗別</button>
   <button class="tab" onclick="sw('veggie')">🥦 野菜別</button>
@@ -150,6 +151,16 @@ input:focus,select:focus{outline:none;border-color:var(--green-mid);box-shadow:0
       <button class="btn btn-primary btn-block" onclick="addRecord()">＋ 出荷を記録する</button>
       <button class="btn btn-block" id="cancel-edit-btn" style="display:none;margin-top:8px" onclick="cancelEdit()">編集をキャンセル</button>
     </div>
+  </div>
+
+  <!-- 当日出荷 -->
+  <div id="tab-today" class="panel">
+    <div class="list-header">
+      <span class="list-title">当日出荷（<span id="today-date"></span>）</span>
+      <button class="btn btn-reload btn-sm" onclick="reloadData()">🔄 最新データ</button>
+    </div>
+    <div class="summary-grid" id="today-summary"></div>
+    <div id="today-list"></div>
   </div>
 
   <!-- 履歴 -->
@@ -513,7 +524,8 @@ async function reloadData(){
   setSyncStatus('⏳ 更新中...');
   await syncFromSheets();
   const t=document.querySelector('.tab.active').textContent;
-  if(t.includes('履歴'))renderList();
+  if(t.includes('当日出荷'))renderToday();
+  else if(t.includes('履歴'))renderList();
   else if(t.includes('店舗'))renderStore();
   else if(t.includes('野菜'))renderVeggie();
   else if(t.includes('月次'))renderMonthly();
@@ -524,9 +536,10 @@ function sw(t){
   document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
   document.getElementById('tab-'+t).classList.add('active');
-  const tabs=['record','list','store','veggie','monthly','settings'];
+  const tabs=['record','today','list','store','veggie','monthly','settings'];
   document.querySelectorAll('.tab')[tabs.indexOf(t)].classList.add('active');
   if(t==='record')renderSummary();
+  else if(t==='today')renderToday();
   else if(t==='list')renderList();
   else if(t==='store'){buildStoreChecks();renderStore();}
   else if(t==='veggie')renderVeggie();
@@ -626,6 +639,39 @@ function renderList(){
   const list=records.filter(r=>(!sf||r.store===sf)&&(!vf||r.veggie===vf));
   const el=document.getElementById('ship-list');
   if(!list.length){el.innerHTML='<div class="empty"><div class="empty-icon">🌱</div>出荷記録がありません</div>';return;}
+  el.innerHTML=list.map(r=>`
+    <div class="ship-item">
+      <div class="ship-top">
+        <div>
+          <div class="ship-veggie">${r.veggie} <span class="badge badge-store">${r.store}</span></div>
+          <div class="ship-store">${r.memo||''}</div>
+        </div>
+        <div class="ship-date">${r.date}</div>
+      </div>
+      <div class="ship-nums">
+        <div class="ship-num-item"><div class="ship-num-label">売値合計<span class="badge-tax">税込</span></div><div class="ship-num-val">${r.total?fmt(r.total):'-'}</div></div>
+        <div class="ship-num-item"><div class="ship-num-label">個数</div><div class="ship-num-val">${fmtN(r.qty)}個</div></div>
+        <div class="ship-num-item"><div class="ship-num-label">手数料率</div><div class="ship-num-val">${r.fee||0}%</div></div>
+        <div class="ship-num-item"><div class="ship-num-label">入金予定額</div><div class="ship-num-val income">${r.income?fmt(r.income):'-'}</div></div>
+      </div>
+      <div style="margin-top:8px;display:flex;gap:6px">
+        <button class="btn btn-sm" onclick="editRecord(${r.id})">✎ 編集</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteRecord(${r.id})">削除</button>
+      </div>
+    </div>`).join('');
+}
+
+function renderToday(){
+  const todayStr=new Date().toISOString().split('T')[0];
+  document.getElementById('today-date').textContent=todayStr;
+  const list=records.filter(r=>r.date===todayStr);
+  const todayIncome=list.reduce((s,r)=>s+(r.income||0),0);
+  const todaySales=list.reduce((s,r)=>s+(r.total||0),0);
+  document.getElementById('today-summary').innerHTML=`
+    <div class="summary-card"><div class="s-label">本日の入金予定額</div><div class="s-value" style="color:#1a6b3c">${fmt(todayIncome)}</div><div class="s-sub">売値合計 ${fmt(todaySales)}（税込）</div></div>
+    <div class="summary-card"><div class="s-label">本日の出荷件数</div><div class="s-value">${list.length}件</div></div>`;
+  const el=document.getElementById('today-list');
+  if(!list.length){el.innerHTML='<div class="empty"><div class="empty-icon">📦</div>本日の出荷記録はまだありません</div>';return;}
   el.innerHTML=list.map(r=>`
     <div class="ship-item">
       <div class="ship-top">
