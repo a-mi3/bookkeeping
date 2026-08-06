@@ -673,7 +673,9 @@ function buildStoreMonthSelect(){
   else if(!prev||prev==='all'){sel.value=currentYm;}
 }
 function buildStoreChecks(){
-  const names=[...new Set(records.map(r=>r.store))];
+  const fromRecords=new Set(records.map(r=>r.store));
+  const fromSettings=stores.map(s=>s.name);
+  const names=[...new Set([...fromSettings,...fromRecords])];
   const el=document.getElementById('store-checks');
   el.innerHTML=names.map(s=>`<label class="store-check" id="sc-${s}"><input type="checkbox" value="${s}" onchange="toggleStoreCheck(this)">${s}</label>`).join('');
 }
