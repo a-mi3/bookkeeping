@@ -121,6 +121,7 @@ input:focus,select:focus{outline:none;border-color:var(--green-mid);box-shadow:0
   <button class="tab" onclick="sw('store')">🏪 店舗別</button>
   <button class="tab" onclick="sw('veggie')">🥦 野菜別</button>
   <button class="tab" onclick="sw('monthly')">📅 月次</button>
+  <button class="tab" onclick="sw('sales')">🔍 売上比較</button>
   <button class="tab" onclick="sw('settings')">⚙️ 設定</button>
 </div>
 
@@ -218,6 +219,25 @@ input:focus,select:focus{outline:none;border-color:var(--green-mid);box-shadow:0
     <div id="monthly-content"></div>
   </div>
 
+  <!-- 売上比較 -->
+  <div id="tab-sales" class="panel">
+    <div class="list-header">
+      <span class="list-title">売上比較（出荷数 vs 実際に売れた数）</span>
+      <div class="filter-row">
+        <button class="btn btn-reload btn-sm" onclick="reloadData()">🔄 最新データ</button>
+        <select id="sales-month" onchange="renderSales()" style="font-size:12px;padding:5px 8px;border:1px solid var(--border);border-radius:6px">
+          <option value="all">全期間</option>
+        </select>
+        <select id="sales-store" onchange="renderSales()" style="font-size:12px;padding:5px 8px;border:1px solid var(--border);border-radius:6px">
+          <option value="">全店舗</option>
+        </select>
+      </div>
+    </div>
+    <div style="font-size:11px;color:var(--text-sub);margin-bottom:10px">「実際に売れた数」は各産直サイトからのメールを自動取込した売上実績データです（メール自動取込が未セットアップの場合は表示されません）</div>
+    <div class="summary-grid" id="sales-summary"></div>
+    <div id="sales-content"></div>
+  </div>
+
   <!-- 設定 -->
   <div id="tab-settings" class="panel">
     <div class="card">
@@ -259,6 +279,7 @@ let stores = [
 ];
 let veggies = ['ズッキーニ','オクラ','ミニトマト','ピーマン','トウモロコシ','ナス','キュウリ','里芋','春菊','大根','ほうれん草','ブロッコリー','サツマイモ','唐辛子','パプリカ','ジャガイモ','たまねぎ','にんにく','七味唐辛子','みかん塩','うま味だし塩','ゆず塩'];
 let records = [];
+let salesRecords = []; // 「売上実績」シート（メール自動取込）から読み込んだ実売データ
 let nextId = 1;
 let editingId = null; // 編集中の出荷記録ID（nullなら新規追加モード）
 
@@ -514,6 +535,16 @@ async function syncFromSheets(mergeLocal=false){
     const lv=srows.map(r=>r[2]).filter(Boolean);
     if(ls.length)stores=ls;
     if(lv.length)veggies=lv;
+    // 売上実績（メール自動取込・GASが書き込むシート。無い場合は空扱い）
+    try{
+      if(meta.result.sheets.map(s=>s.properties.title).includes('売上実績')){
+        const sr2=await gapi.client.sheets.spreadsheets.values.get({spreadsheetId:SPREADSHEET_ID,range:'売上実績!A2:J'});
+        const srows2=sr2.result.values||[];
+        salesRecords=srows2.filter(r=>r[0]).map(r=>({date:r[0],store:r[1],veggie:r[2],price:parseInt(r[3])||0,qty:parseInt(r[4])||0,total:parseInt(r[5])||0,fee:parseFloat(r[6])||0,income:parseInt(r[7])||0,sender:r[8]||'',messageId:r[9]||''}));
+      }else{
+        salesRecords=[];
+      }
+    }catch(e){console.error('売上実績読込エラー:',e);salesRecords=[];}
     buildSelects();renderSummary();
     const msg=mergeLocal&&localRecords.length>0?`✅ ${records.length}件（ローカル分もマージ済み）`:`✅ ${records.length}件`;
     setSyncStatus(msg);
@@ -529,6 +560,7 @@ async function reloadData(){
   else if(t.includes('店舗'))renderStore();
   else if(t.includes('野菜'))renderVeggie();
   else if(t.includes('月次'))renderMonthly();
+  else if(t.includes('売上比較'))renderSales();
 }
 
 /* ===== UI ===== */
@@ -536,7 +568,7 @@ function sw(t){
   document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
   document.getElementById('tab-'+t).classList.add('active');
-  const tabs=['record','today','list','store','veggie','monthly','settings'];
+  const tabs=['record','today','list','store','veggie','monthly','sales','settings'];
   document.querySelectorAll('.tab')[tabs.indexOf(t)].classList.add('active');
   if(t==='record')renderSummary();
   else if(t==='today')renderToday();
@@ -544,6 +576,7 @@ function sw(t){
   else if(t==='store'){buildStoreChecks();renderStore();}
   else if(t==='veggie')renderVeggie();
   else if(t==='monthly')renderMonthly();
+  else if(t==='sales')renderSales();
   else if(t==='settings')renderSettings();
 }
 
@@ -844,6 +877,84 @@ function renderMonthly(){
   el.innerHTML=`<div class="card" style="padding:0;overflow:hidden"><table class="agg-table">
     <thead><tr><th>年月</th><th class="num">件数</th><th class="num">売値合計<br><small style="font-weight:400;color:#aaa">税込</small></th><th class="num-income">入金額合計</th></tr></thead>
     <tbody>${sorted.map(([ym,v])=>`<tr><td style="font-weight:600">${ym.replace('-','年')}月</td><td class="num">${v.count}件</td><td class="num">${fmt(v.total)}</td><td class="num-income">${fmt(v.income)}</td></tr>`).join('')}</tbody>
+  </table></div>`;
+}
+
+// ひらがな/カタカナの表記ゆれを吸収して突き合わせるためのキー正規化
+// （メール取込側は「きゅうり」等ひらがな、アプリ側は「キュウリ」等カタカナで入ってくることがある）
+function normalizeKana(s){
+  return String(s||'').replace(/[ぁ-ゖ]/g,c=>String.fromCharCode(c.charCodeAt(0)+0x60));
+}
+
+function buildSalesMonthSelect(){
+  const months=new Set();
+  records.forEach(r=>{if(r.date)months.add(r.date.substring(0,7));});
+  salesRecords.forEach(r=>{if(r.date)months.add(r.date.substring(0,7));});
+  const sel=document.getElementById('sales-month');
+  const prev=sel.value;
+  const now=new Date();
+  const currentYm=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+  sel.innerHTML='<option value="all">全期間</option>'+
+    [...months].sort((a,b)=>b.localeCompare(a)).map(ym=>`<option value="${ym}">${ym.replace('-','年')}月</option>`).join('');
+  if(prev&&(prev==='all'||months.has(prev)))sel.value=prev;
+  else sel.value=months.has(currentYm)?currentYm:'all';
+}
+function buildSalesStoreSelect(){
+  const names=[...new Set([...stores.map(s=>s.name),...salesRecords.map(r=>r.store)])];
+  const sel=document.getElementById('sales-store');
+  const prev=sel.value;
+  sel.innerHTML='<option value="">全店舗</option>'+names.map(s=>`<option value="${s}">${s}</option>`).join('');
+  if(prev&&names.includes(prev))sel.value=prev;
+}
+
+function renderSales(){
+  buildSalesMonthSelect();
+  buildSalesStoreSelect();
+  const month=document.getElementById('sales-month').value;
+  const storeFilter=document.getElementById('sales-store').value;
+
+  let shipped=records;
+  let sold=salesRecords;
+  if(month!=='all'){
+    shipped=shipped.filter(r=>r.date&&r.date.startsWith(month));
+    sold=sold.filter(r=>r.date&&r.date.startsWith(month));
+  }
+  if(storeFilter){
+    shipped=shipped.filter(r=>r.store===storeFilter);
+    sold=sold.filter(r=>r.store===storeFilter);
+  }
+
+  const map={};
+  shipped.forEach(r=>{
+    const key=`${r.date}|${r.store}|${normalizeKana(r.veggie)}`;
+    if(!map[key])map[key]={date:r.date,store:r.store,veggie:r.veggie,shipQty:0,shipTotal:0,soldQty:0,soldTotal:0};
+    map[key].shipQty+=r.qty||0;map[key].shipTotal+=r.total||0;
+  });
+  sold.forEach(r=>{
+    const key=`${r.date}|${r.store}|${normalizeKana(r.veggie)}`;
+    if(!map[key])map[key]={date:r.date,store:r.store,veggie:r.veggie,shipQty:0,shipTotal:0,soldQty:0,soldTotal:0};
+    map[key].soldQty+=r.qty||0;map[key].soldTotal+=r.total||0;
+  });
+  const rows=Object.values(map).sort((a,b)=>b.date.localeCompare(a.date)||a.store.localeCompare(b.store,'ja'));
+
+  const totalShipQty=rows.reduce((s,r)=>s+r.shipQty,0);
+  const totalSoldQty=rows.reduce((s,r)=>s+r.soldQty,0);
+  const totalShipAmount=rows.reduce((s,r)=>s+r.shipTotal,0);
+  const totalSoldAmount=rows.reduce((s,r)=>s+r.soldTotal,0);
+  document.getElementById('sales-summary').innerHTML=`
+    <div class="summary-card"><div class="s-label">出荷数（合計）</div><div class="s-value">${fmtN(totalShipQty)}個</div><div class="s-sub">売値合計 ${fmt(totalShipAmount)}（税込）</div></div>
+    <div class="summary-card"><div class="s-label">実際に売れた数（合計）</div><div class="s-value" style="color:#1a6b3c">${fmtN(totalSoldQty)}個</div><div class="s-sub">売上合計 ${fmt(totalSoldAmount)}</div></div>`;
+
+  const el=document.getElementById('sales-content');
+  if(!rows.length){el.innerHTML='<div class="empty"><div class="empty-icon">🔍</div>該当データがありません</div>';return;}
+  el.innerHTML=`<div class="card" style="padding:0;overflow:hidden"><table class="agg-table">
+    <thead><tr><th>日付</th><th>店舗</th><th>野菜</th><th class="num">出荷数</th><th class="num">売れた数</th><th class="num">差分</th></tr></thead>
+    <tbody>${rows.map(r=>{
+      const diff=r.shipQty-r.soldQty;
+      const diffStyle=diff>0?'color:var(--earth)':diff<0?'color:var(--red)':'color:var(--text-sub)';
+      const diffLabel=diff>0?`残り${fmtN(diff)}`:diff<0?`超過${fmtN(-diff)}`:'一致';
+      return `<tr><td style="font-size:12px;white-space:nowrap">${r.date}</td><td><span class="badge badge-store">${r.store}</span></td><td><span class="badge badge-veggie">${r.veggie}</span></td><td class="num">${fmtN(r.shipQty)}個</td><td class="num" style="color:#1a6b3c">${r.soldQty?fmtN(r.soldQty)+'個':'-'}</td><td class="num" style="${diffStyle}">${diffLabel}</td></tr>`;
+    }).join('')}</tbody>
   </table></div>`;
 }
 
