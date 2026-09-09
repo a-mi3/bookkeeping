@@ -122,6 +122,7 @@ input:focus,select:focus{outline:none;border-color:var(--green-mid);box-shadow:0
   <button class="tab" onclick="sw('veggie')">🥦 野菜別</button>
   <button class="tab" onclick="sw('monthly')">📅 月次</button>
   <button class="tab" onclick="sw('sales')">🔍 売上比較</button>
+  <button class="tab" onclick="sw('salesStore')">💰 売上店舗別</button>
   <button class="tab" onclick="sw('settings')">⚙️ 設定</button>
 </div>
 
@@ -236,6 +237,25 @@ input:focus,select:focus{outline:none;border-color:var(--green-mid);box-shadow:0
     <div style="font-size:11px;color:var(--text-sub);margin-bottom:10px">「実際に売れた数」は各産直サイトからのメールを自動取込した売上実績データです（メール自動取込が未セットアップの場合は表示されません）</div>
     <div class="summary-grid" id="sales-summary"></div>
     <div id="sales-content"></div>
+  </div>
+
+  <!-- 売上店舗別 -->
+  <div id="tab-salesStore" class="panel">
+    <div class="list-header">
+      <span class="list-title">売上店舗別集計</span>
+      <div class="filter-row">
+        <button class="btn btn-reload btn-sm" onclick="reloadData()">🔄 最新データ</button>
+        <select id="salesstore-month" onchange="renderSalesStore()" style="font-size:12px;padding:5px 8px;border:1px solid var(--border);border-radius:6px">
+          <option value="all">全期間</option>
+        </select>
+      </div>
+    </div>
+    <div style="font-size:11px;color:var(--text-sub);margin-bottom:10px">各産直サイトからのメールを自動取込した「実際に売れた金額・個数」の店舗別集計です</div>
+    <div class="card" style="padding:10px 14px">
+      <div style="font-size:11px;color:var(--text-sub);margin-bottom:6px">表示する店舗を選択</div>
+      <div id="salesstore-checks" style="display:flex;flex-wrap:wrap;gap:6px"></div>
+    </div>
+    <div id="salesstore-content"></div>
   </div>
 
   <!-- 設定 -->
@@ -557,6 +577,7 @@ async function reloadData(){
   const t=document.querySelector('.tab.active').textContent;
   if(t.includes('当日出荷'))renderToday();
   else if(t.includes('履歴'))renderList();
+  else if(t.includes('売上店舗別')){buildSalesStoreChecks();renderSalesStore();}
   else if(t.includes('店舗'))renderStore();
   else if(t.includes('野菜'))renderVeggie();
   else if(t.includes('月次'))renderMonthly();
@@ -568,7 +589,7 @@ function sw(t){
   document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
   document.getElementById('tab-'+t).classList.add('active');
-  const tabs=['record','today','list','store','veggie','monthly','sales','settings'];
+  const tabs=['record','today','list','store','veggie','monthly','sales','salesStore','settings'];
   document.querySelectorAll('.tab')[tabs.indexOf(t)].classList.add('active');
   if(t==='record')renderSummary();
   else if(t==='today')renderToday();
@@ -577,6 +598,7 @@ function sw(t){
   else if(t==='veggie')renderVeggie();
   else if(t==='monthly')renderMonthly();
   else if(t==='sales')renderSales();
+  else if(t==='salesStore'){buildSalesStoreChecks();renderSalesStore();}
   else if(t==='settings')renderSettings();
 }
 
@@ -924,18 +946,19 @@ function renderSales(){
     sold=sold.filter(r=>r.store===storeFilter);
   }
 
+  // 店舗×野菜で累計（日付は集計キーに含めない＝現在までの合計を出す）
   const map={};
   shipped.forEach(r=>{
-    const key=`${r.date}|${r.store}|${normalizeKana(r.veggie)}`;
-    if(!map[key])map[key]={date:r.date,store:r.store,veggie:r.veggie,shipQty:0,shipTotal:0,soldQty:0,soldTotal:0};
+    const key=`${r.store}|${normalizeKana(r.veggie)}`;
+    if(!map[key])map[key]={store:r.store,veggie:r.veggie,shipQty:0,shipTotal:0,soldQty:0,soldTotal:0};
     map[key].shipQty+=r.qty||0;map[key].shipTotal+=r.total||0;
   });
   sold.forEach(r=>{
-    const key=`${r.date}|${r.store}|${normalizeKana(r.veggie)}`;
-    if(!map[key])map[key]={date:r.date,store:r.store,veggie:r.veggie,shipQty:0,shipTotal:0,soldQty:0,soldTotal:0};
+    const key=`${r.store}|${normalizeKana(r.veggie)}`;
+    if(!map[key])map[key]={store:r.store,veggie:r.veggie,shipQty:0,shipTotal:0,soldQty:0,soldTotal:0};
     map[key].soldQty+=r.qty||0;map[key].soldTotal+=r.total||0;
   });
-  const rows=Object.values(map).sort((a,b)=>b.date.localeCompare(a.date)||a.store.localeCompare(b.store,'ja'));
+  const rows=Object.values(map).sort((a,b)=>a.store.localeCompare(b.store,'ja')||normalizeKana(a.veggie).localeCompare(normalizeKana(b.veggie),'ja'));
 
   const totalShipQty=rows.reduce((s,r)=>s+r.shipQty,0);
   const totalSoldQty=rows.reduce((s,r)=>s+r.soldQty,0);
@@ -948,14 +971,84 @@ function renderSales(){
   const el=document.getElementById('sales-content');
   if(!rows.length){el.innerHTML='<div class="empty"><div class="empty-icon">🔍</div>該当データがありません</div>';return;}
   el.innerHTML=`<div class="card" style="padding:0;overflow:hidden"><table class="agg-table">
-    <thead><tr><th>日付</th><th>店舗</th><th>野菜</th><th class="num">出荷数</th><th class="num">売れた数</th><th class="num">差分</th></tr></thead>
+    <thead><tr><th>店舗</th><th>野菜</th><th class="num">出荷数</th><th class="num">売れた数</th><th class="num">差異</th></tr></thead>
     <tbody>${rows.map(r=>{
       const diff=r.shipQty-r.soldQty;
       const diffStyle=diff>0?'color:var(--earth)':diff<0?'color:var(--red)':'color:var(--text-sub)';
       const diffLabel=diff>0?`残り${fmtN(diff)}`:diff<0?`超過${fmtN(-diff)}`:'一致';
-      return `<tr><td style="font-size:12px;white-space:nowrap">${r.date}</td><td><span class="badge badge-store">${r.store}</span></td><td><span class="badge badge-veggie">${r.veggie}</span></td><td class="num">${fmtN(r.shipQty)}個</td><td class="num" style="color:#1a6b3c">${r.soldQty?fmtN(r.soldQty)+'個':'-'}</td><td class="num" style="${diffStyle}">${diffLabel}</td></tr>`;
+      return `<tr><td><span class="badge badge-store">${r.store}</span></td><td><span class="badge badge-veggie">${r.veggie}</span></td><td class="num">${fmtN(r.shipQty)}個</td><td class="num" style="color:#1a6b3c">${r.soldQty?fmtN(r.soldQty)+'個':'-'}</td><td class="num" style="${diffStyle}">${diffLabel}</td></tr>`;
     }).join('')}</tbody>
+    <tfoot><tr><td colspan="2" style="padding:9px 10px;font-weight:700">合計</td><td class="num">${fmtN(totalShipQty)}個</td><td class="num" style="color:#1a6b3c">${fmtN(totalSoldQty)}個</td><td class="num">${totalShipQty-totalSoldQty>=0?'残り':'超過'}${fmtN(Math.abs(totalShipQty-totalSoldQty))}</td></tr></tfoot>
   </table></div>`;
+}
+
+/* ===== 売上店舗別（出荷の「店舗別」タブと同じ構成で、売上実績データを表示） ===== */
+function buildSalesStoreMonthSelect(){
+  const months=new Set();
+  salesRecords.forEach(r=>{if(r.date)months.add(r.date.substring(0,7));});
+  const sel=document.getElementById('salesstore-month');
+  const prev=sel.value;
+  const now=new Date();
+  const currentYm=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+  sel.innerHTML='<option value="all">全期間</option>'+
+    [...months].sort((a,b)=>b.localeCompare(a)).map(ym=>`<option value="${ym}">${ym.replace('-','年')}月</option>`).join('');
+  if(prev&&(prev==='all'||months.has(prev)))sel.value=prev;
+  else sel.value=months.has(currentYm)?currentYm:'all';
+}
+function buildSalesStoreChecks(){
+  const fromRecords=new Set(salesRecords.map(r=>r.store));
+  const fromSettings=stores.map(s=>s.name);
+  const names=[...new Set([...fromSettings,...fromRecords])];
+  const el=document.getElementById('salesstore-checks');
+  const prevChecked=new Set(getCheckedSalesStores());
+  el.innerHTML=names.map(s=>`<label class="store-check${prevChecked.has(s)?' checked':''}" id="ssc-${s}"><input type="checkbox" value="${s}" ${prevChecked.has(s)?'checked':''} onchange="toggleSalesStoreCheck(this)">${s}</label>`).join('');
+}
+function toggleSalesStoreCheck(cb){
+  const label=cb.parentElement;
+  if(cb.checked)label.classList.add('checked');else label.classList.remove('checked');
+  renderSalesStore();
+}
+function getCheckedSalesStores(){
+  return [...document.querySelectorAll('#salesstore-checks input:checked')].map(cb=>cb.value);
+}
+function renderSalesStore(){
+  buildSalesStoreMonthSelect();
+  if(!document.querySelectorAll('#salesstore-checks label').length)buildSalesStoreChecks();
+  const month=document.getElementById('salesstore-month').value;
+  const checked=getCheckedSalesStores();
+  const el=document.getElementById('salesstore-content');
+  if(!checked.length){el.innerHTML='<div class="empty"><div class="empty-icon">🏪</div>店舗を選択してください</div>';return;}
+  let list=salesRecords;
+  if(month!=='all')list=list.filter(r=>r.date&&r.date.startsWith(month));
+  list=list.filter(r=>checked.includes(r.store));
+  if(!list.length){el.innerHTML='<div class="empty"><div class="empty-icon">🌱</div>該当データがありません</div>';return;}
+  let html='';let grandTotal=0,grandIncome=0,grandQty=0;
+  checked.forEach(storeName=>{
+    const items=list.filter(r=>r.store===storeName).sort((a,b)=>b.date.localeCompare(a.date));
+    if(!items.length)return;
+    const storeTotal=items.reduce((s,r)=>s+(r.total||0),0);
+    const storeIncome=items.reduce((s,r)=>s+(r.income||0),0);
+    const storeQty=items.reduce((s,r)=>s+(r.qty||0),0);
+    grandTotal+=storeTotal;grandIncome+=storeIncome;grandQty+=storeQty;
+    html+=`<div class="card" style="padding:0;overflow:hidden;margin-bottom:10px">
+      <div style="padding:12px;background:var(--earth-pale);display:flex;justify-content:space-between;align-items:center">
+        <div><span class="badge badge-store" style="font-size:13px;padding:4px 12px">${storeName}</span>
+        <span style="font-size:12px;color:var(--text-sub);margin-left:8px">${items.length}件・${fmtN(storeQty)}個</span></div>
+      </div>
+      <table class="agg-table">
+        <thead><tr><th>日付</th><th>商品</th><th class="num">金額<small style="font-weight:400;color:#aaa">(税込)</small></th><th class="num">個数</th><th class="num-income">入金見込</th></tr></thead>
+        <tbody>${items.map(r=>`<tr class="detail-row"><td style="font-size:12px;white-space:nowrap">${r.date}</td><td><span class="badge badge-veggie">${r.veggie}</span></td><td class="num">${fmt(r.total)}</td><td class="num">${fmtN(r.qty)}個</td><td class="num-income">${fmt(r.income)}</td></tr>`).join('')}</tbody>
+        <tfoot><tr><td colspan="2" style="padding:9px 10px;font-weight:700">${storeName} 合計</td><td class="num">${fmt(storeTotal)}</td><td class="num" style="font-weight:700">${fmtN(storeQty)}個</td><td class="num-income">${fmt(storeIncome)}</td></tr></tfoot>
+      </table>
+    </div>`;
+  });
+  if(checked.length>1){
+    html+=`<div class="card" style="padding:12px;display:flex;justify-content:space-between;align-items:center;background:var(--green-pale)">
+      <div style="font-weight:700">全店舗合計（${checked.length}店舗）</div>
+      <div style="text-align:right"><div style="font-size:11px;color:var(--text-sub)">売上 ${fmt(grandTotal)}（税込）</div><div style="font-weight:700;color:#1a6b3c;font-size:18px">${fmt(grandIncome)}</div></div>
+    </div>`;
+  }
+  el.innerHTML=html;
 }
 
 function renderSettings(){
