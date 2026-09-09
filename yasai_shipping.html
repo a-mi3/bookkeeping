@@ -658,6 +658,12 @@ function calcIncome(){
   }else{preview.style.display='none';}
 }
 
+// new Date().toISOString()はUTC基準になり、日本時間の深夜〜朝9時頃は
+// 前日の日付を返してしまうため、ローカル日付から直接組み立てる
+function todayLocalStr(){
+  const d=new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
 function fmt(n){return'¥'+Math.round(n).toLocaleString('ja-JP');}
 function fmtN(n){return Math.round(n).toLocaleString('ja-JP');}
 function showAlert(id,msg){const el=document.getElementById(id);if(!el)return;el.textContent=msg;el.style.display='block';setTimeout(()=>{el.style.display='none';},4000);}
@@ -757,7 +763,7 @@ function renderList(){
 }
 
 function renderToday(){
-  const todayStr=new Date().toISOString().split('T')[0];
+  const todayStr=todayLocalStr();
   document.getElementById('today-date').textContent=todayStr;
   const list=records.filter(r=>r.date===todayStr);
   const todayIncome=list.reduce((s,r)=>s+(r.income||0),0);
@@ -1134,7 +1140,7 @@ function exportCSV(){
   const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download='出荷記録.csv';a.click();URL.revokeObjectURL(u);
 }
 
-document.getElementById('r-date').value=new Date().toISOString().split('T')[0];
+document.getElementById('r-date').value=todayLocalStr();
 document.getElementById('r-qty').addEventListener('input',calcIncome);
 buildSelects();renderSummary();
 window.gapiLoaded=gapiLoaded;window.gisLoaded=gisLoaded;
