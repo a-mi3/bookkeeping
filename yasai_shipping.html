@@ -130,6 +130,10 @@ input:focus,select:focus{outline:none;border-color:var(--green-mid);box-shadow:0
 
   <!-- 出荷記録 -->
   <div id="tab-record" class="panel active">
+    <div class="list-header">
+      <span class="list-title">出荷記録</span>
+      <button class="btn btn-reload btn-sm" onclick="confirmSaved()">🔄 保存を確認</button>
+    </div>
     <div class="summary-grid" id="summary-cards"></div>
     <div class="card">
       <div class="card-title">🚚 出荷を記録する</div>
@@ -381,7 +385,7 @@ async function ensureSheets(sheetNames){
 
 // 追記方式：新しい1件だけ追加
 async function appendRecord(r){
-  if(!isSignedIn)return;
+  if(!isSignedIn)return false;
   try{
     setSyncStatus('⏳');
     const meta=await gapi.client.sheets.spreadsheets.get({spreadsheetId:SPREADSHEET_ID});
@@ -397,7 +401,17 @@ async function appendRecord(r){
     });
     await updateAggSheets();
     setSyncStatus('✅ 保存');
-  }catch(e){setSyncStatus('❌');console.error(e);}
+    return true;
+  }catch(e){setSyncStatus('❌');console.error(e);return false;}
+}
+
+// 指定したIDの出荷記録が、実際にスプレッドシート側に書き込まれているかを確認する
+async function verifyRecordSaved(id){
+  try{
+    const res=await gapi.client.sheets.spreadsheets.values.get({spreadsheetId:SPREADSHEET_ID,range:'出荷データ!A2:A'});
+    const ids=(res.result.values||[]).flat().map(v=>parseInt(v)).filter(n=>!isNaN(n));
+    return ids.includes(id);
+  }catch(e){console.error('verifyRecordSaved error:',e);return false;}
 }
 
 // 出荷データシートを新しい順にヘッダー付きで全書き換え
@@ -584,6 +598,20 @@ async function reloadData(){
   else if(t.includes('売上比較'))renderSales();
 }
 
+// スプレッドシートを実際に読み直して、入力した記録が本当に蓄積されているかを確認する
+async function confirmSaved(){
+  if(!isSignedIn){showAlert('alert-ng','⚠️ まずGoogleでログインしてください');return;}
+  setSyncStatus('⏳ スプレッドシートを確認中...');
+  try{
+    await syncFromSheets();
+    renderSummary();
+    showAlert('alert-ok',`✅ スプレッドシートの内容を確認しました（現在 ${records.length}件）`);
+  }catch(e){
+    console.error('confirmSaved error:',e);
+    showAlert('alert-ng','❌ 確認に失敗しました。通信状況を確認してもう一度お試しください');
+  }
+}
+
 /* ===== UI ===== */
 function sw(t){
   document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
@@ -650,6 +678,7 @@ async function addRecord(){
   if(editingId){
     // 既存記録の修正
     const idx=records.findIndex(r=>r.id===editingId);
+    const savedId=editingId;
     if(idx!==-1){
       records[idx]={...records[idx],date,store,veggie,qty,price,total,fee,income,memo};
       showAlert('alert-ok',`✅ ${veggie}の記録を修正しました（入金予定：${fmt(income)}）`);
@@ -662,8 +691,10 @@ async function addRecord(){
       try{
         await rewriteDataSheet();
         await updateAggSheets();
-        setSyncStatus('✅ 保存しました');
-      }catch(e){setSyncStatus('❌ 保存に失敗');console.error(e);}
+        const ok=await verifyRecordSaved(savedId);
+        if(ok){setSyncStatus('✅ 保存を確認しました');showAlert('alert-ok',`✅ ${veggie}の修正をスプレッドシートで確認しました`);}
+        else{setSyncStatus('⚠️ 確認できません');showAlert('alert-ng','⚠️ 保存後の確認ができませんでした。「🔄 保存を確認」で再確認してください');}
+      }catch(e){setSyncStatus('❌ 保存に失敗');showAlert('alert-ng','❌ スプレッドシートへの保存に失敗しました。もう一度お試しください');console.error(e);}
     }
     return;
   }
@@ -674,7 +705,16 @@ async function addRecord(){
   resetRecordForm();
   showAlert('alert-ok',`✅ ${veggie}を${store}に記録しました（入金予定：${fmt(income)}）`);
   renderSummary();
-  if(isSignedIn)appendRecord(rec);
+  if(isSignedIn){
+    const ok=await appendRecord(rec);
+    if(ok){
+      const verified=await verifyRecordSaved(rec.id);
+      if(verified){setSyncStatus('✅ 保存を確認しました');showAlert('alert-ok',`✅ ${veggie}の記録をスプレッドシートで確認しました`);}
+      else{setSyncStatus('⚠️ 確認できません');showAlert('alert-ng','⚠️ 保存後の確認ができませんでした。「🔄 保存を確認」で再確認してください');}
+    }else{
+      showAlert('alert-ng','❌ スプレッドシートへの保存に失敗しました。もう一度お試しください');
+    }
+  }
 }
 
 function renderSummary(){
