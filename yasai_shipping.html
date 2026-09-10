@@ -265,6 +265,11 @@ input:focus,select:focus{outline:none;border-color:var(--green-mid);box-shadow:0
   <!-- 設定 -->
   <div id="tab-settings" class="panel">
     <div class="card">
+      <div class="card-title">🧾 消費税率</div>
+      <div style="font-size:11px;color:var(--text-sub);margin-bottom:10px">月次集計の入金額計算に使用します（税率が変わった場合はここを変更してください）</div>
+      <div class="fg"><label>消費税率（%）</label><input type="number" id="tax-rate" min="0" max="100" step="0.1" oninput="updateTaxRate(this.value)" style="max-width:120px"></div>
+    </div>
+    <div class="card">
       <div class="card-title">🏪 店舗・手数料率の管理</div>
       <div style="font-size:11px;color:var(--text-sub);margin-bottom:10px">手数料率を設定しておくと出荷記録時に自動入力されます</div>
       <div id="fee-list"></div>
@@ -302,6 +307,7 @@ let stores = [
   {name:'ふらっと',fee:2}
 ];
 let veggies = ['ズッキーニ','オクラ','ミニトマト','ピーマン','トウモロコシ','ナス','キュウリ','里芋','春菊','大根','ほうれん草','ブロッコリー','サツマイモ','唐辛子','パプリカ','ジャガイモ','たまねぎ','にんにく','七味唐辛子','みかん塩','うま味だし塩','ゆず塩'];
+let taxRate = 10; // 消費税率(%)。月次の入金額計算に使用（設定タブで変更可）
 let records = [];
 let salesRecords = []; // 「売上実績」シート（メール自動取込）から読み込んだ実売データ
 let nextId = 1;
@@ -432,12 +438,13 @@ async function rewriteDataSheet(){
   }catch(e){console.error('rewriteDataSheet error:',e);}
 }
 
-// 設定のみ保存（店舗・野菜リスト）
+// 設定のみ保存（店舗・野菜リスト・消費税率）
 async function saveSettings(){
   if(!isSignedIn)return;
   try{
     const rows=[['店舗名','手数料率(%)','野菜リスト'],...Array.from({length:Math.max(stores.length,veggies.length)},(_,i)=>[stores[i]?stores[i].name:'',stores[i]?stores[i].fee:'',veggies[i]||''])];
     await gapi.client.sheets.spreadsheets.values.update({spreadsheetId:SPREADSHEET_ID,range:'設定!A1',valueInputOption:'RAW',resource:{values:rows}});
+    await gapi.client.sheets.spreadsheets.values.update({spreadsheetId:SPREADSHEET_ID,range:'設定!E1',valueInputOption:'RAW',resource:{values:[['消費税率(%)'],[taxRate]]}});
   }catch(e){console.error(e);}
 }
 
@@ -569,6 +576,12 @@ async function syncFromSheets(mergeLocal=false){
     const lv=srows.map(r=>r[2]).filter(Boolean);
     if(ls.length)stores=ls;
     if(lv.length)veggies=lv;
+    // 消費税率（設定!E2）
+    try{
+      const trRes=await gapi.client.sheets.spreadsheets.values.get({spreadsheetId:SPREADSHEET_ID,range:'設定!E2'});
+      const trVal=(trRes.result.values||[])[0]?.[0];
+      if(trVal!==undefined&&trVal!=='')taxRate=parseFloat(trVal)||10;
+    }catch(e){console.error('消費税率読込エラー:',e);}
     // 売上実績（メール自動取込・GASが書き込むシート。無い場合は空扱い）
     try{
       if(meta.result.sheets.map(s=>s.properties.title).includes('売上実績')){
@@ -937,12 +950,41 @@ function renderVeggie(){
 }
 
 function renderMonthly(){
+  // 月次の入金額は「各取引を個別に丸めて合計」ではなく、店舗×月の税込合計をまとめて
+  // 税抜化→手数料→消費税込み手数料 の順で計算する（実際の請求書と同じ計算順序に揃える）。
+  const feeByStoreName={};
+  stores.forEach(s=>{feeByStoreName[s.name]=s.fee||0;});
+  const rate=(taxRate||0)/100;
+
+  const byMonthStore={};
+  records.forEach(r=>{
+    const ym=r.date.substring(0,7);
+    const key=`${ym}|${r.store}`;
+    if(!byMonthStore[key])byMonthStore[key]={ym,store:r.store,total:0,qty:0,count:0};
+    byMonthStore[key].total+=r.total||0;
+    byMonthStore[key].qty+=r.qty||0;
+    byMonthStore[key].count++;
+  });
+
   const byMonth={};
-  records.forEach(r=>{const ym=r.date.substring(0,7);if(!byMonth[ym])byMonth[ym]={total:0,income:0,qty:0,count:0};byMonth[ym].total+=r.total||0;byMonth[ym].income+=r.income||0;byMonth[ym].qty+=r.qty||0;byMonth[ym].count++;});
+  Object.values(byMonthStore).forEach(g=>{
+    const fee=feeByStoreName[g.store]||0;
+    const totalExcl=Math.floor(g.total/(1+rate));
+    const feeExcl=Math.floor(totalExcl*(fee/100));
+    const feeIncl=Math.floor(feeExcl*(1+rate));
+    const income=g.total-feeIncl;
+    if(!byMonth[g.ym])byMonth[g.ym]={total:0,income:0,qty:0,count:0};
+    byMonth[g.ym].total+=g.total;
+    byMonth[g.ym].income+=income;
+    byMonth[g.ym].qty+=g.qty;
+    byMonth[g.ym].count+=g.count;
+  });
+
   const sorted=Object.entries(byMonth).sort((a,b)=>b[0].localeCompare(a[0]));
   const el=document.getElementById('monthly-content');
   if(!sorted.length){el.innerHTML='<div class="empty"><div class="empty-icon">📅</div>データがありません</div>';return;}
-  el.innerHTML=`<div class="card" style="padding:0;overflow:hidden"><table class="agg-table">
+  el.innerHTML=`<div style="font-size:11px;color:var(--text-sub);margin-bottom:8px">入金額合計は、店舗ごとに月間の税込売上をまとめてから消費税率${taxRate}%で税抜金額を算出し、手数料→消費税込み手数料を差し引いています（1件ごとに丸めて合計するより、実際の入金額に近い計算方法です）</div>
+  <div class="card" style="padding:0;overflow:hidden"><table class="agg-table">
     <thead><tr><th>年月</th><th class="num">件数</th><th class="num">売値合計<br><small style="font-weight:400;color:#aaa">税込</small></th><th class="num-income">入金額合計</th></tr></thead>
     <tbody>${sorted.map(([ym,v])=>`<tr><td style="font-weight:600">${ym.replace('-','年')}月</td><td class="num">${v.count}件</td><td class="num">${fmt(v.total)}</td><td class="num-income">${fmt(v.income)}</td></tr>`).join('')}</tbody>
   </table></div>`;
@@ -1098,6 +1140,7 @@ function renderSalesStore(){
 }
 
 function renderSettings(){
+  document.getElementById('tax-rate').value=taxRate;
   const fl=document.getElementById('fee-list');
   fl.innerHTML=stores.map((s,i)=>`
     <div class="fee-row">
@@ -1108,6 +1151,7 @@ function renderSettings(){
   document.getElementById('veggie-tags').innerHTML=veggies.map(v=>`<div class="tag-item">${v}<button class="tag-del" onclick="delVeggie('${v}')">×</button></div>`).join('');
 }
 
+function updateTaxRate(val){taxRate=parseFloat(val)||0;if(isSignedIn)saveSettings();}
 function updateFee(i,val){stores[i].fee=parseFloat(val)||0;if(isSignedIn)saveSettings();}
 function addStore(){
   const name=document.getElementById('new-store').value.trim();
