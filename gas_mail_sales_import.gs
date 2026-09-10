@@ -643,3 +643,47 @@ function isSameDate(date, target) {
     date.getDate() === target.getDate()
   );
 }
+
+/* ===================== 一回限りのメンテナンス ===================== */
+
+/**
+ * シートの並び順をアプリのタブ構成（出荷側→売上側→設定）に揃え、
+ * 使っていない「シート1」「出荷管理」を削除する。
+ * 手動で一度だけ実行する想定（関数選択でこれを選んで実行ボタン）。
+ */
+function reorganizeSheets() {
+  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+
+  ['シート1', '出荷管理'].forEach((name) => {
+    const sheet = ss.getSheetByName(name);
+    if (sheet) {
+      ss.deleteSheet(sheet);
+      Logger.log(`削除: ${name}`);
+    } else {
+      Logger.log(`見つからないためスキップ（削除対象）: ${name}`);
+    }
+  });
+
+  const order = [
+    '出荷データ',
+    '月次集計',
+    '店舗別集計',
+    '野菜別集計',
+    '絞り込み',
+    '売上実績',
+    '売上実績_月次集計',
+    '売上実績_店舗別',
+    '売上実績_絞り込み',
+    '設定',
+  ];
+  order.forEach((name, i) => {
+    const sheet = ss.getSheetByName(name);
+    if (!sheet) {
+      Logger.log(`見つからないためスキップ（並び替え対象）: ${name}`);
+      return;
+    }
+    ss.setActiveSheet(sheet);
+    ss.moveActiveSheet(i + 1);
+  });
+  Logger.log('並び替え完了');
+}
