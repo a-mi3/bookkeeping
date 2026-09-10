@@ -12,7 +12,7 @@
  *      SPREADSHEET_ID で直接開くので紐づけは不要）
  *   2. このファイルの内容をまるごと貼り付けて保存
  *   3. 関数選択で setupTrigger を選び、一度だけ手動実行して権限を許可する
- *      → 毎日23:30頃に importDailySales が自動実行されるようになる
+ *      → 毎日20:30頃に importDailySales が自動実行されるようになる
  *   4. 新しい送信元が増えたら SENDER_CONFIGS に追記し、その送信元専用の
  *      パーサー関数（parseXxxMail）を書き足す
  *
@@ -63,21 +63,24 @@ const SENDER_CONFIGS = [
 // 手数料率の突き合わせや表記統一のために使う。無ければ本文の表記のまま使う。
 const STORE_NAME_ALIASES = {
   'フードマート下妻店': 'グラントマト下妻',
+  '道の駅グランテラス筑西': 'グランテラス筑西',
 };
 
-// 道の駅下妻（農産館）は同じ店舗でも商品によって加工品/生鮮の手数料率が分かれる。
-// 商品名にこれらのキーワードを含む場合は「加工」扱いにする。
+// 道の駅しもつま（農産館・物産館）は同じ「道の駅しもつま」でも商品によって
+// 加工品/生鮮の手数料率が分かれる。商品名にこれらのキーワードを含む場合は「加工品」扱いにする。
+// 店舗名は yasai_shipping.html の入力画面（設定シート）の表記に合わせてある。
 const SHIMOTSUMA_PROCESSED_KEYWORDS = ['塩', '唐辛子', '唐がらし', '七味', 'だし'];
+const SHIMOTSUMA_RAW_STORE_NAMES = ['農産館', '物産館'];
 
 function resolveStoreName(rawStore, veggie) {
-  if (rawStore === '農産館') {
+  if (SHIMOTSUMA_RAW_STORE_NAMES.includes(rawStore)) {
     const isProcessed = SHIMOTSUMA_PROCESSED_KEYWORDS.some((k) => veggie.includes(k));
-    return isProcessed ? '道の駅下妻（加工）' : '道の駅下妻（生鮮）';
+    return isProcessed ? '道の駅しもつま（加工品）' : '道の駅しもつま';
   }
   return STORE_NAME_ALIASES[rawStore] || rawStore;
 }
 
-/** 毎日23:30頃に実行するトリガーを1回だけ登録する（設定変更時も再実行すればよい） */
+/** 毎日20:30頃に実行するトリガーを1回だけ登録する（設定変更時も再実行すればよい） */
 function setupTrigger() {
   ScriptApp.getProjectTriggers()
     .filter((t) => t.getHandlerFunction() === 'importDailySales')
@@ -85,7 +88,7 @@ function setupTrigger() {
   ScriptApp.newTrigger('importDailySales')
     .timeBased()
     .everyDays(1)
-    .atHour(23)
+    .atHour(20)
     .nearMinute(30)
     .create();
 }
@@ -137,54 +140,68 @@ function importForDate(targetDate) {
   SENDER_CONFIGS.forEach((cfg) => {
     try {
       const threads = GmailApp.search(`${cfg.query} after:${afterStr} before:${beforeStr}`);
-      let latestMessage = null;
+      const messagesForDate = [];
       threads.forEach((thread) => {
         thread.getMessages().forEach((msg) => {
-          if (!isSameDate(msg.getDate(), targetDate)) return;
-          if (!latestMessage || msg.getDate() > latestMessage.getDate()) latestMessage = msg;
+          if (isSameDate(msg.getDate(), targetDate)) messagesForDate.push(msg);
         });
       });
-      if (!latestMessage) {
+      if (!messagesForDate.length) {
         Logger.log(`[${cfg.label}] ${targetYmd} のメールなし`);
         return;
       }
-      const messageId = latestMessage.getId();
-      if (existingMessageIds.has(messageId)) {
-        Logger.log(`[${cfg.label}] 既に取込済み: ${messageId}`);
-        return;
-      }
 
-      const body = latestMessage.getPlainBody();
-      const parsed = cfg.parser(body);
-      if (!parsed || !parsed.items.length) {
+      // 同じ送信元アドレスから「複数の店舗」の速報が別々のメールで同時刻に届くことがある
+      // （例：道の駅しもつまは農産館・物産館が別メール）ため、1通だけに絞らず全通を解析し、
+      // 本文中の店舗名（生の見出し）ごとに最新のメールを採用する
+      const latestByRawStore = {};
+      messagesForDate.forEach((msg) => {
+        const body = msg.getPlainBody();
+        const parsed = cfg.parser(body);
+        if (!parsed || !parsed.items.length) return;
+        const byStore = {};
+        parsed.items.forEach((item) => {
+          if (!byStore[item.store]) byStore[item.store] = [];
+          byStore[item.store].push(item);
+        });
+        Object.entries(byStore).forEach(([rawStore, items]) => {
+          const existing = latestByRawStore[rawStore];
+          if (!existing || msg.getDate() > existing.msgDate) {
+            latestByRawStore[rawStore] = { msgDate: msg.getDate(), messageId: msg.getId(), items, date: parsed.date };
+          }
+        });
+      });
+
+      const rawStoreNames = Object.keys(latestByRawStore);
+      if (!rawStoreNames.length) {
         Logger.log(`[${cfg.label}] ${targetYmd}: 明細を抽出できませんでした`);
         return;
       }
 
-      // 同じ送信元・同じ日付の行が既にあれば削除してから最新内容で書き直す
-      // （同じ日を複数回取り込んだ場合の重複防止）
-      removeExistingRows(sheet, cfg.label, parsed.date);
+      rawStoreNames.forEach((rawStore) => {
+        const { messageId, items, date } = latestByRawStore[rawStore];
+        if (existingMessageIds.has(messageId)) {
+          Logger.log(`[${cfg.label}/${rawStore}] 既に取込済み: ${messageId}`);
+          return;
+        }
 
-      const rows = parsed.items.map((item) => {
-        const storeName = resolveStoreName(item.store, item.veggie);
-        const fee = feeByStore[storeName] || 0;
-        const total = item.qty * item.price;
-        const income = Math.round(total * (1 - fee / 100));
-        return [
-          parsed.date,
-          storeName,
-          item.veggie,
-          item.price,
-          item.qty,
-          total,
-          fee,
-          income,
-          cfg.label,
-          messageId,
-        ];
+        const rows = items.map((item) => {
+          const storeName = resolveStoreName(item.store, item.veggie);
+          const fee = feeByStore[storeName] || 0;
+          const total = item.qty * item.price;
+          const income = Math.round(total * (1 - fee / 100));
+          return [date, storeName, item.veggie, item.price, item.qty, total, fee, income, cfg.label, messageId];
+        });
+
+        // 同じ店舗・同じ日付の行が既にあれば削除してから最新内容で書き直す
+        // （同じ日を複数回取り込んだ場合の重複防止。店舗単位で消すので、同じ送信元の
+        // 別店舗（例：物産館 vs 農産館）の行を巻き込んで消してしまうことはない）
+        const uniqueStoreNames = [...new Set(rows.map((r) => r[1]))];
+        uniqueStoreNames.forEach((storeName) => removeExistingRows(sheet, storeName, date));
+
+        sheet.getRange(sheet.getLastRow() + 1, 1, rows.length, rows[0].length).setValues(rows);
+        Logger.log(`[${cfg.label}/${rawStore}] ${rows.length}件取込完了 (${date})`);
       });
-      sheet.getRange(sheet.getLastRow() + 1, 1, rows.length, rows[0].length).setValues(rows);
-      Logger.log(`[${cfg.label}] ${rows.length}件取込完了 (${parsed.date})`);
     } catch (e) {
       Logger.log(`[${cfg.label}] エラー: ${e}`);
     }
@@ -589,12 +606,16 @@ function loadFeeByStore(ss) {
   return map;
 }
 
-/** 同一送信元・同一日付の既存行を削除する（再取込時の重複防止） */
-function removeExistingRows(sheet, senderLabel, date) {
+/**
+ * 同一店舗・同一日付の既存行を削除する（再取込時の重複防止）。
+ * 店舗名（解決後の店舗名）単位で消すため、同じ送信元アドレスから届く
+ * 別店舗（例：物産館 vs 農産館）の行を巻き込んで消してしまうことはない。
+ */
+function removeExistingRows(sheet, storeName, date) {
   const tz = Session.getScriptTimeZone();
   const values = sheet.getDataRange().getValues();
   for (let i = values.length - 1; i >= 1; i--) {
-    if (values[i][8] === senderLabel && toYmd(values[i][0], tz) === date) {
+    if (values[i][1] === storeName && toYmd(values[i][0], tz) === date) {
       sheet.deleteRow(i + 1);
     }
   }
