@@ -687,3 +687,44 @@ function reorganizeSheets() {
   });
   Logger.log('並び替え完了');
 }
+
+// 店舗名統一より前に取り込まれた「売上実績」の行に残っている古い店舗名を、
+// 現在の正式名称に一括で書き換える。手動で一度だけ実行する想定。
+const OLD_STORE_NAME_FIXES = {
+  '道の駅下妻（加工）': '道の駅しもつま（加工品）',
+  '道の駅下妻（生鮮）': '道の駅しもつま',
+  '道の駅グランテラス筑西': 'グランテラス筑西',
+};
+
+function renameOldStoreNamesInResults() {
+  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  const sheet = ss.getSheetByName(RESULT_SHEET);
+  if (!sheet) {
+    Logger.log(`${RESULT_SHEET} シートが見つかりません`);
+    return;
+  }
+  const lastRow = sheet.getLastRow();
+  if (lastRow <= 1) return;
+
+  const range = sheet.getRange(2, 2, lastRow - 1, 1); // B列(店舗)
+  const values = range.getValues();
+  let changed = 0;
+  const renamed = values.map((r) => {
+    const old = r[0];
+    if (Object.prototype.hasOwnProperty.call(OLD_STORE_NAME_FIXES, old)) {
+      changed++;
+      return [OLD_STORE_NAME_FIXES[old]];
+    }
+    return [old];
+  });
+  if (changed) {
+    range.setValues(renamed);
+    Logger.log(`${changed}件の店舗名を書き換えました`);
+    sortResultSheetByDateDesc(sheet);
+    updateResultAggregates(ss, sheet);
+    buildResultFilterSheet(ss, sheet);
+    SpreadsheetApp.flush();
+  } else {
+    Logger.log('古い店舗名は見つかりませんでした');
+  }
+}
