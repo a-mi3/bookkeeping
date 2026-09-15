@@ -884,17 +884,18 @@ function filterByPeriod(list,period){
   return list;
 }
 
+let storeMonthInited=false;
 function buildStoreMonthSelect(){
-  const months=new Set();
+  const now=new Date();
+  const currentYm=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+  const months=new Set([currentYm]);
   records.forEach(r=>{if(r.date)months.add(r.date.substring(0,7));});
   const sel=document.getElementById('store-month');
   const prev=sel.value;
-  const now=new Date();
-  const currentYm=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
   sel.innerHTML='<option value="all">全期間</option>'+
     [...months].sort((a,b)=>b.localeCompare(a)).map(ym=>`<option value="${ym}">${ym.replace('-','年')}月</option>`).join('');
-  if(prev&&prev!=='all')sel.value=prev;
-  else if(!prev||prev==='all'){sel.value=currentYm;}
+  if(storeMonthInited)sel.value=prev;
+  else{sel.value=currentYm;storeMonthInited=true;}
 }
 function buildStoreChecks(){
   const fromRecords=new Set(records.map(r=>r.store));
@@ -951,8 +952,11 @@ function renderStore(){
   el.innerHTML=html;
 }
 
+let veggiePeriodInited=false;
 function renderVeggie(){
-  const period=document.getElementById('veggie-period').value;
+  const periodSel=document.getElementById('veggie-period');
+  if(!veggiePeriodInited){periodSel.value='thismonth';veggiePeriodInited=true;}
+  const period=periodSel.value;
   const list=filterByPeriod(records,period);
   const byV={};
   list.forEach(r=>{if(!byV[r.veggie])byV[r.veggie]={total:0,income:0,qty:0,count:0};byV[r.veggie].total+=r.total||0;byV[r.veggie].income+=r.income||0;byV[r.veggie].qty+=r.qty||0;byV[r.veggie].count++;});
@@ -986,18 +990,19 @@ function normalizeKana(s){
   return String(s||'').replace(/[ぁ-ゖ]/g,c=>String.fromCharCode(c.charCodeAt(0)+0x60));
 }
 
+let salesMonthInited=false;
 function buildSalesMonthSelect(){
-  const months=new Set();
+  const now=new Date();
+  const currentYm=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+  const months=new Set([currentYm]);
   records.forEach(r=>{if(r.date)months.add(r.date.substring(0,7));});
   salesRecords.forEach(r=>{if(r.date)months.add(r.date.substring(0,7));});
   const sel=document.getElementById('sales-month');
   const prev=sel.value;
-  const now=new Date();
-  const currentYm=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
   sel.innerHTML='<option value="all">全期間</option>'+
     [...months].sort((a,b)=>b.localeCompare(a)).map(ym=>`<option value="${ym}">${ym.replace('-','年')}月</option>`).join('');
-  if(prev&&(prev==='all'||months.has(prev)))sel.value=prev;
-  else sel.value=months.has(currentYm)?currentYm:'all';
+  if(salesMonthInited)sel.value=prev;
+  else{sel.value=currentYm;salesMonthInited=true;}
 }
 function buildSalesStoreSelect(){
   const names=[...new Set([...stores.map(s=>s.name),...salesRecords.map(r=>r.store)])];
@@ -1061,17 +1066,18 @@ function renderSales(){
 }
 
 /* ===== 売上店舗別（出荷の「店舗別」タブと同じ構成で、売上実績データを表示） ===== */
+let salesStoreMonthInited=false;
 function buildSalesStoreMonthSelect(){
-  const months=new Set();
+  const now=new Date();
+  const currentYm=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+  const months=new Set([currentYm]);
   salesRecords.forEach(r=>{if(r.date)months.add(r.date.substring(0,7));});
   const sel=document.getElementById('salesstore-month');
   const prev=sel.value;
-  const now=new Date();
-  const currentYm=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
   sel.innerHTML='<option value="all">全期間</option>'+
     [...months].sort((a,b)=>b.localeCompare(a)).map(ym=>`<option value="${ym}">${ym.replace('-','年')}月</option>`).join('');
-  if(prev&&(prev==='all'||months.has(prev)))sel.value=prev;
-  else sel.value=months.has(currentYm)?currentYm:'all';
+  if(salesStoreMonthInited)sel.value=prev;
+  else{sel.value=currentYm;salesStoreMonthInited=true;}
 }
 function buildSalesStoreChecks(){
   const fromRecords=new Set(salesRecords.map(r=>r.store));
