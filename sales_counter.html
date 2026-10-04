@@ -144,6 +144,7 @@ const SENDER_MAP={
   'route-50-station0823@himesan.com':'道の駅グランテラス筑西',
   'sanchoku@grantomato.jp':'グラントマト下妻',
   'sanchoku-announcer@netdoa-nx.jp':null,// 本文から判定
+  'rsshimotsuma0826@himesan.com':'道の駅しもつま',
 };
 
 function gapiLoaded(){gapi.load('client',async()=>{await gapi.client.init({discoveryDocs:['https://gmail.googleapis.com/$discovery/rest?version=v1']});gapiInited=true;maybeEnable();});}
@@ -367,6 +368,22 @@ function parseProducts(body,sender){
       }
     }
   }
+  // パターン3b: 道の駅しもつま（農産館・物産館 共通テーブル形式）
+  else if(sender.includes('rsshimotsuma')){
+    for(const line of lines){
+      // 商品名あり: 「ズッキーニ　170円　1　170円」
+      const m1=line.match(/^(.+?)\s+(\d+)円\s+(\d+)\s+(\d[\d,]*)円$/);
+      if(m1&&!['計','合計','商品'].includes(m1[1].trim())){
+        products.push({name:m1[1].trim(),price:parseInt(m1[2]),qty:parseInt(m1[3]),amount:parseInt(m1[4].replace(/,/g,''))});
+        continue;
+      }
+      // 商品名なし: 「190円　2　380円」（同商品の別サイズ等）
+      const m2=line.match(/^(\d+)円\s+(\d+)\s+(\d[\d,]*)円$/);
+      if(m2){
+        products.push({name:'（追加分）',price:parseInt(m2[1]),qty:parseInt(m2[2]),amount:parseInt(m2[3].replace(/,/g,''))});
+      }
+    }
+  }
   // パターン4: netDoA産直（さわやか直売所等）
   else if(sender.includes('netdoa')){
     for(const line of lines){
@@ -402,12 +419,19 @@ function filterFinalOnly(data){
   const result=[];
   Object.values(finalMap).forEach(group=>{
     const finals=group.filter(d=>!d.isSpeed);
-    if(finals.length>0){
-      // 確定があれば確定のみ（最後の1件）
-      result.push(finals[finals.length-1]);
+    const targets=finals.length>0?finals:group;
+    if(targets.length===1){
+      result.push(targets[0]);
     }else{
-      // 速報しかない場合はそれを使う（最後の1件）
-      result.push(group[group.length-1]);
+      // 同日・同店舗で複数の確定メール（農産館＋物産館等）は合算
+      const merged={...targets[0]};
+      merged.products=[...targets[0].products];
+      for(let i=1;i<targets.length;i++){
+        merged.products=[...merged.products,...targets[i].products];
+        merged.total=(merged.total||0)+(targets[i].total||0);
+        merged.totalQty=(merged.totalQty||0)+(targets[i].totalQty||0);
+      }
+      result.push(merged);
     }
   });
   return result;
