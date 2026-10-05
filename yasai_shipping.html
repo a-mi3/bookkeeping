@@ -1021,8 +1021,9 @@ function renderSales(){
   // 前月残の計算（特定月が選ばれている場合のみ）
   const carryMap={};
   if(month!=='all'){
-    const prevShipped=records.filter(r=>r.date&&r.date<month+'-01');
-    const prevSold=salesRecords.filter(r=>r.date&&r.date<month+'-01');
+    const SALES_START='2026-09-01';// 売上メール集計開始月
+    const prevShipped=records.filter(r=>r.date&&r.date>=SALES_START&&r.date<month+'-01');
+    const prevSold=salesRecords.filter(r=>r.date&&r.date>=SALES_START&&r.date<month+'-01');
     prevShipped.forEach(r=>{
       const key=`${r.store}|${normalizeKana(r.veggie)}`;
       if(!carryMap[key])carryMap[key]=0;
