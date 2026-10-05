@@ -118,6 +118,11 @@ function backfillSeptember() {
   backfillRange('2026-09-01', '2026-09-30');
 }
 
+/** 10月2日の農産館+物産館を取り直す（修正後に一度だけ実行） */
+function backfill1002() {
+  backfillRange('2026-10-02', '2026-10-02');
+}
+
 /** 指定した日付を対象に、各送信元の「その日届いた最新の1通」を取り込む */
 function importForDate(targetDate) {
   const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
@@ -178,29 +183,29 @@ function importForDate(targetDate) {
         return;
       }
 
+      // 農産館・物産館のように同じ解決済み店舗名になる複数メールを先に集約してから書き込む
+      // （先に書いた行を後のメールが上書き削除してしまうのを防ぐ）
+      const rowsByResolvedStore = {};
       rawStoreNames.forEach((rawStore) => {
         const { messageId, items, date } = latestByRawStore[rawStore];
         if (existingMessageIds.has(messageId)) {
           Logger.log(`[${cfg.label}/${rawStore}] 既に取込済み: ${messageId}`);
           return;
         }
-
-        const rows = items.map((item) => {
+        items.forEach((item) => {
           const storeName = resolveStoreName(item.store, item.veggie);
           const fee = feeByStore[storeName] || 0;
           const total = item.qty * item.price;
           const income = Math.round(total * (1 - fee / 100));
-          return [date, storeName, item.veggie, item.price, item.qty, total, fee, income, cfg.label, messageId];
+          if (!rowsByResolvedStore[storeName]) rowsByResolvedStore[storeName] = { rows: [], date };
+          rowsByResolvedStore[storeName].rows.push([date, storeName, item.veggie, item.price, item.qty, total, fee, income, cfg.label, messageId]);
         });
+      });
 
-        // 同じ店舗・同じ日付の行が既にあれば削除してから最新内容で書き直す
-        // （同じ日を複数回取り込んだ場合の重複防止。店舗単位で消すので、同じ送信元の
-        // 別店舗（例：物産館 vs 農産館）の行を巻き込んで消してしまうことはない）
-        const uniqueStoreNames = [...new Set(rows.map((r) => r[1]))];
-        uniqueStoreNames.forEach((storeName) => removeExistingRows(sheet, storeName, date));
-
+      Object.entries(rowsByResolvedStore).forEach(([storeName, { rows, date }]) => {
+        removeExistingRows(sheet, storeName, date);
         sheet.getRange(sheet.getLastRow() + 1, 1, rows.length, rows[0].length).setValues(rows);
-        Logger.log(`[${cfg.label}/${rawStore}] ${rows.length}件取込完了 (${date})`);
+        Logger.log(`[${cfg.label}/${storeName}] ${rows.length}件取込完了 (${date})`);
       });
     } catch (e) {
       Logger.log(`[${cfg.label}] エラー: ${e}`);

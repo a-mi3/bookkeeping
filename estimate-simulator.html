@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ホームページ制作 自動見積もりシミュレーター</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500&family=Noto+Serif+JP:wght@400;600&display=swap">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.3.1/umd/react-dom.production.min.js"></script>
+<style>
+:root{--ink:#1c1c1c;--sub:#77736c;--line:#e6e2da;--gold:#a58a5a;--tint:#f6efe0;--serif:'Noto Serif JP','Yu Mincho','Hiragino Mincho ProN',serif;--sans:'Noto Sans JP','Yu Gothic','Hiragino Sans',sans-serif}
+*{box-sizing:border-box}
+body{margin:0;background:#fff;color:var(--ink);font:18px/1.8 var(--sans)}
+.hdr{padding:56px 40px 40px;border-bottom:1px solid var(--line);text-align:center}
+.hdr small{letter-spacing:.3em;color:var(--gold);font-size:14px}
+.hdr h1{font:600 30px/1.5 var(--serif);margin:8px 0 0;letter-spacing:.06em}
+.hdr p{margin:8px 0 0;color:var(--sub);font-size:18px}
+.layout{display:grid;grid-template-columns:minmax(380px,460px) 1fr;gap:64px;padding:56px 40px;max-width:1280px;margin:0 auto}
+.q{border-bottom:1px solid var(--line);padding:0 0 36px;margin-bottom:36px;animation:in .4s ease-out}
+.q h2{font:600 20px/1.6 var(--serif);margin:0 0 16px}
+.q h2 span{color:var(--gold);margin-right:10px;font-size:16px;letter-spacing:.1em}
+.ch{display:block;width:100%;text-align:left;background:#fff;border:1px solid var(--line);border-radius:2px;padding:14px 18px;margin-bottom:10px;font:inherit;color:inherit;cursor:pointer;transition:all .3s}
+.ch:hover{border-color:var(--gold)}
+.ch.on{border-color:var(--gold);background:var(--tint)}
+.ch b{font:600 18px var(--serif);display:block}
+.ch em{font-style:normal;color:var(--sub);font-size:16px}
+.chk{display:flex;gap:12px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line);cursor:pointer}
+.chk input{width:20px;height:20px;accent-color:var(--gold)}
+.chk span:last-child{margin-left:auto;color:var(--sub);font-size:16px}
+.row2{display:flex;gap:10px}.row2 .ch{text-align:center}
+input[type=range]{width:100%;accent-color:var(--gold)}
+.big{font:600 28px var(--serif);color:var(--gold)}
+.sub{padding:20px 0 0 18px;border-left:1px solid var(--gold);margin-top:18px;animation:in .4s ease-out}
+.sub p{margin:0 0 10px;font:600 17px var(--serif)}
+input[type=text]{width:100%;font:inherit;padding:12px 14px;border:1px solid var(--line);border-radius:2px}
+.paper{background:#fff;border:1px solid var(--line);box-shadow:0 6px 30px rgba(0,0,0,.05);padding:56px 56px 40px;max-width:700px;width:100%;margin:0 auto;align-self:start;position:sticky;top:16px}
+.paper h2{font:600 28px var(--serif);letter-spacing:.5em;text-align:center;margin:0 0 28px}
+.meta{display:flex;justify-content:space-between;gap:24px;border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:18px 0;margin-bottom:28px}
+.meta div{min-width:0}
+.meta .to{font:600 22px var(--serif);border-bottom:1px solid var(--ink);display:inline-block;min-width:260px;padding-bottom:2px}
+.co{text-align:right;font-size:16px;line-height:1.7}
+.co b{display:block;font:600 18px var(--serif)}
+table{width:100%;border-collapse:collapse}
+td,th{padding:12px 4px;border-bottom:1px solid var(--line);font-size:17px;font-weight:400;text-align:left;vertical-align:top}
+td.n,th.n{text-align:right;white-space:nowrap}
+th{color:var(--sub);font-size:15px;letter-spacing:.1em}
+td small{display:block;color:var(--sub);font-size:14px;line-height:1.5}
+tr.r{animation:flash 2s ease-out}
+tr.r td{animation:in .4s ease-out}
+tr.star td{color:var(--gold)}
+.total{display:flex;justify-content:space-between;align-items:baseline;margin-top:28px;padding-top:20px;border-top:1px solid var(--ink)}
+.total span{font:600 18px var(--serif);letter-spacing:.2em}
+.total strong{font:600 48px/1.2 var(--serif)}
+.foot{margin-top:24px;font-size:14px;color:var(--sub);line-height:1.7}
+.btn{display:block;width:100%;margin:36px 0 12px;padding:16px;background:var(--ink);color:#fff;border:0;border-radius:2px;font:500 18px var(--sans);letter-spacing:.1em;cursor:pointer;transition:background .3s}
+.btn:hover{background:var(--gold)}
+.hint{color:var(--sub);font-size:14px;line-height:1.7}
+@keyframes in{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+@keyframes flash{0%,20%{background:var(--tint)}100%{background:transparent}}
+@media(max-width:900px){.layout{grid-template-columns:1fr;gap:40px;padding:32px 16px}.paper{padding:28px 20px;position:static}.meta{flex-direction:column}.co{text-align:left}.hdr{padding:36px 16px 28px}.total strong{font-size:38px}}
+@page{size:A4;margin:14mm}
+@media print{
+ .hdr,.left{display:none!important}
+ .layout{display:block;padding:0;max-width:none}
+ .paper{border:0;box-shadow:none;padding:0;max-width:none;position:static}
+ body{font-size:14px;line-height:1.6}
+ td,th{font-size:14px;padding:8px 4px}.paper h2{font-size:24px;margin-bottom:18px}
+ .total strong{font-size:36px}.meta{padding:12px 0;margin-bottom:16px}
+ tr.r,tr.r td{animation:none}
+ *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script>
+const {useState,useEffect,useRef,createElement:h}=React;
+const yen=n=>(n<0?'-':'')+'¥'+Math.abs(n).toLocaleString('ja-JP');
+const EXTRA=25000;
+const PLANS={
+ ume:{n:'梅',t:'ライト',d:'名刺代わりの小さなサイト',inc:3,items:[['d','デザイン（テンプレート活用）',60000],['c','コーディング・スマホ対応',40000],['p','公開・ドメイン設定',20000]]},
+ take:{n:'竹',t:'スタンダード',d:'集客に使える、おすすめのサイト',inc:5,items:[['d','オリジナルデザイン',120000],['c','コーディング・スマホ対応',70000],['f','お問い合わせフォーム',30000],['p','公開・ドメイン設定',20000]]},
+ matsu:{n:'松',t:'プレミアム',d:'ブランドを語る、フルオーダーのサイト',inc:8,items:[['d','フルオーダーデザイン',220000],['c','コーディング・動きの演出',130000],['f','お問い合わせフォーム',30000],['m','更新機能（CMS）導入',80000],['p','公開・ドメイン設定',20000]]}
+};
+const OPTS=[['logo','ロゴ制作',50000],['photo','写真撮影（半日）',60000],['seo','検索対策（SEO）の基本設定',40000],['en','英語ページ',80000]];
+const RESV={form:['予約フォーム連携',50000],sys:['本格予約システム',150000]};
+const DUE={'3w':['3週間以内',.3],'1w':['1週間以内',.5]};
+
+function useCount(v){
+ const [d,setD]=useState(v),cur=useRef(v);
+ useEffect(()=>{const s=cur.current,t0=performance.now();let id;
+  const f=now=>{const p=Math.min(1,(now-t0)/600),e=1-Math.pow(1-p,3);cur.current=Math.round(s+(v-s)*e);setD(cur.current);if(p<1)id=requestAnimationFrame(f)};
+  id=requestAnimationFrame(f);return()=>cancelAnimationFrame(id)},[v]);
+ return d;
+}
+const now=new Date(),p2=n=>String(n).padStart(2,'0');
+const QNO='Q-'+now.getFullYear()+p2(now.getMonth()+1)+p2(now.getDate())+'-'+p2(now.getHours())+p2(now.getMinutes());
+const DATE=now.getFullYear()+'年'+(now.getMonth()+1)+'月'+now.getDate()+'日';
+const exp=new Date(now.getTime()+30*864e5),EXP=exp.getFullYear()+'年'+(exp.getMonth()+1)+'月'+exp.getDate()+'日';
+
+function App(){
+ const [plan,setPlan]=useState('take'),[pages,setPages]=useState(10),[opts,setOpts]=useState([]);
+ const [resv,setResv]=useState(false),[rt,setRt]=useState('form'),[rush,setRush]=useState(false),[due,setDue]=useState('3w'),[name,setName]=useState('株式会社〇〇');
+ const P=PLANS[plan];
+ const lines=P.items.map(([k,l,a])=>({id:plan+k,l,a}));
+ const extra=Math.max(0,pages-P.inc);
+ if(extra)lines.push({id:'ex',l:'追加ページ',s:extra+'ページ × '+yen(EXTRA),a:extra*EXTRA});
+ OPTS.forEach(([k,l,a])=>opts.includes(k)&&lines.push({id:k,l:l,a}));
+ if(resv)lines.push({id:'rv'+rt,l:'予約機能：'+RESV[rt][0],a:RESV[rt][1]});
+ const sub=lines.reduce((s,x)=>s+x.a,0);
+ const rate=pages>=15?.15:pages>=10?.10:0;
+ const disc=-Math.round(sub*rate);
+ const rr=rush?DUE[due][1]:0, rAmt=Math.round((sub+disc)*rr);
+ const tax=Math.round((sub+disc+rAmt)*.1), total=sub+disc+rAmt+tax;
+ const shown=useCount(total);
+ const tog=k=>setOpts(o=>o.includes(k)?o.filter(x=>x!==k):[...o,k]);
+ const R=(id,l,a,cls,s)=>h('tr',{key:id+':'+a,className:'r '+(cls||'')},h('td',null,l,s&&h('small',null,s)),h('td',{className:'n'},yen(a)));
+
+ const left=h('div',{className:'left'},
+  h('div',{className:'q'},h('h2',null,h('span',null,'01'),'ご希望のプランをお選びください'),
+   Object.entries(PLANS).map(([k,v])=>h('button',{key:k,className:'ch'+(plan===k?' on':''),onClick:()=>setPlan(k)},h('b',null,v.n+'　'+v.t+(k==='take'?'（おすすめ）':'')),h('em',null,v.d+'／'+v.inc+'ページ込み')))),
+  h('div',{className:'q'},h('h2',null,h('span',null,'02'),'ページ数はどれくらいですか？'),
+   h('div',{className:'big'},pages+' ページ'),
+   h('input',{type:'range',min:1,max:20,value:pages,onChange:e=>setPages(+e.target.value)}),
+   h('div',{className:'hint'},'基本'+P.inc+'ページ込み。追加は1ページ'+yen(EXTRA)+'。10ページ以上で10%オフ、15ページ以上で15%オフ。')),
+  h('div',{className:'q'},h('h2',null,h('span',null,'03'),'追加したいオプション（複数選べます）'),
+   OPTS.map(([k,l,a])=>h('label',{key:k,className:'chk'},h('input',{type:'checkbox',checked:opts.includes(k),onChange:()=>tog(k)}),h('span',null,l),h('span',null,'+'+yen(a))))),
+  h('div',{className:'q'},h('h2',null,h('span',null,'04'),'予約機能は必要ですか？'),
+   h('div',{className:'row2'},h('button',{className:'ch'+(!resv?' on':''),onClick:()=>setResv(false)},'いいえ'),h('button',{className:'ch'+(resv?' on':''),onClick:()=>setResv(true)},'はい')),
+   resv&&h('div',{className:'sub'},h('p',null,'どちらの予約機能にしますか？'),
+    Object.entries(RESV).map(([k,v])=>h('button',{key:k,className:'ch'+(rt===k?' on':''),onClick:()=>setRt(k)},h('b',null,v[0]),h('em',null,'+'+yen(v[1])))))),
+  h('div',{className:'q'},h('h2',null,h('span',null,'05'),'お急ぎですか？'),
+   h('div',{className:'row2'},h('button',{className:'ch'+(!rush?' on':''),onClick:()=>setRush(false)},'いいえ'),h('button',{className:'ch'+(rush?' on':''),onClick:()=>setRush(true)},'はい')),
+   rush&&h('div',{className:'sub'},h('p',null,'いつまでに必要ですか？（特急料金がかかります）'),
+    Object.entries(DUE).map(([k,v])=>h('button',{key:k,className:'ch'+(due===k?' on':''),onClick:()=>setDue(k)},h('b',null,v[0]),h('em',null,'特急料金 +'+Math.round(v[1]*100)+'%'))))),
+  h('div',{className:'q'},h('h2',null,h('span',null,'06'),'見積書のあて名'),
+   h('input',{type:'text',value:name,onChange:e=>setName(e.target.value)})),
+  h('button',{className:'btn',onClick:()=>window.print()},'この内容で印刷（PDF保存）'),
+  h('div',{className:'hint'},'印刷画面で送信先（プリンター）を「PDFとして保存」に変えると、MacでもWindowsでもPDFになります。'));
+
+ const paper=h('div',{className:'paper'},
+  h('h2',null,'御見積書'),
+  h('div',{className:'meta'},
+   h('div',null,h('div',{className:'to'},(name||'　')+' 御中'),h('div',{className:'hint',style:{marginTop:10}},'下記のとおり、御見積申し上げます。')),
+   h('div',{className:'co'},h('b',null,'株式会社サンプルデザイン'),h('div',null,'〒150-0001'),h('div',null,'東京都渋谷区神宮前1-2-3'),h('div',null,'TEL 03-1234-5678'),h('div',null,'info@example.com'))),
+  h('div',{className:'hint',style:{marginBottom:12}},'見積番号 '+QNO+'　／　発行日 '+DATE+'　／　有効期限 '+EXP),
+  h('table',null,h('thead',null,h('tr',null,h('th',null,'品目'),h('th',{className:'n'},'金額（税抜）'))),
+   h('tbody',null,
+    lines.map(x=>R(x.id,x.l,x.a,'',x.s)),
+    R('sub','小計',sub),
+    rate>0&&R('disc'+rate,'⭐まとめ割 適用中',disc,'star',pages+'ページ（'+(pages>=15?15:10)+'ページ以上）で '+Math.round(rate*100)+'%オフ'),
+    rush&&R('rush'+due,'特急料金',rAmt,'',DUE[due][0]+'納品（+'+Math.round(rr*100)+'%）'),
+    R('tax','消費税（10%）',tax))),
+  h('div',{className:'total'},h('span',null,'御見積合計'),h('strong',null,yen(shown))),
+  h('div',{className:'foot'},'プラン：'+P.n+'（'+P.t+'）／ 納期：'+(rush?DUE[due][0]:'ご相談の上決定')+'　お支払い：納品後30日以内'));
+
+ return h('div',null,
+  h('div',{className:'hdr'},h('small',null,'WEB DESIGN ESTIMATE'),h('h1',null,'ホームページ制作　自動見積もりシミュレーター'),h('p',null,'左で選ぶと、右の見積書がその場で変わります。')),
+  h('div',{className:'layout'},left,paper));
+}
+ReactDOM.createRoot(document.getElementById('root')).render(h(App));
+</script>
+</body>
+</html>

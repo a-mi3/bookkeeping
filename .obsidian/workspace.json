@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "00ボイスメモ.md",
+                "file": "articles/2026-06-27_214629/03_小橋建太氏、倉持明日香の結婚祝福_証人の経緯説明「AKBじゃんけん大会に着ていた時のTシャツに着替え撮影」小橋建太氏、倉持明日香....md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "00ボイスメモ"
+              "title": "03_小橋建太氏、倉持明日香の結婚祝福_証人の経緯説明「AKBじゃんけん大会に着ていた時のTシャツに着替え撮影」小橋建太氏、倉持明日香..."
             }
           }
         ]
@@ -156,13 +156,13 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "00ボイスメモ.md",
+                "file": "articles/2026-06-27_214629/03_小橋建太氏、倉持明日香の結婚祝福_証人の経緯説明「AKBじゃんけん大会に着ていた時のTシャツに着替え撮影」小橋建太氏、倉持明日香....md",
                 "followCursor": true,
                 "showSearch": false,
                 "searchQuery": ""
               },
               "icon": "lucide-list",
-              "title": "00ボイスメモのアウトライン"
+              "title": "03_小橋建太氏、倉持明日香の結婚祝福_証人の経緯説明「AKBじゃんけん大会に着ていた時のTシャツに着替え撮影」小橋建太氏、倉持明日香...のアウトライン"
             }
           }
         ],
@@ -183,19 +183,27 @@
       "bases:新規ベースを作成": false
     }
   },
-  "active": "47fec645c29a0347",
+  "active": "85007b9cbbc3cc12",
   "lastOpenFiles": [
-    "sales_counter.html",
-    "sales_counter.html.tmp.17908.d33ac31ff4fd",
-    "yasai_shipping.html.tmp.17908.42396a987918",
-    "yasai_shipping.html.tmp.17908.80dc11e2d7f1",
-    "yasai_shipping.html.tmp.17908.52134adc4ca9",
-    "yasai_shipping.html.tmp.17908.c1066d5f0b25",
-    "yasai_shipping.html.tmp.17908.cfa6501fad2e",
-    "yasai_shipping.html.tmp.17908.cb63f38a20df",
-    "yasai_shipping.html.tmp.17908.88ef2b79c17d",
-    "yasai_shipping.html.tmp.17908.5f9e94992549",
-    "yasai_shipping.html.tmp.17908.f6129eb996d1",
+    "uniko-ime-dictionary.txt",
+    "uniko-ime-dictionary.txt.tmp.25004.2bc9adad22f9",
+    "imagen.py.tmp.11448.d91e5a59887d",
+    "imagen.py.tmp.11448.113195ca97c5",
+    "imagen.py.tmp.11448.47a74b8d572c",
+    "imagen.py.tmp.11448.f65d6ded6ee3",
+    "imagen.py.tmp.11448.4fba2b415cd4",
+    "imagen.py.tmp.11448.4c536527ba84",
+    "imagen.py.tmp.11448.f500f0cae190",
+    "imagen.py",
+    "imagen.py.tmp.11448.ae607d46cd30",
+    "articles/2026-06-27_214629/01_“ミス慶大グランプリ”齊藤美雅、撮影での“人生初体験”告白「忘れられない思い出です」_“あの夏の恋”を呼び覚ますMV出演“ミス慶大グランプリ”齊....md",
+    "2026-06-27.md",
+    "00ボイスメモ.md",
+    "articles/2026-06-27_214629/05_Mrs._GREEN_APPLE藤澤涼架_地元・長野の「茶臼山動物園」園長からのメッセージに大興奮!_大好きなウォンバット“ウォレス”くんに思いを馳せる3人組ロ.md",
+    "articles/2026-06-27_214629/04_ラミレスの妻・美保さん、子ども4人の顔出しショット_団らん中に緊急地震速報…動揺&戸惑い「ウロウロしちゃいました」ラミレスの妻･美保さん....md",
+    "articles/2026-06-27_214629/03_小橋建太氏、倉持明日香の結婚祝福_証人の経緯説明「AKBじゃんけん大会に着ていた時のTシャツに着替え撮影」小橋建太氏、倉持明日香....md",
+    "articles/2026-06-27_214629/02_『ドッキリGP』今年も4時間テレビSPが決定_向井康二“マッサマン”は「縁の深いあの人」と対決『ドッキリGP』今年も4....md",
+    "2026-06-27_真壁の祇園祭.md",
     "03_加工情報/レコーディング/レコーディング_X投稿_2000字.md",
     "03_加工情報/レコーディング/レコーディング_X投稿_140字.md",
     "03_加工情報/レコーディング/レコーディング_インフォグラフィック_プロンプト.md",
@@ -213,14 +221,6 @@
     "02_ブログ記事/キュウリマルチ/キュウリマルチ.md",
     "01_一時ファイル/レコーディング.md",
     "01_一時ファイル/ピーマン質問.md",
-    "01_一時ファイル/キュウリマルチ.md",
-    "01文字起こし.md",
-    "00ボイスメモ.md",
-    "01文字起こし/ピーマン質問_note.md",
-    "99_アーカイブ/03_加工情報/ピーマン質問_小学生向け解説.md",
-    "99_アーカイブ/03_加工情報/ピーマン質問_インフォグラフィック_プロンプト.md",
-    "99_アーカイブ/03_加工情報/ピーマン質問_X投稿_2000字.md",
-    "99_アーカイブ/03_加工情報/ピーマン質問_X投稿_140字.md",
     "vivant_frames/frame_0016.jpg",
     "vivant_frames/frame_0015.jpg",
     "vivant_frames/frame_0014.jpg",

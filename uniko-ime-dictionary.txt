@@ -1,0 +1,22 @@
+@でざいん	次の流れでHPデザインを行って 1:DESIGN.md作成 2:Claude Cookbookの美学プロンプトを適用 3:Claude Codeでセクション単位に実行 白ベース・黒文字・シンプル・文字大きめ	名詞
+@あげんと	call Agents claude-code-guideに準拠してここまでのFBをskills、Rules、Sub agents、scripts、CLAUDE.mdのいずれかの今回の生成に関わった該当の箇所をアップデートして（pj内に.claude内に該当ものがない場合は新規作成）	名詞
+@あげんと	仕様駆動MVP（level3-spec-mock skill）。動くHTMLサイト＋仕様書図解PNGを実装→open。localStorage単一HTML・サーバ無・日本語実装・サンプル5-15件・AI自動運用検証用・100点スコア・各画面に🤖自動運用ポイント	名詞
+@あげんと	ROUTINE化:1責務分解(冪等)→ローカル(PC要/1m)orクラウド(PC不要/1h)選定→間隔・停止・予算上限明記→失敗時リトライ・破壊操作(本番/削除/強制push)要承認→ログ+異常時Push通知→作成し一覧確認、選定/理由/結果報告	名詞
+@あげんと	CC(goal/Mon/batch/Plan/Hook/Rule/Skill/Flow/allow/Mem/sec/task/Team/rw/rev=cr+sr/Ultra)最適選択→batch/Flow FO→待Mon・危険前ckpt→rev+規模次第A2A→選定/理由/結果/check/要約報告	名詞
+@md	日付_時間_日時_タイトル　のファイル名で	名詞
+@md	ファイル名: YYYY-MM-DD_HHMM_タイトル_v1_01.png でmanifest_タイトル.jsonで全画像のメタデータ管理。HTMLビューアはファイル名降順ソート+カテゴリフィルタ	名詞
+@ひきつぎ	ClaudeCodeの当セッションのコンテキストが長くて新セッションに移動するので引継書作成とメモリーに流れやナレッジまとめておいて	名詞
+@おぺん	ここまでのFBを AGENTS.md・SOUL.md・TOOLS.md・MEMORY.md・skills/・scripts/ の該当箇所に反映して。なければワークスペース内に新規作成	名詞
+@ぐろく	GB(goal=Xリサーチ最大化/batch/Sub=parallel) res:xk(L+s+ja+f) xs xt wf(内)→batch/Fan-out→A2A→sel/res/chk/sum	名詞
+@ぐろく	GB(goal=PJ書込+meta+検証全/Sub=parallel) skills/scripts+AGENTS/SOUL/TOOLS/MEMORY+README+v(read/grep後実施)+fullpath+「何を・どこで」+JP応答+siteopen+家臣+re-prevent+FB反映	名詞
+@ぐろく	GB(goal=実装時sub+A2A実行/Sub=parallel) res:xk(L+s+ja+f) xs xt wf(内)→batch/Fan-out→subagent(research/vhook/忠実性check)+A2A rev→skill再利用+sel/reas/res/chk/sum	名詞
+@ばｓｈ	A生成→Bパス整合→Cビューア再生成を1本bash同期実行(&分割禁止)。完了=exitコード。pgrep自己マッチ禁止。途中=ログのみ。失敗は継続→最後✅N/❌N報告	名詞
+@ぜん	抜本ZEN：上位意図を疑い罠7(手戻/重複/隠依/規模/費爆/単調/エッジ)先読み→設計内蔵。品×速×費×汎×保の最適点。停滞/ぶれ/反復2-3回→前提・手段・軸変更先出し(受禁)。学→法→.claude→次。検=敵/AB/実測。不逆前ckpt・bgexit+後始末。報=何/なぜ/結/次。	名詞
+@もでる	モデル遷移：裁量×失敗コストで決定。①設計/未知②メタ改修=Opus高③定型=Sonnet④visionサブ=agents定義So⑤監視=Haiku⑥再実行=任意。切替=セ:/model・スキル:frontmatter・サブ:agents・WF:継承。普段Sonnet→メタ/未知のみ上げ。	名詞
+@てきすと	以降の成果物（コピペ用の文章・コード・プロンプト等）は ```text … ``` のテキストボックス（フェンス付きコードブロック）で囲って出力して。Markdownを解釈させず、そのままコピーできる素のテキストにする	名詞
+@html	html化＝②HPデザイン3step(DESIGN.md→Cookbook美学→section実装/白ベース文字大)＋⑦グローバルメニュー(単一NAV1ファイル参照サイドバー・左固定追従ハイライト・スマホ収納・各リンク見出し)。表を多用しわかりやすく。当セッションのQA反映	名詞
+@あさな	Asana引継：.claude+成果物を対象PJにミラー集約。zip/添付なし→各内容は概要(説明)にテキスト直書き(装飾Asana記法)。概要>説明=README・要旨=CLAUDE.md。REST直叩。復元=概要を.claude復元→再開。落とし穴は🅱。	名詞
+@のちおん	Notion引継：.claude+成果物をNotion1ページに親→子で階層ミラー集約。zip/添付なし・本文ブロック(テキスト/コード)だけで完結＋トップに目次&CLAUDE.md相当。作成API/MCP(MD直貼OK)。復元=本文コピー→.claude→再開。	名詞
+@せんたくし	選択肢提案：当セッション＋当PJの未完・途中作業をgit/handoff/TODO/skill改善欄など実測根拠で洗い出し一覧化→優先度(高中低)＋理由つきでやるべき事5つを箇条書き→さらにPJ改善案を軽く列挙。憶測禁止・実ファイル根拠のみ。	名詞
+@して	siteopen：完成物は言う前1回open。閲覧file://フルパス。localhostは画像コピー時のみ(run_in_bg永続/&禁止/curl200後open)。URL/パスcodeblock単体。MD/PNGはHTML化。desc何+パス。末尾1回。	名詞
+@さいど	グローバルメニュー：単一NAV配列(1ファイル参照)からサイドバー描画。カテゴリ構造化・左固定・追従ハイライト・スマホ収納・印刷非表示・外部依存なし・各リンクに見出し＋読み。	名詞

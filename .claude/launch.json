@@ -1,0 +1,23 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "meishin-uranai-dev",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["--prefix", "C:\\Users\\ami\\Downloads\\meishin-uranai-", "run", "dev"],
+      "port": 3000
+    },
+    {
+      "name": "meishin-uranai-static",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["serve", "-l", "3001", "C:\\Users\\ami\\Downloads\\meishin-uranai-\\out"],
+      "port": 3001
+    },
+    {
+      "name": "bookkeeping",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["--yes", "http-server", "C:\\Users\\ami\\Downloads\\Claude用\\ami.kadai", "-p", "3100"],
+      "port": 3100
+    }
+  ]
+}

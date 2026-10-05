@@ -1,0 +1,153 @@
+<!-- WordPressカスタムHTML用：既存内容をすべて置き換えてください -->
+<style>
+#seeen-portfolio{--ink:#172c2a;--muted:#61736e;--paper:#f7f8f3;--line:#dce4db;--green:#225d49;--mint:#d9edb8;box-sizing:border-box;width:100%;max-width:1440px;margin:0 auto;background:var(--paper);color:var(--ink);font-family:"Noto Sans JP","Yu Gothic",Meiryo,sans-serif;font-size:15px;line-height:1.95;text-align:left;isolation:isolate;overflow-wrap:anywhere}
+#seeen-portfolio *,#seeen-portfolio *::before,#seeen-portfolio *::after{box-sizing:border-box}
+#seeen-portfolio h1,#seeen-portfolio h2,#seeen-portfolio h3,#seeen-portfolio p,#seeen-portfolio ul,#seeen-portfolio ol,#seeen-portfolio dl,#seeen-portfolio figure{margin:0;padding:0;background:none;border:0;box-shadow:none;color:inherit;text-indent:0;letter-spacing:normal}
+#seeen-portfolio h1::before,#seeen-portfolio h1::after,#seeen-portfolio h2::before,#seeen-portfolio h2::after,#seeen-portfolio h3::before,#seeen-portfolio h3::after{content:none;display:none}
+#seeen-portfolio a{color:inherit;text-decoration:none;transition:background .2s,color .2s,transform .2s}
+#seeen-portfolio a:focus-visible,#seeen-portfolio summary:focus-visible{outline:3px solid #66965c;outline-offset:5px}
+#seeen-portfolio .wrap{width:100%;max-width:1180px;margin:0 auto;padding-inline:clamp(22px,5vw,64px)}
+#seeen-portfolio .nav{display:flex;justify-content:space-between;align-items:center;gap:20px;padding-block:23px;border-bottom:1px solid var(--line)}
+#seeen-portfolio .brand{font-size:22px;font-weight:800;letter-spacing:-1px;white-space:nowrap}
+#seeen-portfolio .brand span{display:block;font-size:9px;letter-spacing:2px;font-weight:500;line-height:1.2}
+#seeen-portfolio .nav-links{display:flex;gap:25px;align-items:center;font-size:12px;font-weight:600}
+#seeen-portfolio .nav-links a:hover{color:var(--green);text-decoration:underline;text-underline-offset:5px}
+#seeen-portfolio .eyebrow{display:flex;align-items:center;gap:10px;font-size:11px;font-weight:700;letter-spacing:2px;color:var(--green);line-height:1.5}
+#seeen-portfolio .eyebrow::before{content:"";width:22px;height:1px;background:currentColor}
+#seeen-portfolio .hero{padding-block:64px 48px}
+#seeen-portfolio .hero-grid{display:grid;grid-template-columns:1.3fr 1fr;gap:44px;align-items:center}
+#seeen-portfolio h1{font-size:clamp(32px,4.4vw,58px);font-weight:750;line-height:1.5;letter-spacing:-.05em;margin:23px 0}
+#seeen-portfolio h1 em{font-style:normal;color:var(--green)}
+#seeen-portfolio .lead{max-width:39rem;color:var(--muted);font-size:15px;line-height:2.1}
+#seeen-portfolio .actions{display:flex;flex-wrap:wrap;gap:12px;margin-top:28px}
+#seeen-portfolio .button{display:inline-flex;align-items:center;justify-content:space-between;gap:28px;padding:15px 22px;border:1px solid var(--green);border-radius:4px;background:var(--green);color:white;font-size:13px;font-weight:650;line-height:1.6;min-height:50px}
+#seeen-portfolio .button:hover{background:#174431;transform:translateY(-2px)}
+#seeen-portfolio .button.secondary{background:transparent;color:var(--green);border-color:#b7c7bd}
+#seeen-portfolio .button.secondary:hover{background:#e7eedf}
+#seeen-portfolio .hero-note{font-size:11px;color:var(--muted);margin-top:14px}
+#seeen-portfolio .visual{position:relative;background:#e8eee1;border:1px solid #dce4d4;border-radius:8px;padding:28px;min-height:340px;display:flex;flex-direction:column;justify-content:center;overflow:hidden}
+#seeen-portfolio .visual::before{content:"";position:absolute;inset:0;background-image:linear-gradient(#225d4909 1px,transparent 1px),linear-gradient(90deg,#225d4909 1px,transparent 1px);background-size:24px 24px}
+#seeen-portfolio .visual-title{position:relative;font-size:10px;letter-spacing:2px;color:var(--green);margin-bottom:25px}
+#seeen-portfolio .flow-block{position:relative;background:#fffefb;border:1px solid #cbd6c4;border-radius:5px;padding:16px 18px;display:flex;justify-content:space-between;align-items:center;gap:10px;box-shadow:0 8px 20px #173e2310}
+#seeen-portfolio .flow-block small{display:block;color:var(--muted);font-size:10px}
+#seeen-portfolio .flow-block strong{font-size:16px;font-weight:650}
+#seeen-portfolio .flow-block b{color:#76936b;font-size:22px;font-weight:400}
+#seeen-portfolio .flow-arrow{position:relative;text-align:center;font-size:18px;color:#6a8962;line-height:1.7}
+#seeen-portfolio .flow-block.result{background:var(--green);color:white;border-color:var(--green)}
+#seeen-portfolio .flow-block.result small,#seeen-portfolio .flow-block.result b{color:#d9edb8}
+#seeen-portfolio .credentials{display:flex;gap:16px 30px;flex-wrap:wrap;border-top:1px solid var(--line);padding-top:26px;margin-top:42px;font-size:11px;color:var(--muted)}
+#seeen-portfolio .credentials span::before{content:"＋";color:var(--green);margin-right:7px}
+#seeen-portfolio .section{padding-block:65px;border-top:1px solid var(--line);scroll-margin-top:30px}
+#seeen-portfolio .section-head{display:flex;justify-content:space-between;gap:24px;align-items:flex-end;margin-bottom:32px}
+#seeen-portfolio h2{font-size:clamp(25px,3vw,35px);font-weight:700;line-height:1.5;letter-spacing:-.03em;margin-top:12px}
+#seeen-portfolio .section-head>p{font-size:13px;color:var(--muted);max-width:26rem}
+#seeen-portfolio .service-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+#seeen-portfolio .service{padding:26px 22px;border:1px solid var(--line);border-radius:5px;background:#fffefb}
+#seeen-portfolio .num{font-size:11px;letter-spacing:2px;color:#5b7f65;display:block;margin-bottom:24px}
+#seeen-portfolio h3{font-size:19px;font-weight:700;line-height:1.7;margin-bottom:12px}
+#seeen-portfolio .service p{font-size:13px;color:var(--muted)}
+#seeen-portfolio .service ul{list-style:none;border-top:1px solid var(--line);margin-top:20px;padding-top:15px;font-size:12px}
+#seeen-portfolio .service li{padding:4px 0}
+#seeen-portfolio .service li::before{content:"↗";color:var(--green);margin-right:8px}
+#seeen-portfolio .work-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 34px;counter-reset:project}
+#seeen-portfolio .work{position:relative;padding:28px 0;border-top:1px solid #aebfb0;counter-increment:project}
+#seeen-portfolio .work::before{content:"PROJECT / 0" counter(project);display:block;font-size:10px;letter-spacing:2px;color:var(--green);margin-bottom:16px}
+#seeen-portfolio .work h3{font-size:21px;margin-bottom:9px}
+#seeen-portfolio .work .stack{display:inline-block;font-size:10px;line-height:1.7;color:#3c6954;padding:5px 9px;background:#e9eee2;border-radius:3px;margin-bottom:15px}
+#seeen-portfolio .work p{font-size:13px;color:var(--muted)}
+#seeen-portfolio .work .link{margin-top:18px;font-size:12px;font-weight:650;color:var(--green)}
+#seeen-portfolio .work .link a{border-bottom:1px solid #a6baa6;padding-bottom:4px;overflow-wrap:anywhere}
+#seeen-portfolio .work .link a::after{content:" ↗"}
+#seeen-portfolio .mid-cta{display:flex;align-items:center;justify-content:space-between;gap:24px;padding:25px 28px;background:#e8eee1;border-radius:5px;margin-top:20px}
+#seeen-portfolio .mid-cta p{font-size:14px;font-weight:600}
+#seeen-portfolio .about-grid{display:grid;grid-template-columns:1fr 1.15fr;gap:40px;align-items:start}
+#seeen-portfolio .about-image{display:block;width:100%;height:auto;border-radius:5px}
+#seeen-portfolio figcaption{font-size:11px;color:var(--muted);margin-top:10px}
+#seeen-portfolio .about-text p{font-size:14px;color:var(--muted);margin-bottom:16px}
+#seeen-portfolio .name{font-size:24px;font-weight:700;margin-bottom:16px}
+#seeen-portfolio .name small{display:block;font-size:11px;font-weight:400;letter-spacing:1px;color:var(--muted)}
+#seeen-portfolio .facts{display:grid;grid-template-columns:1fr 1fr;gap:16px;border-top:1px solid var(--line);padding-top:18px;margin-top:22px}
+#seeen-portfolio .facts strong{display:block;font-size:12px;color:var(--green)}
+#seeen-portfolio .facts span{font-size:11px;color:var(--muted)}
+#seeen-portfolio details{border-top:1px solid var(--line);padding:20px 0;margin-top:25px}
+#seeen-portfolio summary{cursor:pointer;font-size:13px;font-weight:600}
+#seeen-portfolio .career{list-style:none;margin-top:16px}
+#seeen-portfolio .career li{display:grid;grid-template-columns:65px 1fr;gap:16px;padding:11px 0;border-bottom:1px solid var(--line);font-size:12px;color:var(--muted)}
+#seeen-portfolio .steps{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:22px;list-style:none}
+#seeen-portfolio .steps li{padding-top:20px;border-top:1px solid #aebfb0}
+#seeen-portfolio .steps .num{margin-bottom:14px}
+#seeen-portfolio .steps h3{font-size:16px}
+#seeen-portfolio .steps p{font-size:12px;color:var(--muted)}
+#seeen-portfolio .contact{background:#183e32;color:#fffefb;padding-block:60px}
+#seeen-portfolio .contact .eyebrow{color:#c7dfaa}
+#seeen-portfolio .contact h2{font-size:clamp(27px,3.7vw,43px);margin-bottom:18px}
+#seeen-portfolio .contact-intro{max-width:38rem;font-size:14px;color:#cad8ce}
+#seeen-portfolio .contact .button{background:#d9edb8;color:#183e32;border-color:#d9edb8}
+#seeen-portfolio .contact .button:hover{background:#ecf5dc}
+#seeen-portfolio .contact .button.secondary{background:transparent;color:#fffefb;border-color:#70897c}
+#seeen-portfolio .contact-meta{border-top:1px solid #526b5e;margin-top:34px;padding-top:22px;display:flex;flex-wrap:wrap;gap:12px 30px;font-size:11px;color:#cad8ce}
+#seeen-portfolio .contact-tip{font-size:12px;color:#cad8ce;margin-top:18px}
+#seeen-portfolio .footer{display:flex;justify-content:space-between;gap:20px;padding-block:24px;font-size:10px;color:var(--muted);letter-spacing:1px}
+@media(max-width:850px){#seeen-portfolio .hero-grid{grid-template-columns:1fr;gap:32px}#seeen-portfolio .visual{min-height:0;max-width:540px;width:100%;padding:24px}#seeen-portfolio .hero{padding-top:38px}#seeen-portfolio .service-grid{grid-template-columns:1fr}#seeen-portfolio .service .num{margin-bottom:12px}#seeen-portfolio .about-grid{grid-template-columns:1fr}#seeen-portfolio .steps{grid-template-columns:1fr 1fr}#seeen-portfolio .section-head{display:block}#seeen-portfolio .section-head>p{margin-top:16px}#seeen-portfolio .nav-links{gap:16px}#seeen-portfolio .section{padding-block:44px}}
+@media(max-width:540px){#seeen-portfolio .nav-links a:nth-child(2){display:none}#seeen-portfolio .nav-links{font-size:11px;gap:13px}#seeen-portfolio .brand{font-size:20px}#seeen-portfolio .work-grid{grid-template-columns:1fr}#seeen-portfolio .mid-cta{display:block;padding:22px}#seeen-portfolio .mid-cta .button{margin-top:16px}#seeen-portfolio .actions{display:grid}#seeen-portfolio .credentials{gap:12px;font-size:10px}#seeen-portfolio .steps{gap:22px 16px}#seeen-portfolio .footer{display:block}#seeen-portfolio .contact{padding-block:42px}}
+@media(prefers-reduced-motion:reduce){#seeen-portfolio a{transition:none}#seeen-portfolio .button:hover{transform:none}}
+</style>
+<div id="seeen-portfolio">
+<div class="wrap"><nav class="nav" aria-label="ポートフォリオ内ナビゲーション"><a class="brand" href="#sp-top">See-EN<span>AMI OZAKI / PORTFOLIO</span></a><div class="nav-links"><a href="#sp-works">制作実績</a><a href="#sp-about">私について</a><a href="#sp-contact">ご相談 ↗</a></div></nav></div>
+<header id="sp-top" class="hero wrap"><div class="hero-grid"><div><p class="eyebrow">AI × WEB × BUSINESS</p><h1>日々の「手間」を、<br><em>使える仕組み</em>に。</h1><p class="lead">小さな事業のための、AI活用とWeb開発。<br>業務ツールからWebサイトまで、現場の困りごとを聞き、設計・実装・運用まで一人で伴走します。</p><div class="actions"><a class="button" href="#sp-contact">つくりたいものを相談する <span aria-hidden="true">↗</span></a><a class="button secondary" href="#sp-works">制作実績を見る <span aria-hidden="true">↓</span></a></div><p class="hero-note">要件が決まっていなくても大丈夫です。オンライン相談に対応。</p></div><div class="visual" aria-label="困りごとの整理から設計・開発、日々の運用まで対応"><p class="visual-title">FROM YOUR WORK, TO A BETTER WORKFLOW.</p><div class="flow-block"><div><small>01 / LISTEN</small><strong>現場の困りごとを整理</strong></div><b aria-hidden="true">＋</b></div><div class="flow-arrow" aria-hidden="true">↓</div><div class="flow-block"><div><small>02 / DESIGN & BUILD</small><strong>AI・Webで仕組みをつくる</strong></div><b aria-hidden="true">↗</b></div><div class="flow-arrow" aria-hidden="true">↓</div><div class="flow-block result"><div><small>03 / OPERATE</small><strong>毎日の仕事で、使い続ける。</strong></div><b aria-hidden="true">✓</b></div></div></div><div class="credentials"><span>企画から実装・運用まで一貫対応</span><span>自社の業務ツールを日々運用</span><span>Google Cloud Generative AI Leader</span></div></header>
+<section class="section wrap" id="sp-services"><div class="section-head"><div><p class="eyebrow">01 / SERVICES</p><h2>こんなお仕事を、お手伝いできます。</h2></div><p>「何をつくるか」から一緒に整理。<br>今の業務や規模に合う方法をご提案します。</p></div><div class="service-grid"><article class="service"><span class="num">01 — AUTOMATION</span><h3>業務の手間を減らす</h3><p>転記、集計、帳票づくり。繰り返す作業を、現場で使えるツールにまとめます。</p><ul><li>受発注・在庫・顧客管理ツール</li><li>スプレッドシート連携・自動化</li><li>見積書・請求書などの帳票発行</li></ul></article><article class="service"><span class="num">02 — WEB DEVELOPMENT</span><h3>サービスを形にする</h3><p>伝えるサイトから、決済や診断を備えたWebアプリまで。目的に合わせて設計します。</p><ul><li>WordPressサイト・LP制作</li><li>Next.jsによるWebアプリ開発</li><li>EC・決済・LINE LIFF連携</li></ul></article><article class="service"><span class="num">03 — AI & CONTENTS</span><h3>AIと発信を仕事に生かす</h3><p>AIの使いどころを整理し、日々の業務やコンテンツ制作に取り入れます。</p><ul><li>AI導入相談・活用レクチャー</li><li>SNS運用・投稿の自動化</li><li>パッケージ・POP・動画制作</li></ul></article></div></section>
+<section class="section wrap" id="sp-works"><div class="section-head"><div><p class="eyebrow">02 / SELECTED WORKS</p><h2>仕事の現場から、生まれたもの。</h2></div><p>自社運用のツールから、公開中のWebサービスまで。企画・設計・実装を手がけています。</p></div><div class="work-grid"><article class="work">
+        <h3>移住スタイル診断ツール</h3>
+        <p class="stack">Next.js ／ Claude API ／ Vercel</p>
+        <p>設問への答えをAIが読み、その人に合った移住のしかたを示すWebツールです。移住相談の現場で、話のきっかけとして使うために企画から公開まで一人で手がけました。</p>
+        <p class="link"><a href="https://ijyu-shindan.vercel.app/">ijyu-shindan.vercel.app</a></p>
+      </article>
+<article class="work">
+        <h3>守護女神占い 鑑定アプリ</h3>
+        <p class="stack">WordPress ／ WooCommerce ／ Next.js ／ LINE LIFF</p>
+        <p>240通りの鑑定結果を、両面印刷に対応した5ページ構成で自動生成します。決済、クーポン、購入までの導線を設計・実装し、iframe埋め込みでの遷移ループやLINE内ブラウザのCookie引き継ぎ不具合も切り分けて直しました。</p>
+        <p class="link"><a href="https://uranai.see-en.net/meishin-uranai/">uranai.see-en.net/meishin-uranai</a></p>
+      </article>
+<article class="work">
+        <h3>農産物 出荷・販売管理アプリ</h3>
+        <p class="stack">Googleスプレッドシート連携</p>
+        <p>出荷の登録から売上の集計までを一画面で終える形にしました。自分の直売所の出荷場で毎日使っています。いま、ほかの生産者にも渡せるよう製品化を進めています。</p>
+      </article>
+<article class="work">
+        <h3>複式簿記Webアプリ</h3>
+        <p class="stack">部門管理 ／ 消費税計算 ／ ダッシュボード</p>
+        <p>簿記の知識と自社経理の実務をもとに設計した会計ソフトです。自社の帳簿は今もこれでつけています。</p>
+      </article>
+<article class="work">
+        <h3>見積書・請求書・領収書 発行アプリ</h3>
+        <p class="stack">印刷サービスの業務用</p>
+        <p>入力から印刷までを一つの画面で終えられるようにしました。手が空かない現場で、迷わず押せることを優先しています。</p>
+      </article>
+<article class="work">
+        <h3>サロン向け 顧客管理・カルテアプリ</h3>
+        <p class="stack">Next.js ／ Supabase</p>
+        <p>施術の履歴とお客様の情報を管理します。紙のカルテから移すところを想定した設計です。</p>
+      </article>
+<article class="work">
+        <h3>Instagram自動投稿システム</h3>
+        <p class="stack">Meta Graph API ／ Vercel ／ スプレッドシート連携</p>
+        <p>投稿する内容をシートに用意しておくと、決めた時刻に自動で投稿されます。発信を続けたいが手が回らない、という状態を解きたくてつくりました。</p>
+      </article>
+<article class="work">
+        <h3>See-EN株式会社 コーポレートサイト</h3>
+        <p class="stack">WordPress</p>
+        <p>自社サイトの構築と運用。</p>
+        <p class="link"><a href="https://see-en.net/">see-en.net</a></p>
+      </article></div><div class="mid-cta"><p>「うちの仕事にも使えそう」と思ったら。</p><a class="button secondary" href="#sp-contact">似た課題を相談する <span aria-hidden="true">↗</span></a></div></section>
+<section class="section wrap" id="sp-about"><div class="section-head"><div><p class="eyebrow">03 / ABOUT</p><h2>つくる人であり、つかう人でも。</h2></div></div><div class="about-grid"><figure><img class="about-image" src="https://see-en.net/wp-content/uploads/2026/03/名称未設定のデザイン-7.jpg" width="1024" height="683" loading="lazy" alt="活動拠点の旧高久家住宅を描いた水彩調のイメージ"><figcaption>活動の拠点：真壁のりびんぐ「ふらっと」／ 茨城県桜川市</figcaption></figure><div class="about-text"><div class="name">尾﨑 亜美<small>AMI OZAKI / See-EN株式会社 代表取締役</small></div><p>農産物直売「やさい日和」と、交流拠点「真壁のりびんぐ ふらっと」を運営しながら、業務ツールとWebアプリを開発しています。</p><p>受発注も、在庫も、経理も、自分の毎日の仕事。自社で使い続けているからこそ、機能を増やすことより「迷わず使えて、仕事が進むこと」を大切にしています。</p><p>法人営業や移住相談で培ったヒアリングを生かし、まだ言葉になっていない課題から一緒に整理します。</p><div class="facts"><div><strong>相談から運用まで</strong><span>窓口も、開発する人も同じです。</span></div><div><strong>茨城から、オンラインで</strong><span>Zoom・Google Meetに対応。</span></div></div></div></div><details><summary>経歴・使う技術・資格を見る</summary><ul class="career">
+        <li><span class="yr">1998年</span><span>一般事務・経理。簿記を実務で使いはじめる</span></li>
+        <li><span class="yr">2009年</span><span>インテリア商社で小売店向け法人営業。新作展示会の企画運営、提案資料の作成</span></li>
+        <li><span class="yr">2017年</span><span>耐火物メーカーで製品検査・品質管理・研究職</span></li>
+        <li><span class="yr">2021年</span><span>ネットショップ運営、商品企画、パッケージデザイン、YouTube運営</span></li>
+        <li><span class="yr">2023年</span><span>桜川市地域おこし協力隊／移住支援コンシェルジュ</span></li>
+        <li><span class="yr">2026年</span><span>See-EN株式会社を設立、代表取締役</span></li>
+      </ul><p style="margin-top:20px;font-size:12px;color:#61736e">Next.js / React / Supabase / Vercel / Claude API / Google Sheets API / Meta Graph API / WordPress / WooCommerce / LINE LIFF / HTML・CSS・JavaScript / Git・GitHub / Canva / PowerDirector</p><p style="margin-top:12px;font-size:12px;color:#61736e">資格：Google Cloud Generative AI Leader（生成AIリーダー認定）、簿記、普通自動車運転免許</p></details></section>
+<section class="section wrap" id="sp-process"><div class="section-head"><div><p class="eyebrow">04 / PROCESS</p><h2>ご相談から、使いはじめるまで。</h2></div><p>内容・費用・進め方を確認してから制作します。</p></div><ol class="steps"><li><span class="num">STEP 01</span><h3>ご相談</h3><p>今のお仕事と、困っていることをお聞かせください。構想段階でも構いません。</p></li><li><span class="num">STEP 02</span><h3>整理・ご提案</h3><p>必要な機能と優先順位を整理し、対応範囲・お見積り・スケジュールをご提案します。</p></li><li><span class="num">STEP 03</span><h3>設計・制作</h3><p>使い方を確認しながら、設計と実装を進めます。操作のしやすさも一緒に確かめます。</p></li><li><span class="num">STEP 04</span><h3>公開・運用</h3><p>使いはじめをサポート。納品後の修正・保守は、必要な範囲を相談して決めます。</p></li></ol></section>
+<section class="contact" id="sp-contact"><div class="wrap"><p class="eyebrow">LET’S MAKE IT WORK.</p><h2>その「ちょっと困った」を、<br>つくるきっかけに。</h2><p class="contact-intro">「この作業をラクにしたい」「こんなサービスを形にしたい」。<br>まずは、今のお話を聞かせてください。ご予算に合う形を一緒に考えます。</p><div class="actions"><a class="button" href="mailto:ami.ozaki@see-en.net?subject=制作・業務改善のご相談">メールで相談する <span aria-hidden="true">↗</span></a><a class="button secondary" href="tel:0296471135">電話する：0296-47-1135 <span aria-hidden="true">↗</span></a></div><p class="contact-tip">ご相談の際は、困っていること・ご希望の時期・ご予算の目安を、わかる範囲でお知らせください。</p><div class="contact-meta"><a href="mailto:ami.ozaki@see-en.net">ami.ozaki@see-en.net</a><span>オンライン打ち合わせ対応</span><span>〒300-4427 茨城県桜川市真壁町上谷貝754-1</span></div></div></section>
+<footer class="footer wrap"><span>© See-EN Inc. / AMI OZAKI</span><a href="https://see-en.net/">See-EN コーポレートサイト ↗</a></footer>
+</div>

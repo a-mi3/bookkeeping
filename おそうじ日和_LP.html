@@ -1,0 +1,643 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>おそうじ日和｜休日を、掃除だけで終わらせない。地域密着のハウスクリーニング</title>
+<meta name="description" content="気になる「その1カ所」から頼める、地域密着の訪問ハウスクリーニング。エアコン1台9,900円（税込）〜。作業前の状況確認と明朗会計。無料見積もり・ご相談受付中。">
+<style>
+:root{
+  --main:#1E6B9E; --main-d:#155578; --mint:#EBF5F6; --accent:#E86A38; --accent-d:#C9552A;
+  --base:#FAFAF9; --text:#333333; --muted:#666B70; --line:#D9E4E8; --white:#fff;
+  --shadow:0 6px 24px rgba(30,107,158,.10);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:"Noto Sans JP","Hiragino Kaku Gothic ProN","Yu Gothic UI","Meiryo",sans-serif;color:var(--text);background:var(--base);line-height:1.9;font-size:16px;-webkit-text-size-adjust:100%}
+img,svg{max-width:100%;display:block}
+a{color:inherit}
+.wrap{max-width:1080px;margin:0 auto;padding:0 20px}
+section{padding:84px 0}
+.alt{background:var(--mint)}
+.eyebrow{display:block;text-align:center;color:var(--main);font-weight:700;font-size:13px;letter-spacing:.18em;margin-bottom:8px}
+h2{font-size:clamp(24px,4.2vw,34px);line-height:1.5;text-align:center;font-weight:800;letter-spacing:.02em}
+.lead{text-align:center;color:var(--muted);margin:16px auto 44px;max-width:680px}
+.pc{display:inline}
+
+/* header */
+header{position:sticky;top:0;z-index:20;background:rgba(250,250,249,.94);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+.hd{display:flex;align-items:center;justify-content:space-between;height:60px}
+.logo{display:flex;align-items:center;gap:8px;font-weight:800;color:var(--main);font-size:18px;text-decoration:none}
+.logo svg{width:28px;height:28px}
+.hd .btn{padding:8px 18px;font-size:14px;min-height:0}
+
+/* buttons */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:56px;padding:14px 32px;border-radius:999px;font-weight:700;font-size:16px;text-decoration:none;border:2px solid transparent;transition:.2s;cursor:pointer;font-family:inherit}
+.btn-main{background:var(--accent);color:#fff;box-shadow:0 6px 16px rgba(232,106,56,.32)}
+.btn-main:hover{background:var(--accent-d);transform:translateY(-1px)}
+.btn-sub{background:#fff;color:var(--main);border-color:var(--main)}
+.btn-sub:hover{background:var(--mint)}
+.btns{display:flex;gap:14px;flex-wrap:wrap}
+
+/* hero */
+.hero{padding:56px 0 72px;background:linear-gradient(180deg,#fff 0%,var(--mint) 100%);overflow:hidden}
+.hero .wrap{display:grid;grid-template-columns:1.1fr .9fr;gap:40px;align-items:center}
+.badge{display:inline-block;background:var(--mint);color:var(--main);border:1px solid #BFDDE3;font-weight:700;font-size:13px;padding:5px 14px;border-radius:999px;margin-bottom:18px}
+.hero h1{font-size:clamp(34px,6.2vw,56px);line-height:1.35;font-weight:900;color:var(--main-d);letter-spacing:.01em}
+.hero h1 em{font-style:normal;color:var(--accent);white-space:nowrap}
+.hero h1{font-size:clamp(30px,5.2vw,48px)}
+.hero .sub{font-size:clamp(17px,2.4vw,20px);font-weight:700;margin:20px 0 12px;line-height:1.7}
+.hero p.body{color:var(--muted);margin-bottom:26px}
+.hero .note{margin-top:16px;font-size:13px;color:var(--muted)}
+.hero-visual{position:relative}
+.ph{border-radius:24px;overflow:hidden;position:relative;background:linear-gradient(135deg,#DDEFF3,#F4F9F6)}
+.ph svg{width:100%;height:auto}
+.ph-tag{position:absolute;right:12px;bottom:10px;background:rgba(255,255,255,.88);font-size:11px;padding:2px 10px;border-radius:999px;color:var(--muted)}
+.float-card{position:absolute;left:-14px;bottom:-22px;background:#fff;border-radius:16px;padding:14px 18px;box-shadow:var(--shadow);font-size:14px;font-weight:700;line-height:1.5}
+.float-card b{color:var(--accent);font-size:22px}
+
+/* worries */
+.worry{background:#EEF2F4}
+.worry .grid{display:grid;grid-template-columns:1.15fr .85fr;gap:36px;align-items:center}
+.checks{list-style:none;display:grid;gap:12px}
+.checks li{background:#fff;border-radius:14px;padding:16px 18px 16px 56px;position:relative;box-shadow:0 2px 8px rgba(0,0,0,.05);font-weight:500}
+.checks li::before{content:"";position:absolute;left:18px;top:50%;width:24px;height:24px;margin-top:-12px;border:2px solid var(--main);border-radius:7px;background:#fff}
+.checks li::after{content:"";position:absolute;left:25px;top:50%;width:6px;height:11px;margin-top:-9px;border:solid var(--main);border-width:0 3px 3px 0;transform:rotate(45deg)}
+.worry .text{margin-top:28px;text-align:center;max-width:760px;margin-left:auto;margin-right:auto;color:#444}
+
+/* concept */
+.concept{text-align:center}
+.concept h2{font-size:clamp(26px,4.8vw,40px);line-height:1.6;color:var(--main-d)}
+.concept .sub{font-weight:700;color:var(--accent);margin:16px 0 36px}
+.concept .txt{max-width:700px;margin:0 auto;text-align:left}
+.concept .txt p{margin-bottom:1.4em}
+.concept .ph{margin-top:44px}
+
+/* cards */
+.cards3{display:grid;grid-template-columns:repeat(3,1fr);gap:24px}
+.card{background:#fff;border-radius:20px;padding:34px 26px 28px;box-shadow:var(--shadow);position:relative}
+.point{position:absolute;top:-14px;left:24px;background:var(--main);color:#fff;font-size:12px;font-weight:700;letter-spacing:.1em;padding:4px 14px;border-radius:999px}
+.card .ic{width:56px;height:56px;margin-bottom:14px}
+.card h3{font-size:18px;line-height:1.55;margin-bottom:10px;color:var(--main-d)}
+.card p{font-size:15px;color:#555;line-height:1.85}
+
+/* benefit */
+.benefit .grid{display:grid;grid-template-columns:1fr 1fr;gap:40px;align-items:center}
+.benefit ul{list-style:none;display:grid;gap:14px}
+.benefit li{display:flex;gap:12px;align-items:flex-start;background:#fff;border-radius:14px;padding:16px 18px;box-shadow:0 2px 8px rgba(0,0,0,.05)}
+.benefit li svg{flex:none;width:26px;height:26px;margin-top:3px}
+.benefit .after{margin-top:24px;color:#444}
+
+/* for whom */
+.who{background:#fff;border:2px solid #BFDDE3;border-radius:24px;padding:36px;display:grid;grid-template-columns:1fr 1fr;gap:14px 28px}
+.who .item{position:relative;padding-left:44px;font-weight:500}
+.who .item::before{content:"";position:absolute;left:0;top:3px;width:28px;height:28px;border-radius:8px;background:var(--main)}
+.who .item::after{content:"";position:absolute;left:10px;top:7px;width:7px;height:13px;border:solid #fff;border-width:0 3px 3px 0;transform:rotate(45deg)}
+.who-foot{text-align:center;margin-top:28px;font-weight:700;color:var(--main-d)}
+
+/* price */
+.price-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+.pcard{background:#fff;border:1px solid var(--line);border-radius:18px;padding:26px 24px;text-align:center}
+.pcard h3{font-size:18px;color:var(--main-d)}
+.pcard .yen{font-size:34px;font-weight:900;color:var(--text);margin:6px 0 2px;line-height:1.3}
+.pcard .yen small{font-size:14px;font-weight:700;margin-left:2px}
+.pcard .tax{font-size:12px;color:var(--muted)}
+.pcard p{font-size:14px;color:#555;margin-top:10px;line-height:1.7}
+.pset{margin-top:22px;background:linear-gradient(135deg,var(--main),#2B84B8);color:#fff;border-radius:20px;padding:30px 28px;display:grid;grid-template-columns:1fr auto;gap:20px;align-items:center;position:relative;box-shadow:var(--shadow)}
+.pset .tag{display:inline-block;background:var(--accent);font-size:12px;font-weight:700;padding:2px 12px;border-radius:999px;margin-bottom:6px}
+.pset h3{font-size:22px}
+.pset p{font-size:14px;opacity:.92}
+.pset .yen{font-size:40px;font-weight:900;white-space:nowrap}
+.pset .yen small{font-size:14px}
+.notes{margin-top:24px;font-size:13px;color:var(--muted);line-height:1.9}
+.cta-center{text-align:center;margin-top:36px}
+
+/* gallery */
+.ba-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px}
+.ba{background:#fff;border-radius:20px;padding:16px;box-shadow:var(--shadow)}
+.ba h3{font-size:16px;margin:4px 4px 10px;color:var(--main-d)}
+.ba-pair{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.ba-img{position:relative;border-radius:12px;overflow:hidden;aspect-ratio:1/1}
+.ba-img .lbl{position:absolute;left:8px;top:8px;font-size:11px;font-weight:800;letter-spacing:.08em;padding:2px 10px;border-radius:999px;background:rgba(51,51,51,.78);color:#fff;z-index:2}
+.ba-img.after .lbl{background:var(--main)}
+.ba-img svg{width:100%;height:100%}
+.ba p{font-size:14px;color:#555;margin:12px 4px 4px;line-height:1.8}
+.work{margin-top:28px;display:grid;grid-template-columns:.9fr 1.1fr;gap:28px;align-items:center;background:#fff;border-radius:20px;padding:18px;box-shadow:var(--shadow)}
+.work p{font-size:15px}
+.work .pend{display:inline-block;font-size:12px;color:var(--accent-d);background:#FDEEE6;padding:2px 10px;border-radius:999px;margin-bottom:6px;font-weight:700}
+.img-note{text-align:center;margin-top:18px;font-size:12px;color:var(--muted)}
+
+/* compare */
+.tbl-wrap{overflow-x:auto;border-radius:18px;box-shadow:var(--shadow);background:#fff}
+table{width:100%;border-collapse:collapse;min-width:720px;font-size:14.5px}
+th,td{padding:16px 16px;border-bottom:1px solid var(--line);vertical-align:top;text-align:left;line-height:1.7}
+thead th{background:#F1F5F7;text-align:center;font-size:15px}
+thead th.us{background:var(--main);color:#fff}
+tbody th{width:130px;background:#FAFCFC;font-size:14px;color:var(--main-d)}
+td.us{background:#EAF5FA;border-left:3px solid var(--main);border-right:3px solid var(--main)}
+tbody tr:last-child td.us{border-bottom:3px solid var(--main)}
+.mk{display:block;font-weight:900;font-size:20px;line-height:1.2;margin-bottom:2px}
+.mk.o{color:var(--main)} .mk.t{color:#C98A1B} .mk.x{color:#B55}
+
+/* steps */
+.steps{display:grid;grid-template-columns:repeat(5,1fr);gap:16px;position:relative}
+.step{background:#fff;border-radius:18px;padding:26px 16px 22px;text-align:center;box-shadow:var(--shadow);position:relative}
+.step .num{width:48px;height:48px;border-radius:50%;background:var(--main);color:#fff;font-weight:800;display:flex;align-items:center;justify-content:center;margin:-50px auto 12px;border:4px solid var(--mint);font-size:15px}
+.step h3{font-size:15.5px;line-height:1.55;margin-bottom:8px;color:var(--main-d)}
+.step p{font-size:13.5px;color:#555;line-height:1.75;text-align:left}
+.step:not(:last-child)::after{content:"";position:absolute;right:-13px;top:50%;margin-top:-6px;border:7px solid transparent;border-left:9px solid var(--main);z-index:2}
+.steps-wrap{padding-top:30px}
+
+/* faq */
+.faq{display:grid;gap:16px;max-width:820px;margin:0 auto}
+.qa{background:#fff;border:1px solid var(--line);border-radius:16px;padding:22px 22px}
+.qa .q,.qa .a{display:flex;gap:14px;align-items:flex-start}
+.qa .q{font-weight:700;margin-bottom:12px;color:var(--main-d)}
+.qa .a{color:#444;font-size:15px}
+.ql{flex:none;width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px}
+.q .ql{background:var(--main);color:#fff}
+.a .ql{background:var(--mint);color:var(--main);border:1px solid #BFDDE3}
+
+/* consult */
+.consult-box{background:#fff;border-radius:28px;padding:48px 32px;text-align:center;box-shadow:var(--shadow);border:2px solid #BFDDE3;max-width:860px;margin:0 auto}
+.consult-box h2{font-size:clamp(22px,3.6vw,30px)}
+.consult-box .body{max-width:640px;margin:20px auto 28px;text-align:left}
+.consult-box .btns{justify-content:center}
+.consult-box .small{margin-top:18px;font-size:13px;color:var(--muted)}
+
+/* area */
+.area-box{max-width:760px;margin:0 auto;background:#fff;border-radius:20px;padding:30px;text-align:center;box-shadow:var(--shadow)}
+.area-box strong{font-size:20px;color:var(--main-d)}
+.area-box p{margin-top:10px;font-size:14px;color:var(--muted)}
+
+/* final */
+.final{background:linear-gradient(160deg,#12456A,#1E6B9E);color:#fff;text-align:center}
+.final h2{color:#fff}
+.final .lead{color:#DCEBF3;margin-bottom:30px}
+.final .btns{justify-content:center}
+.final .btn-main{background:#F5A524;color:#2a1a00;box-shadow:0 8px 20px rgba(0,0,0,.25);min-height:62px;font-size:18px;padding:16px 44px}
+.final .btn-main:hover{background:#FFB73D}
+.final .btn-sub{background:transparent;color:#fff;border-color:#fff}
+.final .btn-sub:hover{background:rgba(255,255,255,.12)}
+.final ul{list-style:none;display:flex;gap:10px 22px;justify-content:center;flex-wrap:wrap;margin:30px 0 14px;font-size:14px}
+.final ul li::before{content:"✓ ";font-weight:800;color:#F5A524}
+.final .note{font-size:13px;color:#C9DDEA}
+
+/* form */
+.form-sec{background:var(--base)}
+form{max-width:640px;margin:0 auto;background:#fff;border-radius:22px;padding:34px 28px;box-shadow:var(--shadow);display:grid;gap:18px}
+label{font-weight:700;font-size:14px;display:block;margin-bottom:6px}
+label .req{background:var(--accent);color:#fff;font-size:11px;padding:1px 8px;border-radius:999px;margin-left:6px}
+label .opt{background:#98A4AB;color:#fff;font-size:11px;padding:1px 8px;border-radius:999px;margin-left:6px}
+input,select,textarea{width:100%;padding:14px;border:1px solid #C5D3D9;border-radius:12px;font:inherit;background:#fff;color:var(--text)}
+input:focus,select:focus,textarea:focus{outline:3px solid #BFDDE3;border-color:var(--main)}
+textarea{min-height:120px;resize:vertical}
+.chk{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.chk label{font-weight:500;display:flex;gap:8px;align-items:center;margin:0;padding:10px 12px;border:1px solid var(--line);border-radius:10px;cursor:pointer}
+.chk input{width:18px;height:18px;padding:0;accent-color:var(--main)}
+form .btn{width:100%}
+.form-msg{display:none;background:#E8F6EC;color:#256C3A;padding:14px;border-radius:12px;font-size:14px}
+.form-note{font-size:12px;color:var(--muted)}
+
+footer{background:#0F3A58;color:#C9DDEA;padding:36px 0 96px;font-size:13px;text-align:center}
+footer .logo{justify-content:center;color:#fff;margin-bottom:10px}
+
+/* floating bar (mobile) */
+.fbar{display:none}
+
+@media (max-width:860px){
+  section{padding:60px 0}
+  .hero .wrap,.worry .grid,.benefit .grid{grid-template-columns:1fr}
+  .hero-visual{order:5;margin-top:12px}
+  .float-card{left:10px;bottom:-16px}
+  .cards3,.price-grid,.ba-grid{grid-template-columns:1fr}
+  .who{grid-template-columns:1fr;padding:26px 20px}
+  .pset{grid-template-columns:1fr;text-align:center}
+  .work{grid-template-columns:1fr}
+  .benefit .ph{order:-1}
+  /* steps -> vertical timeline */
+  .steps{grid-template-columns:1fr;gap:18px;padding-left:34px}
+  .steps::before{content:"";position:absolute;left:23px;top:10px;bottom:10px;width:3px;background:#BFDDE3}
+  .steps-wrap{padding-top:0}
+  .step{text-align:left;padding:20px 18px 18px 36px}
+  .step .num{position:absolute;left:-34px;top:16px;margin:0;width:42px;height:42px;font-size:13px}
+  .step:not(:last-child)::after{display:none}
+  .step p{text-align:left}
+  .hd .btn{display:none}
+  .btns .btn{width:100%}
+  .chk{grid-template-columns:1fr}
+  .pc{display:none}
+  .fbar{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:30;padding:10px 14px calc(10px + env(safe-area-inset-bottom));background:rgba(255,255,255,.96);border-top:1px solid var(--line);gap:8px;box-shadow:0 -4px 16px rgba(0,0,0,.08)}
+  .fbar .btn{flex:1;min-height:50px;padding:10px 12px;font-size:14.5px}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap hd">
+    <a class="logo" href="#top" aria-label="おそうじ日和">
+      <svg viewBox="0 0 32 32" fill="none" aria-hidden="true"><circle cx="16" cy="16" r="15" fill="#EBF5F6" stroke="#1E6B9E" stroke-width="2"/><circle cx="16" cy="13" r="4.5" fill="#E86A38"/><path d="M6 21c3-2 6-2 10 0s7 2 10 0" stroke="#1E6B9E" stroke-width="2.2" stroke-linecap="round"/></svg>
+      おそうじ日和
+    </a>
+    <a class="btn btn-main" href="#contact">無料見積もりを相談する</a>
+  </div>
+</header>
+
+<main id="top">
+
+<!-- 1 ファーストビュー -->
+<div class="hero">
+  <div class="wrap">
+    <div>
+      <span class="badge">地域密着型 訪問ハウスクリーニング</span>
+      <h1>休日を、<br>掃除だけで<em>終わらせない。</em></h1>
+      <p class="sub">家全体を頼む必要はありません。<br>気になる「その1カ所」から頼める安心のハウスクリーニング</p>
+      <p class="body">エアコン1台9,900円（税込）〜。作業前の丁寧な状況確認と明朗会計で、頑固な汚れを徹底清掃。週末の掃除負担をプロに任せて、あなたの自由な時間を取り戻しませんか？</p>
+      <div class="btns">
+        <a class="btn btn-main" href="#contact">無料見積もりを相談する</a>
+        <a class="btn btn-sub" href="#contact">まずは相談してみる</a>
+      </div>
+      <p class="note">作業前の汚れ確認・明朗会計 ｜ 1カ所からお気軽にご依頼いただけます</p>
+    </div>
+    <div class="hero-visual">
+      <div class="ph">
+        <!-- 差し替え: 明るく清潔なリビング・キッチン写真 -->
+        <svg viewBox="0 0 560 460" role="img" aria-label="明るく清潔なリビングのイメージ">
+          <defs><linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#E4F3F7"/><stop offset="1" stop-color="#F7FBF8"/></linearGradient></defs>
+          <rect width="560" height="460" fill="url(#sky)"/>
+          <rect x="60" y="50" width="200" height="190" rx="10" fill="#fff" stroke="#BFDDE3" stroke-width="4"/>
+          <path d="M160 50v190M60 145h200" stroke="#BFDDE3" stroke-width="4"/>
+          <circle cx="215" cy="100" r="22" fill="#FFE2A8"/>
+          <rect x="300" y="70" width="190" height="60" rx="14" fill="#fff" stroke="#D9E4E8" stroke-width="3"/>
+          <path d="M318 112h154" stroke="#BFDDE3" stroke-width="4" stroke-linecap="round"/>
+          <rect y="320" width="560" height="140" fill="#E9DFCF"/>
+          <rect x="70" y="270" width="260" height="90" rx="22" fill="#fff" stroke="#D9E4E8" stroke-width="3"/>
+          <rect x="70" y="250" width="260" height="46" rx="20" fill="#CFE6EC"/>
+          <rect x="360" y="300" width="130" height="14" rx="7" fill="#C9B79B"/>
+          <rect x="376" y="314" width="8" height="46" fill="#C9B79B"/><rect x="466" y="314" width="8" height="46" fill="#C9B79B"/>
+          <ellipse cx="430" cy="292" rx="22" ry="8" fill="#fff"/><path d="M430 292v-30" stroke="#6FAE8C" stroke-width="4"/><ellipse cx="418" cy="258" rx="14" ry="6" fill="#8CC7A5"/><ellipse cx="444" cy="254" rx="14" ry="6" fill="#6FAE8C"/>
+          <g fill="#fff" opacity=".9"><path d="M110 200l6 12 12 6-12 6-6 12-6-12-12-6 12-6z"/><path d="M290 190l4 8 8 4-8 4-4 8-4-8-8-4 8-4z"/></g>
+        </svg>
+        <span class="ph-tag">イメージ（写真差し替え予定）</span>
+      </div>
+      <div class="float-card">エアコン1台<br><b>9,900円</b>（税込）〜</div>
+    </div>
+  </div>
+</div>
+
+<!-- 2 悩み -->
+<section class="worry">
+  <div class="wrap">
+    <span class="eyebrow">WORRIES</span>
+    <h2>せっかくの休日、<br class="pc">こんなお悩みはありませんか？</h2>
+    <p class="lead">「休みなのに、全然休めない……」そんなため息が増えていませんか？</p>
+    <div class="grid">
+      <ul class="checks">
+        <li>換気扇のギトギトした油汚れや、お風呂の水垢・カビが市販の洗剤では落ちない</li>
+        <li>エアコンの内部を掃除したいけれど、どうやって手入れすればいいか分からない</li>
+        <li>せっかくの週末なのに、半日以上掃除に追われて体を休める時間がない</li>
+        <li>掃除の負担や焦りで心に余裕がなくなり、家族に対してイライラしてしまう</li>
+        <li>「プロに頼みたいけれど、1カ所だけでも頼めるのかな……」と迷っている</li>
+      </ul>
+      <div class="ph">
+        <svg viewBox="0 0 400 420" role="img" aria-label="休日の掃除に疲れて座り込む女性のイメージ">
+          <rect width="400" height="420" fill="#E6EDF0"/>
+          <rect y="320" width="400" height="100" fill="#D8D2C6"/>
+          <circle cx="200" cy="160" r="38" fill="#F2D3BC"/>
+          <path d="M160 150c4-34 76-34 80 0-14-12-66-12-80 0z" fill="#5A4A42"/>
+          <path d="M150 340c0-70 20-130 50-130s50 60 50 130z" fill="#9DB7C4"/>
+          <rect x="262" y="190" width="10" height="150" rx="5" fill="#C9B79B"/>
+          <path d="M255 340h30l-6-26h-18z" fill="#8FA7B3"/>
+          <path d="M180 170q20 14 40 0" stroke="#7A6A62" stroke-width="3" fill="none" stroke-linecap="round"/>
+        </svg>
+        <span class="ph-tag">イメージ（写真差し替え予定）</span>
+      </div>
+    </div>
+    <p class="text">平日は仕事や育児に追われ、ようやく迎えた週末。「たまっている掃除を片付けなきゃ」とゴシゴシ擦っても、頑固な汚れはなかなか落ちず、気づけば休日が終わってしまう……。本当はゆっくり体を休めたり、家族と笑顔で過ごしたりしたいのに、掃除の疲れと自己嫌悪ばかりが残っていませんか？</p>
+  </div>
+</section>
+
+<!-- 3 コンセプト -->
+<section class="concept">
+  <div class="wrap">
+    <span class="eyebrow">CONCEPT</span>
+    <h2>頑固な汚れはプロに任せて、<br>あなたの「自由な時間」を取り戻す。</h2>
+    <p class="sub">家全体の大掃除ではなく、気になる「1カ所」から頼める新しい選択肢</p>
+    <div class="txt">
+      <p>「掃除は全部、自分でやらなければならない」と気負う必要はありません。プロの機材と技術を使えば、落としきれなかった頑固な汚れも短時間でスッキリ落とせます。</p>
+      <p>私たちが目指しているのは、単に汚れを落とすことだけではありません。汚れの悩みや掃除に費やしていた時間をプロに預けることで、生まれたゆとりを、ご自身の休息や大切なご家族と過ごす時間に変えていただくこと。</p>
+      <p>家全体を頼む大掃除を覚悟しなくても大丈夫です。あなたが今いちばん気になっているその1カ所から、身軽にプロを頼ってみませんか？</p>
+    </div>
+    <div class="ph">
+      <svg viewBox="0 0 900 380" role="img" aria-label="片付いたリビングで家族がくつろぐイメージ">
+        <rect width="900" height="380" fill="#F3F8F6"/>
+        <rect y="270" width="900" height="110" fill="#E9DFCF"/>
+        <rect x="90" y="50" width="220" height="160" rx="10" fill="#fff" stroke="#BFDDE3" stroke-width="4"/><circle cx="250" cy="100" r="24" fill="#FFE2A8"/>
+        <rect x="330" y="180" width="320" height="110" rx="28" fill="#CFE6EC"/><rect x="350" y="150" width="280" height="60" rx="26" fill="#DCEEF2"/>
+        <circle cx="430" cy="140" r="20" fill="#F2D3BC"/><circle cx="500" cy="146" r="16" fill="#F2D3BC"/><circle cx="560" cy="150" r="14" fill="#F2D3BC"/>
+        <path d="M410 200c0-30 40-30 40 0z M482 204c0-24 34-24 34 0z M544 206c0-20 30-20 30 0z" fill="#E86A38" opacity=".85"/>
+        <ellipse cx="760" cy="300" rx="70" ry="14" fill="#D8CDB8"/><path d="M760 290v-80" stroke="#6FAE8C" stroke-width="6"/><ellipse cx="735" cy="205" rx="26" ry="10" fill="#8CC7A5"/><ellipse cx="785" cy="195" rx="26" ry="10" fill="#6FAE8C"/>
+      </svg>
+      <span class="ph-tag">イメージ（写真差し替え予定）</span>
+    </div>
+  </div>
+</section>
+
+<!-- 4 特徴 -->
+<section class="alt">
+  <div class="wrap">
+    <span class="eyebrow">FEATURES</span>
+    <h2>初めての方でも安心できる、3つの特徴</h2>
+    <p class="lead">不安やご負担をできる限りなくすための、丁寧な対応をお約束します。</p>
+    <div class="cards3">
+      <div class="card"><span class="point">POINT 01</span>
+        <svg class="ic" viewBox="0 0 56 56" fill="none" stroke="#1E6B9E" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="28" cy="28" r="26" fill="#EBF5F6" stroke="none"/><path d="M14 27l14-11 14 11v13a2 2 0 0 1-2 2H16a2 2 0 0 1-2-2z"/><circle cx="28" cy="31" r="4" stroke="#E86A38"/></svg>
+        <h3>家全体ではなく「1カ所から」気軽に選べる</h3>
+        <p>大がかりな家全体の清掃だけでなく、「換気扇だけ」「浴室だけ」「エアコン1台だけ」といったピンポイントのご依頼が可能です。気になる箇所だけを無理のない範囲でご相談いただけます。</p></div>
+      <div class="card"><span class="point">POINT 02</span>
+        <svg class="ic" viewBox="0 0 56 56" fill="none" stroke="#1E6B9E" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="28" cy="28" r="26" fill="#EBF5F6" stroke="none"/><circle cx="25" cy="25" r="9"/><path d="M32 32l9 9"/><path d="M21 25l3 3 5-6" stroke="#E86A38"/></svg>
+        <h3>作業前の汚れ確認と丁寧な事前説明</h3>
+        <p>作業を始める前に、必ずお客様と一緒に清掃箇所と汚れの状況を確認します。どのような手順で進めるかを分かりやすくご説明してから着手するため、想定外の作業が行われる心配はありません。</p></div>
+      <div class="card"><span class="point">POINT 03</span>
+        <svg class="ic" viewBox="0 0 56 56" fill="none" stroke="#1E6B9E" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="28" cy="28" r="26" fill="#EBF5F6" stroke="none"/><rect x="14" y="16" width="28" height="24" rx="4"/><path d="M14 24h28"/><path d="M20 33h8" stroke="#E86A38"/></svg>
+        <h3>事前説明のない追加作業・追加費用なし</h3>
+        <p>分かりやすい基本料金を提示しています。汚れの状況により追加の作業が必要となる場合でも、無断で作業を進めることは一切ありません。必ず事前にご説明し、ご納得いただいてから対応いたします。</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- 5 ベネフィット -->
+<section class="benefit">
+  <div class="wrap">
+    <span class="eyebrow">BENEFIT</span>
+    <h2>週末が「掃除の日」から<br class="pc">「休む日」に変わる。</h2>
+    <p class="lead">プロに任せることで、暮らしと心に心地よいゆとりが生まれます。</p>
+    <div class="grid">
+      <div>
+        <ul>
+          <li><svg viewBox="0 0 26 26" fill="none" stroke="#6FAE8C" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="13" cy="13" r="11"/><path d="M8 13.5l3.5 3.5L18 10"/></svg>週末をまるごと自分の休息や、家族とのお出かけの時間に充てられる</li>
+          <li><svg viewBox="0 0 26 26" fill="none" stroke="#6FAE8C" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="13" cy="13" r="11"/><path d="M8 13.5l3.5 3.5L18 10"/></svg>擦っても落ちなかった頑固な油汚れや水垢のストレスから解放される</li>
+          <li><svg viewBox="0 0 26 26" fill="none" stroke="#6FAE8C" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="13" cy="13" r="11"/><path d="M8 13.5l3.5 3.5L18 10"/></svg>カビやホコリが気になっていたエアコンから、清潔で心地よい空気が広がる</li>
+          <li><svg viewBox="0 0 26 26" fill="none" stroke="#6FAE8C" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="13" cy="13" r="11"/><path d="M8 13.5l3.5 3.5L18 10"/></svg>「掃除しなきゃ」という焦りやイライラがなくなり、家族と笑顔で会話できる</li>
+          <li><svg viewBox="0 0 26 26" fill="none" stroke="#6FAE8C" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="13" cy="13" r="11"/><path d="M8 13.5l3.5 3.5L18 10"/></svg>綺麗になったお部屋を見るたびに、清々しく前向きな気持ちになれる</li>
+        </ul>
+        <p class="after">週末に掃除道具を持ってため息をつく時間は、もう必要ありません。気になる場所が綺麗になるだけで、いつもの住まいがぐっと快適になり、心にも時間にも大きなゆとりが生まれます。</p>
+      </div>
+      <div class="ph">
+        <svg viewBox="0 0 440 420" role="img" aria-label="休日に家族でお出かけするイメージ">
+          <rect width="440" height="420" fill="#EAF6F0"/>
+          <circle cx="340" cy="80" r="40" fill="#FFE2A8"/>
+          <path d="M0 300c80-60 160-60 240 0s140 40 200-10v130H0z" fill="#BFE0CC"/>
+          <path d="M0 340c90-40 190-30 250 10s130 10 190-20v90H0z" fill="#9FD0B4"/>
+          <circle cx="150" cy="210" r="18" fill="#F2D3BC"/><path d="M128 300c0-52 12-72 22-72s22 20 22 72z" fill="#1E6B9E"/>
+          <circle cx="215" cy="226" r="15" fill="#F2D3BC"/><path d="M196 300c0-42 10-58 19-58s19 16 19 58z" fill="#E86A38"/>
+          <circle cx="270" cy="250" r="11" fill="#F2D3BC"/><path d="M256 300c0-30 6-42 14-42s14 12 14 42z" fill="#F5A524"/>
+        </svg>
+        <span class="ph-tag">イメージ（写真差し替え予定）</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 6 おすすめ -->
+<section class="alt">
+  <div class="wrap">
+    <span class="eyebrow">FOR YOU</span>
+    <h2>このような方におすすめです</h2>
+    <p class="lead">ひとつでも当てはまる方は、ぜひお気軽にご相談ください。</p>
+    <div class="who">
+      <div class="item">共働きや子育て中で、週末にまとまった掃除をする時間や体力がない方</div>
+      <div class="item">レンジフードの油汚れやお風呂の水垢など、自力では落とせない汚れにお困りの方</div>
+      <div class="item">エアコンの内部を自分で掃除できず、ニオイやホコリが気になっている方</div>
+      <div class="item">家全体の大掃除ではなく、気になる場所だけをピンポイントで綺麗にしたい方</div>
+      <div class="item">事前の説明や明朗な料金提示があり、初めてでも安心して頼める業者を探している方</div>
+      <div class="item">休日は掃除に追われず、自分の趣味や家族との時間を大切に過ごしたい方</div>
+    </div>
+    <p class="who-foot">1つでも当てはまればお気軽にご相談ください ↓</p>
+  </div>
+</section>
+
+<!-- 7 料金 -->
+<section id="price">
+  <div class="wrap">
+    <span class="eyebrow">PRICE</span>
+    <h2>明朗な料金プラン</h2>
+    <p class="lead">気になる箇所を1カ所からお選びいただけます。作業前の事前確認なしに追加費用を請求することは一切ありません。</p>
+    <div class="price-grid">
+      <div class="pcard"><h3>エアコン（1台）</h3><div class="yen">9,900<small>円〜</small></div><div class="tax">税込</div><p>フィルターの奥のホコリやカビ汚れが気になる方に。</p></div>
+      <div class="pcard"><h3>レンジフード</h3><div class="yen">12,100<small>円〜</small></div><div class="tax">税込</div><p>ファンまわりのベタつく油汚れが気になる方に。</p></div>
+      <div class="pcard"><h3>浴室</h3><div class="yen">13,200<small>円〜</small></div><div class="tax">税込</div><p>水垢・カビ・床の黒ずみが気になる方に。</p></div>
+      <div class="pcard"><h3>キッチン</h3><div class="yen">13,200<small>円〜</small></div><div class="tax">税込</div><p>コンロ周辺やシンクの汚れが気になる方に。</p></div>
+      <div class="pcard"><h3>トイレ</h3><div class="yen">8,800<small>円〜</small></div><div class="tax">税込</div><p>毎日使う場所を、すみずみまですっきり。</p></div>
+      <div class="pcard"><h3>洗面所</h3><div class="yen">8,800<small>円〜</small></div><div class="tax">税込</div><p>水垢や鏡まわりの汚れが気になる方に。</p></div>
+    </div>
+    <div class="pset">
+      <div><span class="tag">おすすめ</span><h3>水回り3点セット</h3><p>汚れが気になる水回りをまとめてすっきり整えたい方へ。</p></div>
+      <div class="yen">29,800<small>円（税込）〜</small></div>
+    </div>
+    <p class="notes">※すべての表記価格は消費税込みです。<br>※清掃箇所の汚れ状況や構造により追加作業が必要となる場合は、必ず事前にご説明とお見積もりを行い、ご納得いただいてから作業に着手いたします。</p>
+    <div class="cta-center"><a class="btn btn-main" href="#contact">無料見積もりを相談する</a></div>
+  </div>
+</section>
+
+<!-- 8 ギャラリー -->
+<section class="alt" id="gallery">
+  <div class="wrap">
+    <span class="eyebrow">BEFORE / AFTER</span>
+    <h2>清掃事例・作業の様子</h2>
+    <p class="lead">長年たまった頑固な汚れも、プロの技術と専用機材で、すみずみまで丁寧に。</p>
+    <div class="ba-grid">
+      <div class="ba"><h3>事例1：レンジフード（油汚れ）</h3>
+        <div class="ba-pair">
+          <div class="ba-img"><span class="lbl">BEFORE</span><svg viewBox="0 0 100 100"><rect width="100" height="100" fill="#8A7650"/><circle cx="50" cy="50" r="30" fill="#6B5A3A"/><g stroke="#4D3F28" stroke-width="3"><path d="M50 20v60M20 50h60M29 29l42 42M71 29L29 71"/></g><circle cx="50" cy="50" r="7" fill="#3E3321"/></svg></div>
+          <div class="ba-img after"><span class="lbl">AFTER</span><svg viewBox="0 0 100 100"><rect width="100" height="100" fill="#EEF2F4"/><circle cx="50" cy="50" r="30" fill="#CBD5DA"/><g stroke="#fff" stroke-width="3"><path d="M50 20v60M20 50h60M29 29l42 42M71 29L29 71"/></g><circle cx="50" cy="50" r="7" fill="#9FB0B8"/></svg></div>
+        </div>
+        <p>市販の洗剤では歯が立たなかったファンの頑固な油汚れを徹底分解清掃。本来の吸気力を取り戻しました。</p></div>
+      <div class="ba"><h3>事例2：浴室（水垢・カビ）</h3>
+        <div class="ba-pair">
+          <div class="ba-img"><span class="lbl">BEFORE</span><svg viewBox="0 0 100 100"><rect width="100" height="100" fill="#B9C0C2"/><g fill="#8E9A94" opacity=".8"><circle cx="20" cy="30" r="9"/><circle cx="62" cy="22" r="7"/><circle cx="76" cy="62" r="12"/><circle cx="34" cy="74" r="8"/></g><rect x="42" y="38" width="16" height="6" rx="3" fill="#7F8A8E"/></svg></div>
+          <div class="ba-img after"><span class="lbl">AFTER</span><svg viewBox="0 0 100 100"><rect width="100" height="100" fill="#F3F8FA"/><rect x="42" y="38" width="16" height="6" rx="3" fill="#C8D3D8"/><path d="M14 22l4 8 8 4-8 4-4 8-4-8-8-4 8-4z" fill="#BFDDE3"/><path d="M74 66l3 6 6 3-6 3-3 6-3-6-6-3 6-3z" fill="#BFDDE3"/></svg></div>
+        </div>
+        <p>壁面や蛇口にこびりついたウロコ状の水垢、床の黒ずみ汚れを除去し、清潔感あふれる明るい空間へ。</p></div>
+      <div class="ba"><h3>事例3：エアコン内部（高圧洗浄）</h3>
+        <div class="ba-pair">
+          <div class="ba-img"><span class="lbl">BEFORE</span><svg viewBox="0 0 100 100"><rect width="100" height="100" fill="#A9A59B"/><g stroke="#6F6B60" stroke-width="3"><path d="M10 30h80M10 42h80M10 54h80M10 66h80"/></g><circle cx="30" cy="48" r="10" fill="#5E5A50" opacity=".7"/></svg></div>
+          <div class="ba-img after"><span class="lbl">AFTER</span><svg viewBox="0 0 100 100"><rect width="100" height="100" fill="#F3F8FA"/><g stroke="#BFD0D6" stroke-width="3"><path d="M10 30h80M10 42h80M10 54h80M10 66h80"/></g></svg></div>
+        </div>
+        <p>フィルターの奥にある熱交換器や送風ファンに溜まったカビ・ホコリを高圧洗浄ですっきり洗い流しました。</p></div>
+    </div>
+    <div class="work">
+      <div class="ph">
+        <svg viewBox="0 0 420 260" role="img" aria-label="スタッフが丁寧に作業するイメージ">
+          <rect width="420" height="260" fill="#E4F0F3"/><rect y="200" width="420" height="60" fill="#D8D2C6"/>
+          <circle cx="170" cy="100" r="26" fill="#F2D3BC"/><path d="M142 92c4-26 52-26 56 0-10-8-46-8-56 0z" fill="#3E3A39"/>
+          <path d="M130 210c0-60 14-84 40-84s40 24 40 84z" fill="#1E6B9E"/>
+          <path d="M205 150l80-40" stroke="#1E6B9E" stroke-width="14" stroke-linecap="round"/>
+          <rect x="270" y="60" width="110" height="50" rx="10" fill="#fff" stroke="#BFDDE3" stroke-width="3"/>
+        </svg>
+        <span class="ph-tag">イメージ（実際の写真に差し替え予定）</span>
+      </div>
+      <div><span class="pend">写真準備中</span><p>お客様の大切なご自宅を汚さないよう、作業箇所の周りは丁寧に養生を行い、礼儀正しく誠実な作業を徹底しています。</p></div>
+    </div>
+    <p class="img-note">※上記の画像はイメージ図です。公開時には実際の施工写真（お客様の掲載許諾済みのもの）に差し替えてください。仕上がりは汚れの状態・素材により異なります。</p>
+  </div>
+</section>
+
+<!-- 9 比較 -->
+<section>
+  <div class="wrap">
+    <span class="eyebrow">COMPARE</span>
+    <h2>他社や自力での清掃との違い</h2>
+    <p class="lead">必要な箇所だけを無理のない料金で。丁寧な事前確認で安心をお届けします。</p>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th></th><th class="us">おそうじ日和</th><th>一般的な清掃業者</th><th>自力での清掃</th></tr></thead>
+        <tbody>
+          <tr><th>依頼の単位</th>
+            <td class="us"><span class="mk o">◎</span>気になる1カ所からピンポイントで依頼可能</td>
+            <td><span class="mk t">△</span>家全体のまとめ清掃やセットプランが中心で頼みにくい</td>
+            <td><span class="mk x">×</span>すべて自分で行う必要があり負担が大きい</td></tr>
+          <tr><th>料金と追加費用</th>
+            <td class="us"><span class="mk o">◎</span>明朗な基本料金を提示。作業前の説明なしに追加費用は発生しません</td>
+            <td><span class="mk t">△</span>大がかりなプランで費用が高額になりやすく、追加基準が分かりにくい場合も</td>
+            <td><span class="mk t">△</span>洗剤や道具代だけで済むが、労力と時間が膨大にかかる</td></tr>
+          <tr><th>仕上がり</th>
+            <td class="us"><span class="mk o">◎</span>プロの専用機材と技術で、頑固な油汚れやカビにも丁寧に対応</td>
+            <td><span class="mk o">○</span>プロによる高い仕上がり</td>
+            <td><span class="mk x">×</span>市販の洗剤では落としきれない汚れが残り、再発しやすい</td></tr>
+          <tr><th>休日の過ごし方</th>
+            <td class="us"><span class="mk o">◎</span>掃除の手間をプロに任せて、家族との時間や休息に使える</td>
+            <td><span class="mk t">△</span>清掃の手間は省けるが、費用や手配の心理的負担が大きい</td>
+            <td><span class="mk x">×</span>せっかくの休日が丸一日掃除だけで潰れてしまい疲弊する</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- 10 流れ -->
+<section class="alt">
+  <div class="wrap">
+    <span class="eyebrow">FLOW</span>
+    <h2>ご相談から作業完了までの流れ</h2>
+    <p class="lead">初めての方でも安心していただけるよう、事前の確認と説明を徹底しています。</p>
+    <div class="steps-wrap">
+      <div class="steps">
+        <div class="step"><div class="num">01</div><h3>無料見積もり・ご相談</h3><p>専用フォームより、清掃をご希望の箇所や気になる汚れについてお気軽にご連絡ください。「まずは料金の目安だけ知りたい」というご相談も歓迎です。</p></div>
+        <div class="step"><div class="num">02</div><h3>内容・訪問日時のご案内</h3><p>ご相談内容をもとに概算費用をご案内し、お客様のご都合に合わせて訪問日程を調整いたします。</p></div>
+        <div class="step"><div class="num">03</div><h3>ご自宅訪問・作業前の事前確認</h3><p>スタッフがご自宅へお伺いし、作業を始める前に必ずお客様と一緒に汚れの状況を確認。清掃手順をご説明し、ご納得いただいてから着手します。</p></div>
+        <div class="step"><div class="num">04</div><h3>プロによる丁寧な清掃作業</h3><p>清掃箇所の周囲をしっかり養生し、プロの機材と専用洗剤で頑固な汚れを丁寧に落とします。</p></div>
+        <div class="step"><div class="num">05</div><h3>仕上がり確認・お支払い</h3><p>作業終了後、お客様と一緒に清掃箇所を確認していただきます。仕上がりに問題がないことをご確認いただき、作業完了となります。</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 11 FAQ -->
+<section id="faq">
+  <div class="wrap">
+    <span class="eyebrow">FAQ</span>
+    <h2>よくあるご質問</h2>
+    <p class="lead">お申し込み前にお寄せいただく疑問についてお答えします。</p>
+    <div class="faq">
+      <div class="qa"><div class="q"><span class="ql">Q</span><span>本当に汚れが気になる「1カ所だけ」の依頼でも大丈夫ですか？</span></div><div class="a"><span class="ql">A</span><span>はい、喜んでお伺いいたします。「レンジフードだけ」「浴室だけ」など、1カ所からピンポイントでお気軽にご利用いただけます。家全体の清掃を無理におすすめすることはありませんのでご安心ください。</span></div></div>
+      <div class="qa"><div class="q"><span class="ql">Q</span><span>作業中は、ずっとそばで立ち会っていなければいけませんか？</span></div><div class="a"><span class="ql">A</span><span>作業開始前の状況確認・ご説明と、清掃完了後の仕上がり確認の際にはお立ち会いをお願いしております。作業中は清掃箇所のそばにずっといらっしゃる必要はありませんので、別のお部屋でご自身の時間をお過ごしいただけます。</span></div></div>
+      <div class="qa"><div class="q"><span class="ql">Q</span><span>作業当日までに、自分で掃除や片付けをしておく必要はありますか？</span></div><div class="a"><span class="ql">A</span><span>事前の特別な清掃は不要です。清掃箇所の周辺（キッチンの調理器具やお風呂場のシャンプーボトルなど）の小物類を少し移動していただけると大変助かりますが、難しい場合は当日スタッフにお気軽にご相談ください。</span></div></div>
+      <div class="qa"><div class="q"><span class="ql">Q</span><span>当日、見積もり以上の追加料金を請求されることはありませんか？</span></div><div class="a"><span class="ql">A</span><span>無断で追加作業を行ったり、不透明な追加費用を請求することはありません。汚れの状況によって特別な作業が必要となる可能性がある場合は、必ず作業着手前にお客様へ状況をご説明し、ご納得いただいてから進めます。</span></div></div>
+      <div class="qa"><div class="q"><span class="ql">Q</span><span>まだ頼むか決めていませんが、相談や見積もりだけでも可能ですか？</span></div><div class="a"><span class="ql">A</span><span>はい、大歓迎です。概算料金の確認や、どの箇所を頼むべきかといったご相談だけでも無料でお受けしております。ご納得いただいてからご依頼を決められますので、まずはお気軽にご連絡ください。</span></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- 対応エリア -->
+<section class="alt" id="area" style="padding:64px 0">
+  <div class="wrap">
+    <span class="eyebrow">AREA</span>
+    <h2>対応エリア</h2>
+    <div class="area-box" style="margin-top:28px">
+      <strong>○○市・○○市・周辺地域</strong>
+      <p>※対応エリアは仮表示です。公開前に実際の市区町村名へ差し替えてください。<br>お住まいが対応エリアか分からない場合も、お気軽にご確認ください。</p>
+    </div>
+  </div>
+</section>
+
+<!-- 12 無料相談 -->
+<section>
+  <div class="wrap">
+    <div class="consult-box">
+      <span class="eyebrow">CONSULT</span>
+      <h2>メニュー選びに迷ったら、<br>まずは無料でお気軽にご相談ください</h2>
+      <p class="lead" style="margin:14px auto 0">「うちの汚れも落ちる？」「いくらくらいかかる？」など、事前のご質問だけでも大歓迎です。</p>
+      <p class="body">初めてハウスクリーニングをご検討される際は、どの箇所を頼むべきか、費用がどのくらいになるのかなど、分からないことも多いかと思います。正式なお申し込みを決める前でも、気になる箇所の状況をお知らせいただければ、概算のお見積もりや最適なプランを無料でご案内いたします。気になる汚れについて、まずは気兼ねなくお聞かせください。</p>
+      <div class="btns">
+        <a class="btn btn-main" href="#contact">無料見積もりを相談する</a>
+        <a class="btn btn-sub" href="#contact">まずは相談してみる</a>
+      </div>
+      <p class="small">ご相談・お見積もりは無料です。ご依頼を前提としたご相談である必要はありません。</p>
+    </div>
+  </div>
+</section>
+
+<!-- 13 最終CTA -->
+<section class="final">
+  <div class="wrap">
+    <h2>今度の休日は、頑固な汚れをプロに任せて<br>ゆったり過ごしませんか？</h2>
+    <p class="lead">家全体ではなく、気になる「その1カ所」から。<br>事前の確認と明朗会計で、安心のハウスクリーニングをお届けします。</p>
+    <div class="btns">
+      <a class="btn btn-main" href="#contact">無料見積もりを相談する</a>
+      <a class="btn btn-sub" href="#contact">まずは相談してみる</a>
+    </div>
+    <ul><li>気になる1カ所からピンポイントで対応</li><li>作業前の汚れ確認と明朗会計</li><li>ご相談・お見積もりは無料</li></ul>
+    <p class="note">※作業前の事前説明なしに追加費用が発生することはありません。お気軽にご相談ください。</p>
+  </div>
+</section>
+
+<!-- フォーム -->
+<section class="form-sec" id="contact">
+  <div class="wrap">
+    <span class="eyebrow">CONTACT</span>
+    <h2>無料見積もり・ご相談フォーム</h2>
+    <p class="lead">ご依頼を決めていない段階でもOKです。分かる範囲でご記入ください。</p>
+    <form id="f" novalidate>
+      <div><label for="name">お名前<span class="req">必須</span></label><input id="name" name="name" autocomplete="name" required></div>
+      <div><label for="contact">ご連絡先（電話番号またはメールアドレス）<span class="req">必須</span></label><input id="contact" name="contact" required></div>
+      <div><label>気になっている場所<span class="opt">任意</span></label>
+        <div class="chk">
+          <label><input type="checkbox">エアコン</label><label><input type="checkbox">レンジフード</label>
+          <label><input type="checkbox">浴室</label><label><input type="checkbox">キッチン</label>
+          <label><input type="checkbox">トイレ</label><label><input type="checkbox">洗面所</label>
+          <label><input type="checkbox">水回り3点セット</label><label><input type="checkbox">まだ決まっていない</label>
+        </div></div>
+      <div><label for="msg">ご相談内容・汚れの状況など<span class="opt">任意</span></label><textarea id="msg" name="msg" placeholder="例：換気扇の油汚れが気になっています。おおよその料金を知りたいです。"></textarea></div>
+      <button class="btn btn-main" type="submit">無料見積もりを相談する</button>
+      <div class="form-msg" id="ok" role="status">ありがとうございます。（※これは表示サンプルです。送信先は未設定のため、公開前にフォームの送信先を設定してください）</div>
+      <p class="form-note">※いただいた個人情報は、ご相談への回答以外の目的には使用しません。（プライバシーポリシーは公開前に整備・リンク設置してください）</p>
+    </form>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <div class="logo">おそうじ日和</div>
+    <p>地域密着型 訪問ハウスクリーニング</p>
+    <p style="margin-top:8px">運営者情報：（未設定） ｜ 所在地：（未設定） ｜ 連絡先：（未設定）</p>
+    <p style="margin-top:8px">© おそうじ日和</p>
+  </div>
+</footer>
+
+<div class="fbar">
+  <a class="btn btn-main" href="#contact">無料見積もりを相談する</a>
+  <a class="btn btn-sub" href="#contact">まずは相談</a>
+</div>
+
+<script>
+document.getElementById('f').addEventListener('submit',function(e){
+  e.preventDefault();
+  document.getElementById('ok').style.display='block';
+});
+</script>
+</body>
+</html>
