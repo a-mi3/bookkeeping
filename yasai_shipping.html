@@ -1065,7 +1065,17 @@ function renderSales(){
       map[key]={store,veggie,shipQty:0,shipTotal:0,soldQty:0,soldTotal:0};
     }
   });
-  const rows=Object.values(map).sort((a,b)=>a.store.localeCompare(b.store,'ja')||normalizeKana(a.veggie).localeCompare(normalizeKana(b.veggie),'ja'));
+  const STORE_ORDER=['さわやか直売所','加波山市場','道の駅しもつま','道の駅しもつま（加工品）','グランテラス筑西','道の駅グランテラス筑西','たいらや真壁','グラントマト下妻','ふらっと','きらいち筑西'];
+  const PROCESSED_KEYWORDS=['塩','七味','唐辛子','唐がらし','だし','みかん'];
+  const storeRank=s=>{const i=STORE_ORDER.indexOf(s);return i>=0?i:STORE_ORDER.length;};
+  const isProcessed=v=>PROCESSED_KEYWORDS.some(k=>v.includes(k));
+  const rows=Object.values(map).sort((a,b)=>{
+    const sr=storeRank(a.store)-storeRank(b.store);
+    if(sr!==0)return sr;
+    const pa=isProcessed(a.veggie)?1:0,pb=isProcessed(b.veggie)?1:0;
+    if(pa!==pb)return pa-pb;
+    return normalizeKana(a.veggie).localeCompare(normalizeKana(b.veggie),'ja');
+  });
 
   const hasCarry=month!=='all'&&Object.values(carryMap).some(v=>v!==0);
   const totalShipQty=rows.reduce((s,r)=>s+r.shipQty,0);
