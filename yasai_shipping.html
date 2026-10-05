@@ -1018,6 +1018,23 @@ function renderSales(){
   const month=document.getElementById('sales-month').value;
   const storeFilter=document.getElementById('sales-store').value;
 
+  // 前月残の計算（特定月が選ばれている場合のみ）
+  const carryMap={};
+  if(month!=='all'){
+    const prevShipped=records.filter(r=>r.date&&r.date<month+'-01');
+    const prevSold=salesRecords.filter(r=>r.date&&r.date<month+'-01');
+    prevShipped.forEach(r=>{
+      const key=`${r.store}|${normalizeKana(r.veggie)}`;
+      if(!carryMap[key])carryMap[key]=0;
+      carryMap[key]+=r.qty||0;
+    });
+    prevSold.forEach(r=>{
+      const key=`${r.store}|${normalizeKana(r.veggie)}`;
+      if(!carryMap[key])carryMap[key]=0;
+      carryMap[key]-=r.qty||0;
+    });
+  }
+
   let shipped=records;
   let sold=salesRecords;
   if(month!=='all'){
@@ -1029,7 +1046,6 @@ function renderSales(){
     sold=sold.filter(r=>r.store===storeFilter);
   }
 
-  // 店舗×野菜で累計（日付は集計キーに含めない＝現在までの合計を出す）
   const map={};
   shipped.forEach(r=>{
     const key=`${r.store}|${normalizeKana(r.veggie)}`;
@@ -1041,27 +1057,42 @@ function renderSales(){
     if(!map[key])map[key]={store:r.store,veggie:r.veggie,shipQty:0,shipTotal:0,soldQty:0,soldTotal:0};
     map[key].soldQty+=r.qty||0;map[key].soldTotal+=r.total||0;
   });
+  // 前月残がある品目でmap未登録のものも追加
+  Object.entries(carryMap).forEach(([key,carry])=>{
+    if(carry!==0&&!map[key]){
+      const [store,veggie]=key.split('|');
+      map[key]={store,veggie,shipQty:0,shipTotal:0,soldQty:0,soldTotal:0};
+    }
+  });
   const rows=Object.values(map).sort((a,b)=>a.store.localeCompare(b.store,'ja')||normalizeKana(a.veggie).localeCompare(normalizeKana(b.veggie),'ja'));
 
+  const hasCarry=month!=='all'&&Object.values(carryMap).some(v=>v!==0);
   const totalShipQty=rows.reduce((s,r)=>s+r.shipQty,0);
   const totalSoldQty=rows.reduce((s,r)=>s+r.soldQty,0);
   const totalShipAmount=rows.reduce((s,r)=>s+r.shipTotal,0);
   const totalSoldAmount=rows.reduce((s,r)=>s+r.soldTotal,0);
+  const totalCarry=hasCarry?Object.values(carryMap).reduce((s,v)=>s+v,0):0;
+  const totalFinalDiff=totalCarry+totalShipQty-totalSoldQty;
   document.getElementById('sales-summary').innerHTML=`
-    <div class="summary-card"><div class="s-label">出荷数（合計）</div><div class="s-value">${fmtN(totalShipQty)}個</div><div class="s-sub">売値合計 ${fmt(totalShipAmount)}（税込）</div></div>
-    <div class="summary-card"><div class="s-label">実際に売れた数（合計）</div><div class="s-value" style="color:#1a6b3c">${fmtN(totalSoldQty)}個</div><div class="s-sub">売上合計 ${fmt(totalSoldAmount)}</div></div>`;
+    <div class="summary-card"><div class="s-label">出荷数（当月）</div><div class="s-value">${fmtN(totalShipQty)}個</div><div class="s-sub">売値合計 ${fmt(totalShipAmount)}（税込）</div></div>
+    <div class="summary-card"><div class="s-label">実際に売れた数</div><div class="s-value" style="color:#1a6b3c">${fmtN(totalSoldQty)}個</div><div class="s-sub">売上合計 ${fmt(totalSoldAmount)}</div></div>
+    ${hasCarry?`<div class="summary-card"><div class="s-label">前月繰越残</div><div class="s-value" style="color:var(--earth)">${totalCarry>=0?'+':''}${fmtN(totalCarry)}個</div><div class="s-sub">在庫差異 ${totalFinalDiff>=0?'残り':'超過'}${fmtN(Math.abs(totalFinalDiff))}個</div></div>`:''}`;
 
   const el=document.getElementById('sales-content');
   if(!rows.length){el.innerHTML='<div class="empty"><div class="empty-icon">🔍</div>該当データがありません</div>';return;}
   el.innerHTML=`<div class="card" style="padding:0;overflow:hidden"><table class="agg-table">
-    <thead><tr><th>店舗</th><th>野菜</th><th class="num">出荷数</th><th class="num">売れた数</th><th class="num">差異</th></tr></thead>
+    <thead><tr><th>店舗</th><th>野菜</th>${hasCarry?'<th class="num">前月残</th>':''}
+    <th class="num">当月出荷</th><th class="num">当月売上</th><th class="num">在庫差異</th></tr></thead>
     <tbody>${rows.map(r=>{
-      const diff=r.shipQty-r.soldQty;
-      const diffStyle=diff>0?'color:var(--earth)':diff<0?'color:var(--red)':'color:var(--text-sub)';
-      const diffLabel=diff>0?`残り${fmtN(diff)}`:diff<0?`超過${fmtN(-diff)}`:'一致';
-      return `<tr><td><span class="badge badge-store">${r.store}</span></td><td><span class="badge badge-veggie">${r.veggie}</span></td><td class="num">${fmtN(r.shipQty)}個</td><td class="num" style="color:#1a6b3c">${r.soldQty?fmtN(r.soldQty)+'個':'-'}</td><td class="num" style="${diffStyle}">${diffLabel}</td></tr>`;
+      const key=`${r.store}|${normalizeKana(r.veggie)}`;
+      const carry=carryMap[key]||0;
+      const finalDiff=carry+r.shipQty-r.soldQty;
+      const diffStyle=finalDiff>0?'color:var(--earth)':finalDiff<0?'color:var(--red)':'color:var(--text-sub)';
+      const diffLabel=finalDiff>0?`残り${fmtN(finalDiff)}`:finalDiff<0?`超過${fmtN(-finalDiff)}`:'一致';
+      const carryStyle=carry>0?'color:var(--earth)':carry<0?'color:var(--red)':'color:var(--text-sub)';
+      return `<tr><td><span class="badge badge-store">${r.store}</span></td><td><span class="badge badge-veggie">${r.veggie}</span></td>${hasCarry?`<td class="num" style="${carryStyle}">${carry!==0?(carry>0?'+':'')+fmtN(carry)+'個':'-'}</td>`:''}<td class="num">${fmtN(r.shipQty)}個</td><td class="num" style="color:#1a6b3c">${r.soldQty?fmtN(r.soldQty)+'個':'-'}</td><td class="num" style="${diffStyle}">${diffLabel}</td></tr>`;
     }).join('')}</tbody>
-    <tfoot><tr><td colspan="2" style="padding:9px 10px;font-weight:700">合計</td><td class="num">${fmtN(totalShipQty)}個</td><td class="num" style="color:#1a6b3c">${fmtN(totalSoldQty)}個</td><td class="num">${totalShipQty-totalSoldQty>=0?'残り':'超過'}${fmtN(Math.abs(totalShipQty-totalSoldQty))}</td></tr></tfoot>
+    <tfoot><tr><td colspan="2" style="padding:9px 10px;font-weight:700">合計</td>${hasCarry?`<td class="num" style="color:var(--earth)">${totalCarry>=0?'+':''}${fmtN(totalCarry)}個</td>`:''}<td class="num">${fmtN(totalShipQty)}個</td><td class="num" style="color:#1a6b3c">${fmtN(totalSoldQty)}個</td><td class="num">${totalFinalDiff>=0?'残り':'超過'}${fmtN(Math.abs(totalFinalDiff))}</td></tr></tfoot>
   </table></div>`;
 }
 
