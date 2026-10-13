@@ -313,6 +313,15 @@ body.authed #login-screen{display:none}
       <button class="btn btn-block" id="si-cancel" style="display:none;margin-top:8px" onclick="cancelSalesInputEdit()">編集をキャンセル</button>
     </div>
     <div class="card">
+      <div class="card-title">📥 わくわく広場の売上CSVを取り込む</div>
+      <div style="font-size:11px;color:var(--text-sub);margin-bottom:10px">ポータルからダウンロードした「店舗×単価」の売上CSV（prd_ten_tanka_download.csv など）を選ぶと、内容を確認してから「売上実績」に取り込めます。何度取り込んでも二重にはならず、期間内の前回取込分が入れ替わります</div>
+      <div class="fg"><label>取り込み先の店舗</label><select id="waku-store" onchange="renderWakuPreview()"></select></div>
+      <div class="fg"><label>CSVファイル</label><input type="file" id="waku-file" accept=".csv,text/csv" onchange="onWakuFile(this)"></div>
+      <div id="waku-imported" style="font-size:11px;color:var(--text-sub);margin-bottom:6px"></div>
+      <div id="waku-preview"></div>
+      <button class="btn btn-primary btn-block" id="waku-go" style="display:none;margin-top:10px" onclick="runWakuImport()">📥 取り込む</button>
+    </div>
+    <div class="card">
       <div class="card-title">手入力した売上（新しい順・最大50件）</div>
       <div id="si-list"></div>
     </div>
@@ -407,7 +416,7 @@ function tokenStillValid(){const s=getSavedToken();return !!s&&Date.now()<s.expi
 function lockToLogin(msg,isError){
   clearTimeout(refreshTimer);clearInterval(expiryTimer);
   isSignedIn=false;refreshing=false;loginPending=false;
-  records=[];salesRecords=[];editingId=null;salesEditingMid=null;
+  records=[];salesRecords=[];editingId=null;salesEditingMid=null;wakuParsed=null;
   try{localStorage.removeItem('yasai_token');}catch(e){}
   try{gapi.client.setToken('');}catch(e){}
   updateAuthUI(false);
@@ -1443,7 +1452,7 @@ let salesEditingMid=null;
 
 function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 function newManualSalesId(){return 'manual-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,6);}
-function salesRecToRow(r){return [r.date,r.store,r.veggie,r.price||0,r.qty||0,r.total||0,r.fee||0,r.income||0,MANUAL_SENDER,r.messageId];}
+function salesRecToRow(r){return [r.date,r.store,r.veggie,r.price||0,r.qty||0,r.total||0,r.fee||0,r.income||0,r.sender||MANUAL_SENDER,r.messageId];}
 
 async function loadSalesRecords(){
   const res=await gapi.client.sheets.spreadsheets.values.get({spreadsheetId:SPREADSHEET_ID,range:SALES_SHEET+'!A2:J'});
@@ -1574,6 +1583,185 @@ async function syncSalesFilterSheet(sheetId){
   await gapi.client.sheets.spreadsheets.values.update({spreadsheetId:SPREADSHEET_ID,range:`${FS}!A${formulaRow}`,valueInputOption:'USER_ENTERED',resource:{values:[[formula]]}});
 }
 
+/* ===== わくわく広場 売上CSVの取込 =====
+   出店者ポータル(わくわく広場)の「店舗×単価」売上CSVを読み込み、「売上実績」シートへ入れる。
+   CSVは Shift_JIS・1行が「売上年月日 × 売り先の店舗 × 商品 × 単価」。売り先の店舗は分けず、
+   アプリでは1店舗(わくわく広場)として「日付 × 商品 × 単価」で合算する。
+   - 単価・金額は税抜のため、設定の商品の消費税率で税込に換算する
+   - 入金見込額は、ポータルの「原価金額」(実際の精算額)をそのまま使う
+   - 再取込しても二重にならないよう、取込期間内の「わくわく広場(CSV)」の行を入れ替える */
+const WAKU_SENDER='わくわく広場(CSV)';
+let wakuParsed=null;   // 取込前のプレビュー内容 {rows,from,to,unmapped,lineCount}
+
+// CSV本文の文字コードを判定して文字列にする（UTF-8 → だめなら Shift_JIS）
+function decodeCsvBuffer(buf){
+  try{return new TextDecoder('utf-8',{fatal:true}).decode(buf).replace(/^﻿/,'');}
+  catch(e){return new TextDecoder('shift_jis').decode(buf);}
+}
+// ダブルクォート・カンマ区切りに対応した簡易CSV解析
+function parseCsvText(text){
+  const rows=[];let row=[],cur='',q=false;
+  for(let i=0;i<text.length;i++){
+    const c=text[i];
+    if(q){
+      if(c==='"'){if(text[i+1]==='"'){cur+='"';i++;}else q=false;}else cur+=c;
+    }else if(c==='"')q=true;
+    else if(c===','){row.push(cur);cur='';}
+    else if(c==='\n'||c==='\r'){
+      if(c==='\r'&&text[i+1]==='\n')i++;
+      row.push(cur);cur='';rows.push(row);row=[];
+    }else cur+=c;
+  }
+  if(cur!==''||row.length){row.push(cur);rows.push(row);}
+  return rows;
+}
+const csvNum=s=>{const n=parseFloat(String(s??'').replace(/[,\s]/g,''));return Number.isFinite(n)?n:0;};
+// CSV文字列 → 取込行（日付×商品×単価で合算）。列は見出し名で探すので並び順が変わっても読める
+function parseWakuCsv(text,store){
+  const table=parseCsvText(text).filter(r=>r.some(c=>String(c).trim()!==''));
+  const hi=table.findIndex(r=>r.includes('売上年月日')&&r.includes('商品名'));
+  if(hi<0)throw new Error('「売上年月日」「商品名」の列が見つかりません。ポータルの店舗×単価の売上CSVを選んでください');
+  const h=table[hi],col=n=>h.indexOf(n);
+  const need=['売上年月日','商品コード','商品名','単価(税抜)','数量','売上金額(税抜)','原価金額'];
+  const miss=need.filter(n=>col(n)<0);
+  if(miss.length)throw new Error('CSVに必要な列がありません: '+miss.join('、'));
+  const rate=1+goodsTaxRate/100;
+  const veggieKey=new Map(veggies.map(v=>[normalizeKana(v),v]));
+  const unmapped=new Set(),agg=new Map();let lineCount=0;
+  table.slice(hi+1).forEach(r=>{
+    const ymd=String(r[col('売上年月日')]||'').trim();
+    if(!/^\d{8}$/.test(ymd))return;          // 末尾の「PPP15」などの行は読み飛ばす
+    const date=`${ymd.slice(0,4)}-${ymd.slice(4,6)}-${ymd.slice(6,8)}`;
+    const code=String(r[col('商品コード')]||'').trim();
+    const raw=String(r[col('商品名')]||'').trim();
+    const veggie=veggieKey.get(normalizeKana(raw))||raw;
+    if(!veggieKey.has(normalizeKana(raw)))unmapped.add(raw);
+    const exTanka=csvNum(r[col('単価(税抜)')]);
+    const key=`${date}|${code}|${exTanka}`;
+    if(!agg.has(key))agg.set(key,{date,code,veggie,exTanka,qty:0,exTotal:0,cost:0});
+    const a=agg.get(key);
+    a.qty+=csvNum(r[col('数量')]);a.exTotal+=csvNum(r[col('売上金額(税抜)')]);a.cost+=csvNum(r[col('原価金額')]);
+    lineCount++;
+  });
+  const rows=[...agg.values()].filter(a=>a.qty!==0||a.exTotal!==0).map(a=>({
+    date:a.date,store,veggie:a.veggie,
+    price:Math.round(a.exTanka*rate),qty:a.qty,total:Math.round(a.exTotal*rate),
+    fee:0,income:Math.round(a.cost),sender:WAKU_SENDER,messageId:`waku-${a.date}-${a.code}-${a.exTanka}`
+  })).sort((x,y)=>y.date.localeCompare(x.date)||x.veggie.localeCompare(y.veggie,'ja'));
+  if(!rows.length)throw new Error('取り込める売上行がありませんでした');
+  return {rows,from:rows[rows.length-1].date,to:rows[0].date,unmapped:[...unmapped],lineCount};
+}
+function wakuStoreName(){
+  const sel=document.getElementById('waku-store');
+  return sel&&sel.value?sel.value:(stores.find(s=>s.name.includes('わくわく'))||{}).name||'わくわく広場';
+}
+function buildWakuStoreSelect(){
+  const sel=document.getElementById('waku-store');
+  const prev=sel.value;
+  const names=stores.map(s=>s.name);
+  const def=names.find(n=>n.includes('わくわく'))||'わくわく広場';
+  if(!names.includes(def))names.push(def);
+  sel.innerHTML=names.map(n=>`<option value="${esc(n)}">${esc(n)}</option>`).join('');
+  sel.value=prev&&names.includes(prev)?prev:def;
+  renderWakuImported();
+}
+function renderWakuImported(){
+  const el=document.getElementById('waku-imported');if(!el)return;
+  const mine=salesRecords.filter(r=>r.sender===WAKU_SENDER);
+  if(!mine.length){el.textContent='まだ取り込んでいません';return;}
+  const dates=mine.map(r=>r.date).sort();
+  el.textContent=`取込済み: ${dates[0]} 〜 ${dates[dates.length-1]}（${mine.length}行）`;
+}
+async function onWakuFile(input){
+  const f=input.files&&input.files[0];
+  const prev=document.getElementById('waku-preview');
+  wakuParsed=null;document.getElementById('waku-go').style.display='none';
+  if(!f){prev.innerHTML='';return;}
+  try{
+    const text=decodeCsvBuffer(await f.arrayBuffer());
+    wakuParsed=parseWakuCsv(text,wakuStoreName());
+    renderWakuPreview();
+  }catch(e){
+    console.error(e);
+    prev.innerHTML=`<div class="alert alert-ng" style="display:block">❌ ${esc(e.message||'読み込めませんでした')}</div>`;
+  }
+}
+function renderWakuPreview(){
+  const p=wakuParsed,prev=document.getElementById('waku-preview');
+  if(!p)return;
+  const st=wakuStoreName(),fee=(stores.find(x=>x.name===st)||{}).fee||0;
+  p.rows.forEach(r=>{r.store=st;r.fee=fee;});
+  const qty=p.rows.reduce((s,r)=>s+r.qty,0),total=p.rows.reduce((s,r)=>s+r.total,0),inc=p.rows.reduce((s,r)=>s+r.income,0);
+  prev.innerHTML=`
+    <div style="font-size:12px;margin:8px 0">期間 <b>${esc(p.from)} 〜 ${esc(p.to)}</b> ／ ${p.rows.length}行（CSV ${p.lineCount}行を日付×商品×単価で合算）</div>
+    <div class="summary-grid" style="grid-template-columns:repeat(3,1fr)">
+      <div class="summary-card"><div class="s-label">売れた個数</div><div class="s-value">${fmtN(qty)}</div></div>
+      <div class="summary-card"><div class="s-label">売上(税込換算)</div><div class="s-value" style="font-size:16px">${fmt(total)}</div></div>
+      <div class="summary-card"><div class="s-label">入金見込(原価金額)</div><div class="s-value" style="font-size:16px;color:#1a6b3c">${fmt(inc)}</div></div>
+    </div>
+    ${p.unmapped.length?`<div class="alert alert-ng" style="display:block">⚠️ 野菜リストにない商品名: ${p.unmapped.map(esc).join('、')}（このままの名前で取り込みます。名前をそろえたい場合は、設定の野菜リストに追加してください）</div>`:''}
+    <div style="max-height:260px;overflow:auto;border:1px solid var(--border);border-radius:8px">
+      <table class="agg-table"><thead><tr><th>日付</th><th>野菜</th><th class="num">単価</th><th class="num">個数</th><th class="num">売上</th></tr></thead>
+      <tbody>${p.rows.map(r=>`<tr><td style="white-space:nowrap">${esc(r.date.slice(5))}</td><td>${esc(r.veggie)}</td><td class="num">${fmtN(r.price)}</td><td class="num">${fmtN(r.qty)}</td><td class="num">${fmtN(r.total)}</td></tr>`).join('')}</tbody></table>
+    </div>
+    <div style="font-size:11px;color:var(--text-sub);margin-top:6px">単価・売上は税抜を設定の商品の消費税率(${goodsTaxRate}%)で税込に換算しています。入金見込はポータルの原価金額です。取り込むと、期間内の前回取込分は入れ替わります。</div>`;
+  const go=document.getElementById('waku-go');
+  go.style.display='block';go.textContent=`📥 ${p.rows.length}行を取り込む`;
+}
+// 取込: 期間内の「わくわく広場(CSV)」の行を削除してから、日付順の位置へ入れ直す（1回のリクエストで実行）
+async function _importWakuRows(rows,from,to,store){
+  const sheetId=await ensureSalesSheet();
+  const cur=await readSalesRows();
+  const del=[];
+  cur.forEach((r,i)=>{
+    const d=salesRowDate(r);
+    if(r&&r[8]===WAKU_SENDER&&r[1]===store&&d>=from&&d<=to)del.push(i);
+  });
+  const requests=[];
+  // 下の行から削除して、行番号がずれないようにする（連続する行は1つにまとめる）
+  for(let k=del.length-1;k>=0;){
+    let end=k;while(end>0&&del[end-1]===del[end]-1)end--;
+    requests.push({deleteDimension:{range:{sheetId,dimension:'ROWS',startIndex:del[end]+1,endIndex:del[k]+2}}});
+    k=end-1;
+  }
+  const sim=cur.filter((_,i)=>!del.includes(i));
+  rows.forEach(rec=>{
+    const reqs=salesInsertRequests(sheetId,sim,{...rec,sender:WAKU_SENDER});
+    requests.push(...reqs);
+    sim.splice(salesInsertIndex(sim,rec.date),0,[rec.date]);
+  });
+  await gapi.client.sheets.spreadsheets.batchUpdate({spreadsheetId:SPREADSHEET_ID,resource:{requests}});
+  await afterSalesWrite();
+  return {removed:del.length,added:rows.length};
+}
+const importWakuRows=(...a)=>serial(()=>_importWakuRows(...a));
+async function runWakuImport(){
+  if(!wakuParsed)return;
+  const store=wakuStoreName(),p=wakuParsed;
+  if(!confirm(`${p.from} 〜 ${p.to} の売上 ${p.rows.length}行を「${store}」として取り込みます。期間内の前回取込分は入れ替わります。よろしいですか？`))return;
+  const go=document.getElementById('waku-go');go.disabled=true;
+  setSyncStatus('⏳ 取込中...');
+  try{
+    const fee=(stores.find(x=>x.name===store)||{}).fee||0;
+    const rows=p.rows.map(r=>({...r,store,fee}));
+    const res=await importWakuRows(rows,p.from,p.to,store);
+    renderWakuImported();renderSalesInput();
+    const saved=salesRecords.filter(r=>r.sender===WAKU_SENDER&&r.store===store&&r.date>=p.from&&r.date<=p.to).length;
+    if(saved===rows.length){
+      setSyncStatus('✅ 取込を確認しました');
+      showAlert('si-alert-ok',`✅ ${rows.length}行を取り込みました（入れ替え ${res.removed}行）`+(salesAggOk?'':'　※集計シートの更新は失敗しました（売上は保存済み）'));
+    }else{
+      setSyncStatus('⚠️ 確認できません');
+      showAlert('si-alert-ng',`⚠️ 取込後の確認で件数が合いません（期待 ${rows.length}行／シート ${saved}行）。「🔄 最新データ」で確認してください`);
+    }
+    document.getElementById('waku-file').value='';document.getElementById('waku-preview').innerHTML='';go.style.display='none';wakuParsed=null;
+    window.scrollTo({top:0,behavior:'smooth'});
+  }catch(e){
+    console.error(e);setSyncStatus('❌ 取込に失敗');
+    if(!handleAuthError(e))showAlert('si-alert-ng','❌ 取り込みに失敗しました。シートは変更されていません。もう一度お試しください');
+  }finally{go.disabled=false;}
+}
+
 function buildSalesInputSelects(){
   const sSel=document.getElementById('si-store'),vSel=document.getElementById('si-veggie');
   const ps=sSel.value,pv=vSel.value;
@@ -1599,6 +1787,7 @@ function calcSiIncome(){
 }
 function renderSalesInput(){
   buildSalesInputSelects();
+  buildWakuStoreSelect();
   const d=document.getElementById('si-date');if(!d.value)d.value=todayLocalStr();
   const list=salesRecords.filter(r=>r.sender===MANUAL_SENDER).sort((a,b)=>b.date.localeCompare(a.date)||String(b.messageId).localeCompare(String(a.messageId))).slice(0,50);
   const el=document.getElementById('si-list');
