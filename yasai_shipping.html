@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>出荷管理 - やさい日和</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -94,9 +94,30 @@ input:focus,select:focus{outline:none;border-color:var(--green-mid);box-shadow:0
 .store-check.checked{background:var(--green-mid);color:#fff;border-color:var(--green-mid)}
 .detail-row td{font-size:12px;color:var(--text)}
 .detail-row:nth-child(even){background:rgba(0,0,0,.02)}
+/* ログイン画面：ログインするまでメイン画面は一切表示しない */
+body:not(.authed) .auth-bar,body:not(.authed) .header,body:not(.authed) .tabs,body:not(.authed) .main{display:none}
+body.authed #login-screen{display:none}
+#login-screen{min-height:100vh;min-height:100dvh;background:var(--green-dark);color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:24px 24px calc(24px + env(safe-area-inset-bottom));padding-top:calc(24px + env(safe-area-inset-top));text-align:center}
+#login-screen .login-icon{font-size:64px;line-height:1}
+#login-screen .login-title{font-size:24px;font-weight:700}
+#login-screen .login-sub{font-size:13px;opacity:.75;margin-top:-8px}
+#login-msg{font-size:14px;min-height:20px;margin-top:8px;opacity:.9;max-width:320px}
+#login-msg.error{color:#FFD6D1;opacity:1}
+#login-btn{width:100%;max-width:320px;padding:16px;border-radius:12px;border:none;background:#fff;color:var(--green-dark);font-size:17px;font-weight:700;font-family:inherit;cursor:pointer;display:none}
+#login-btn:active{background:var(--green-pale)}
+#login-btn:disabled{opacity:.6}
+.auth-bar{padding-top:calc(8px + env(safe-area-inset-top))}
 </style>
 </head>
 <body>
+
+<div id="login-screen">
+  <div class="login-icon">🥬</div>
+  <div class="login-title">出荷管理</div>
+  <div class="login-sub">やさい日和 · See-EN</div>
+  <div id="login-msg">⏳ 準備中...</div>
+  <button id="login-btn" onclick="handleLogin()">Googleでログイン</button>
+</div>
 
 <div class="auth-bar" id="auth-bar">
   <span id="auth-msg">📊 Google Sheetsと連携してデータを保存できます</span>
@@ -329,73 +350,139 @@ let salesRecords = []; // 「売上実績」シート（メール自動取込）
 let nextId = 1;
 let editingId = null; // 編集中の出荷記録ID（nullなら新規追加モード）
 
-/* ===== Google Sheets ===== */
+/* ===== Google Sheets / ログイン ===== */
 let tokenClient=null,gapiInited=false,gisInited=false,isSignedIn=false;
+let refreshing=false;          // サイレント再取得の最中か
+let loginPending=false;        // ログインボタン押下後の応答待ちか
+let expiryTimer=null;
+
+// ログイン画面の表示（state: 'checking' 確認中 / 'login' ボタン表示）
+function showLoginScreen(state,msg,isError){
+  document.body.classList.remove('authed');
+  const m=document.getElementById('login-msg'),b=document.getElementById('login-btn');
+  m.textContent=msg||'';m.className=isError?'error':'';
+  b.style.display=state==='login'?'block':'none';
+  b.disabled=false;
+}
+function getSavedToken(){
+  try{const s=JSON.parse(localStorage.getItem('yasai_token')||'null');return s&&s.token&&s.expiry?s:null;}catch(e){return null;}
+}
+function tokenStillValid(){const s=getSavedToken();return !!s&&Date.now()<s.expiry;}
+
+// ログイン状態を解除してログイン画面へ戻す（再ログインしたときに前回のデータが混ざらないよう消す）
+function lockToLogin(msg,isError){
+  clearTimeout(refreshTimer);clearInterval(expiryTimer);
+  isSignedIn=false;refreshing=false;loginPending=false;
+  records=[];salesRecords=[];editingId=null;
+  try{localStorage.removeItem('yasai_token');}catch(e){}
+  try{gapi.client.setToken('');}catch(e){}
+  updateAuthUI(false);
+  showLoginScreen(gapiInited&&gisInited?'login':'checking',msg||'ログインしてください',isError);
+}
+// ログイン成功後にメイン画面へ入る
+async function enterApp(){
+  isSignedIn=true;loginPending=false;
+  scheduleTokenRefresh();
+  clearInterval(expiryTimer);
+  expiryTimer=setInterval(checkExpiry,15000);
+  setSyncStatus('⏳ データ読込中...');
+  const ok=await syncFromSheets();
+  if(!isSignedIn)return;               // 読込中に認証切れでロックされた場合
+  if(!ok){lockToLogin('データを読み込めませんでした。もう一度ログインしてください',true);return;}
+  updateAuthUI(true);
+  restoreDraft();
+}
+// 有効期限が切れていたらログイン画面に戻す
+function checkExpiry(){
+  if(!isSignedIn||refreshing)return;
+  if(!tokenStillValid())lockToLogin('ログインの有効期限が切れました。もう一度ログインしてください');
+}
 function gapiLoaded(){gapi.load('client',async()=>{await gapi.client.init({discoveryDocs:['https://sheets.googleapis.com/$discovery/rest?version=v4']});gapiInited=true;maybeEnableAuth();});}
 function gisLoaded(){
   tokenClient=google.accounts.oauth2.initTokenClient({
     client_id:GAPI_CLIENT_ID,scope:SCOPES,
     callback:async(resp)=>{
-      if(resp.error)return;
+      if(resp.error){onTokenFailure('ログインできませんでした。もう一度お試しください');return;}
       const expiry=Date.now()+((resp.expires_in||3600)-60)*1000;
-      isSignedIn=true;
       localStorage.setItem('yasai_token',JSON.stringify({token:resp.access_token,expiry}));
       gapi.client.setToken(resp);
-      scheduleTokenRefresh();
-      updateAuthUI(true);await syncFromSheets(true);
+      const wasSignedIn=isSignedIn;
+      refreshing=false;
+      if(wasSignedIn){scheduleTokenRefresh();return;}   // 使用中の自動更新はメイン画面のまま続行
+      await enterApp();
+    },
+    // ポップアップが開けない/閉じられた場合
+    error_callback:(err)=>{
+      onTokenFailure(err&&err.type==='popup_closed'?'ログインがキャンセルされました':'ログインできませんでした。もう一度お試しください');
     }
   });
   gisInited=true;maybeEnableAuth();
+}
+// トークン取得に失敗したとき：使用中で、まだ期限内なら続行。期限切れ/未ログインならログイン画面へ
+function onTokenFailure(msg){
+  refreshing=false;loginPending=false;
+  if(isSignedIn&&tokenStillValid())return;
+  lockToLogin(msg,true);
 }
 // トークンが切れる前に自動で再取得するタイマー
 let refreshTimer=null;
 function scheduleTokenRefresh(){
   clearTimeout(refreshTimer);
-  const saved=localStorage.getItem('yasai_token');
-  if(!saved)return;
-  try{
-    const {expiry}=JSON.parse(saved);
-    const ms=expiry-Date.now()-120000; // 期限の2分前に更新
-    if(ms>0){refreshTimer=setTimeout(()=>{tokenClient.requestAccessToken({prompt:''});},ms);}
-  }catch(e){}
+  const s=getSavedToken();
+  if(!s)return;
+  const ms=s.expiry-Date.now()-120000; // 期限の2分前に更新
+  if(ms>0){refreshTimer=setTimeout(silentRefresh,ms);}
+}
+function silentRefresh(){
+  if(!tokenClient)return;
+  refreshing=true;
+  tokenClient.requestAccessToken({prompt:''});
+  setTimeout(()=>{refreshing=false;},20000); // 応答がなくても20秒でフラグを戻す
 }
 async function maybeEnableAuth(){
   if(!gapiInited||!gisInited)return;
-  document.getElementById('auth-btn').disabled=false;
-  // 保存済みトークンがあれば自動復元
-  const saved=localStorage.getItem('yasai_token');
-  if(saved){
-    try{
-      const {token,expiry}=JSON.parse(saved);
-      if(Date.now()<expiry){
-        // まだ有効なトークン → そのまま使う
-        gapi.client.setToken({access_token:token});
-        isSignedIn=true;updateAuthUI(true);
-        scheduleTokenRefresh();
-        setSyncStatus('⏳ データ読込中...');
-        await syncFromSheets();
-        return;
-      }else{
-        // 期限切れ → サイレントで再取得
-        localStorage.removeItem('yasai_token');
-        setSyncStatus('⏳ 自動ログイン中...');
-        tokenClient.requestAccessToken({prompt:''});
-      }
-    }catch(e){localStorage.removeItem('yasai_token');}
+  clearTimeout(loadTimeout);
+  // 保存済みトークンがまだ有効ならそのままメイン画面へ
+  const s=getSavedToken();
+  if(s&&Date.now()<s.expiry){
+    gapi.client.setToken({access_token:s.token});
+    showLoginScreen('checking','⏳ 確認中...');
+    await enterApp();
+    return;
   }
+  // 期限切れ・未ログイン → ログインボタンを表示（ポップアップはボタン操作からしか開けないため）
+  try{localStorage.removeItem('yasai_token');}catch(e){}
+  showLoginScreen('login','Googleアカウントでログインしてください');
 }
+function handleLogin(){
+  if(!tokenClient||loginPending)return;
+  loginPending=true;
+  const b=document.getElementById('login-btn');b.disabled=true;
+  document.getElementById('login-msg').textContent='⏳ ログイン中...';
+  document.getElementById('login-msg').className='';
+  tokenClient.requestAccessToken({prompt:'select_account'});
+  // ポップアップが閉じられても応答が来ない場合に備え、ボタンを戻す
+  setTimeout(()=>{if(loginPending&&!isSignedIn){loginPending=false;showLoginScreen('login','Googleアカウントでログインしてください');}},60000);
+}
+// ログアウト（メイン画面上部のボタン）
 function handleAuth(){
-  if(!isSignedIn){
-    tokenClient.requestAccessToken({prompt:'select_account'});
-  }else{
-    google.accounts.oauth2.revoke(gapi.client.getToken().access_token,()=>{
-      gapi.client.setToken('');isSignedIn=false;
-      localStorage.removeItem('yasai_token');
-      updateAuthUI(false);
-    });
-  }
+  const tk=gapi.client.getToken();
+  const done=()=>lockToLogin('ログアウトしました');
+  if(tk&&tk.access_token)google.accounts.oauth2.revoke(tk.access_token,done);else done();
 }
-function updateAuthUI(connected){const bar=document.getElementById('auth-bar'),msg=document.getElementById('auth-msg'),btn=document.getElementById('auth-btn');if(connected){bar.className='auth-bar connected';msg.textContent='✅ Google Sheetsと接続中 · 自動保存有効';btn.textContent='ログアウト';}else{bar.className='auth-bar';msg.textContent='📊 Google Sheetsと連携してデータを保存できます';btn.textContent='Googleでログイン';}}
+// 画面を開き直した（別アプリから戻った）ときに期限を確認する。バックグラウンド中はタイマーが止まるため
+document.addEventListener('visibilitychange',()=>{
+  if(document.visibilityState!=='visible'||!isSignedIn)return;
+  const s=getSavedToken();
+  if(!s){lockToLogin('ログインしてください');return;}
+  if(s.expiry-Date.now()<120000)silentRefresh();   // 期限間近/切れ → 静かに再取得。失敗すればerror_callbackでログイン画面へ
+  else scheduleTokenRefresh();
+});
+// Googleのスクリプトが読み込めない（オフライン等）場合の案内
+const loadTimeout=setTimeout(()=>{
+  if(!(gapiInited&&gisInited))showLoginScreen('checking','Googleに接続できません。通信状況を確認して、ページを開き直してください',true);
+},10000);
+function updateAuthUI(connected){const bar=document.getElementById('auth-bar'),msg=document.getElementById('auth-msg'),btn=document.getElementById('auth-btn');if(connected){document.body.classList.add('authed');bar.className='auth-bar connected';msg.textContent='✅ Google Sheetsと接続中 · 自動保存有効';btn.textContent='ログアウト';}else{document.body.classList.remove('authed');bar.className='auth-bar';msg.textContent='📊 Google Sheetsと連携してデータを保存できます';btn.textContent='ログアウト';}}
 function setSyncStatus(msg){document.getElementById('sync-status').textContent=msg;if(msg)setTimeout(()=>{document.getElementById('sync-status').textContent='';},3000);}
 
 async function ensureSheets(sheetNames){
@@ -424,7 +511,7 @@ async function appendRecord(r){
     await updateAggSheets();
     setSyncStatus('✅ 保存');
     return true;
-  }catch(e){setSyncStatus('❌');console.error(e);return false;}
+  }catch(e){setSyncStatus('❌');console.error(e);handleAuthError(e);return false;}
 }
 
 // 指定したIDの出荷記録が、実際にスプレッドシート側に書き込まれているかを確認する
@@ -451,7 +538,7 @@ async function rewriteDataSheet(){
     // シートをクリアしてから書き込み（古いデータが残らないように）
     await gapi.client.sheets.spreadsheets.values.clear({spreadsheetId:SPREADSHEET_ID,range:'出荷データ!A:J'});
     await gapi.client.sheets.spreadsheets.values.update({spreadsheetId:SPREADSHEET_ID,range:'出荷データ!A1',valueInputOption:'RAW',resource:{values:rows}});
-  }catch(e){console.error('rewriteDataSheet error:',e);}
+  }catch(e){console.error('rewriteDataSheet error:',e);handleAuthError(e);}
 }
 
 // 設定のみ保存（店舗・野菜リスト・消費税率）
@@ -461,7 +548,7 @@ async function saveSettings(){
     const rows=[['店舗名','手数料率(%)','野菜リスト'],...Array.from({length:Math.max(stores.length,veggies.length)},(_,i)=>[stores[i]?stores[i].name:'',stores[i]?stores[i].fee:'',veggies[i]||''])];
     await gapi.client.sheets.spreadsheets.values.update({spreadsheetId:SPREADSHEET_ID,range:'設定!A1',valueInputOption:'RAW',resource:{values:rows}});
     await gapi.client.sheets.spreadsheets.values.update({spreadsheetId:SPREADSHEET_ID,range:'設定!E1',valueInputOption:'RAW',resource:{values:[['商品の消費税率(%)','手数料の消費税率(%)'],[goodsTaxRate,feeTaxRate]]}});
-  }catch(e){console.error(e);}
+  }catch(e){console.error(e);handleAuthError(e);}
 }
 
 async function updateAggSheets(){
@@ -549,35 +636,27 @@ async function buildFilterSheet(){
   }catch(e){console.error('buildFilterSheet error:',e);}
 }
 
-async function syncFromSheets(mergeLocal=false){
-  if(!isSignedIn)return;
+// 認証切れ(401)かどうか。該当すればログイン画面に戻す
+function handleAuthError(e){
+  const code=e&&(e.status||(e.result&&e.result.error&&e.result.error.code));
+  if(code===401||code===403&&e.result&&e.result.error&&e.result.error.status==='UNAUTHENTICATED'){
+    lockToLogin('ログインの有効期限が切れました。もう一度ログインしてください',true);
+    return true;
+  }
+  return false;
+}
+
+// 読み込みに成功したら true、失敗したら false を返す
+async function syncFromSheets(){
+  if(!isSignedIn)return false;
   try{
     setSyncStatus('⏳ 読込中');
-    // ログイン前のローカルデータを退避
-    const localRecords=mergeLocal?[...records]:[];
     const meta=await gapi.client.sheets.spreadsheets.get({spreadsheetId:SPREADSHEET_ID});
     await ensureSheets(meta.result.sheets.map(s=>s.properties.title));
     // 出荷データ
     const dr=await gapi.client.sheets.spreadsheets.values.get({spreadsheetId:SPREADSHEET_ID,range:'出荷データ!A2:J'});
     const rows=dr.result.values||[];
     const sheetRecords=rows.filter(r=>r[0]).map(r=>({id:parseInt(r[0]),date:r[1],store:r[2],veggie:r[3],qty:parseInt(r[4])||0,price:parseInt(r[5])||0,total:parseInt(r[6])||0,fee:parseFloat(r[7])||0,income:parseInt(r[8])||0,memo:r[9]||''}));
-    // ローカルデータをマージ（Sheetsにないものだけ追加）
-    if(mergeLocal&&localRecords.length>0){
-      const sheetIds=new Set(sheetRecords.map(r=>r.id));
-      const toMerge=localRecords.filter(r=>!sheetIds.has(r.id));
-      if(toMerge.length>0){
-        setSyncStatus(`⏳ ローカルデータ${toMerge.length}件を保存中...`);
-        for(const r of toMerge){
-          await gapi.client.sheets.spreadsheets.values.append({
-            spreadsheetId:SPREADSHEET_ID,range:'出荷データ!A1',
-            valueInputOption:'RAW',insertDataOption:'INSERT_ROWS',
-            resource:{values:[[r.id,r.date,r.store,r.veggie,r.qty,r.price||0,r.total||0,r.fee||0,r.income||0,r.memo||'']]}
-          });
-        }
-        sheetRecords.push(...toMerge);
-        await updateAggSheets();
-      }
-    }
     records=sheetRecords.sort((a,b)=>{
       const d=b.date.localeCompare(a.date);
       return d!==0?d:b.id-a.id;
@@ -610,9 +689,14 @@ async function syncFromSheets(mergeLocal=false){
       }
     }catch(e){console.error('売上実績読込エラー:',e);salesRecords=[];}
     buildSelects();renderSummary();
-    const msg=mergeLocal&&localRecords.length>0?`✅ ${records.length}件（ローカル分もマージ済み）`:`✅ ${records.length}件`;
-    setSyncStatus(msg);
-  }catch(e){setSyncStatus('❌ 読込失敗');console.error(e);}
+    setSyncStatus(`✅ ${records.length}件`);
+    return true;
+  }catch(e){
+    console.error(e);
+    if(handleAuthError(e))return false;
+    setSyncStatus('❌ 読込失敗');
+    return false;
+  }
 }
 
 async function reloadData(){
@@ -688,6 +772,34 @@ function calcIncome(){
   }else{preview.style.display='none';}
 }
 
+/* ===== 入力中の下書き（ログインが切れて再ログインしても入力内容が消えないように） ===== */
+const DRAFT_FIELDS={date:'r-date',store:'r-store',veggie:'r-veggie',price:'r-price',qty:'r-qty',fee:'r-fee',memo:'r-memo'};
+function saveDraft(){
+  if(editingId)return;
+  try{
+    const d={};
+    Object.entries(DRAFT_FIELDS).forEach(([k,id])=>{d[k]=document.getElementById(id).value;});
+    d.t=Date.now();
+    if(d.price||d.qty||d.memo)localStorage.setItem('yasai_draft',JSON.stringify(d));
+  }catch(e){}
+}
+function clearDraft(){try{localStorage.removeItem('yasai_draft');}catch(e){}}
+function restoreDraft(){
+  try{
+    const d=JSON.parse(localStorage.getItem('yasai_draft')||'null');
+    if(!d||editingId)return;
+    // 古い下書き（再ログイン直後ではないもの）は誤入力の元になるので使わない。日付は常に当日のまま
+    if(!d.t||Date.now()-d.t>6*3600*1000){clearDraft();return;}
+    document.getElementById('r-store').value=d.store||'';
+    document.getElementById('r-veggie').value=d.veggie||'';
+    document.getElementById('r-price').value=d.price||'';
+    document.getElementById('r-qty').value=d.qty||'';
+    document.getElementById('r-fee').value=d.fee||'';
+    document.getElementById('r-memo').value=d.memo||'';
+    calcIncome();
+  }catch(e){}
+}
+
 // new Date().toISOString()はUTC基準になり、日本時間の深夜〜朝9時頃は
 // 前日の日付を返してしまうため、ローカル日付から直接組み立てる
 function todayLocalStr(){
@@ -730,7 +842,7 @@ async function addRecord(){
         const ok=await verifyRecordSaved(savedId);
         if(ok){setSyncStatus('✅ 保存を確認しました');showAlert('alert-ok',`✅ ${veggie}の修正をスプレッドシートで確認しました`);}
         else{setSyncStatus('⚠️ 確認できません');showAlert('alert-ng','⚠️ 保存後の確認ができませんでした。「🔄 保存を確認」で再確認してください');}
-      }catch(e){setSyncStatus('❌ 保存に失敗');showAlert('alert-ng','❌ スプレッドシートへの保存に失敗しました。もう一度お試しください');console.error(e);}
+      }catch(e){setSyncStatus('❌ 保存に失敗');showAlert('alert-ng','❌ スプレッドシートへの保存に失敗しました。もう一度お試しください');console.error(e);handleAuthError(e);}
     }
     return;
   }
@@ -738,6 +850,7 @@ async function addRecord(){
   // 新規追加
   const rec={id:nextId++,date,store,veggie,qty,price,total,fee,income,memo};
   records.unshift(rec);
+  saveDraft();            // 保存に失敗してログインし直す場合に備えて、入力内容を残しておく
   resetRecordForm();
   showAlert('alert-ok',`✅ ${veggie}を${store}に記録しました（入金予定：${fmt(income)}）`);
   renderSummary();
@@ -745,6 +858,7 @@ async function addRecord(){
     const ok=await appendRecord(rec);
     if(ok){
       const verified=await verifyRecordSaved(rec.id);
+      clearDraft();
       if(verified){setSyncStatus('✅ 保存を確認しました');showAlert('alert-ok',`✅ ${veggie}の記録をスプレッドシートで確認しました`);}
       else{setSyncStatus('⚠️ 確認できません');showAlert('alert-ng','⚠️ 保存後の確認ができませんでした。「🔄 保存を確認」で再確認してください');}
     }else{
@@ -870,7 +984,7 @@ async function deleteRecord(id){
       await rewriteDataSheet();
       await updateAggSheets();
       setSyncStatus('✅ 削除しました（Sheetsにも反映済み）');
-    }catch(e){setSyncStatus('❌ 削除の反映に失敗');console.error(e);}
+    }catch(e){setSyncStatus('❌ 削除の反映に失敗');console.error(e);handleAuthError(e);}
   }
 }
 
@@ -1226,6 +1340,7 @@ function exportCSV(){
 
 document.getElementById('r-date').value=todayLocalStr();
 document.getElementById('r-qty').addEventListener('input',calcIncome);
+Object.values(DRAFT_FIELDS).forEach(id=>{const el=document.getElementById(id);el.addEventListener('input',saveDraft);el.addEventListener('change',saveDraft);});
 buildSelects();renderSummary();
 window.gapiLoaded=gapiLoaded;window.gisLoaded=gisLoaded;
 </script>
