@@ -347,7 +347,6 @@ function calcIncomeAmount(total, feeRate){
 }
 let records = [];
 let salesRecords = []; // 「売上実績」シート（メール自動取込）から読み込んだ実売データ
-let nextId = 1;
 let editingId = null; // 編集中の出荷記録ID（nullなら新規追加モード）
 
 /* ===== Google Sheets / ログイン ===== */
@@ -490,55 +489,139 @@ async function ensureSheets(sheetNames){
   const toAdd=needed.filter(n=>!sheetNames.includes(n));
   if(!toAdd.length)return;
   await gapi.client.sheets.spreadsheets.batchUpdate({spreadsheetId:SPREADSHEET_ID,resource:{requests:toAdd.map(title=>({addSheet:{properties:{title}}}))}});
+  if(toAdd.includes('出荷データ')){
+    await gapi.client.sheets.spreadsheets.values.update({spreadsheetId:SPREADSHEET_ID,range:'出荷データ!A1',valueInputOption:'RAW',resource:{values:[DATA_HEADER]}});
+  }
 }
 
-// 追記方式：新しい1件だけ追加
+/* ===== 出荷データシートの操作 =====
+   シートの全消去・全書き換えは行わない。追加・修正・削除は常に「該当する1行だけ」を操作する。
+   （全消去方式だと、途中で通信が切れたときや2台で同時に使ったときに記録が消えるため） */
+const DATA_HEADER=['ID','日付','店舗','野菜','個数','単価(税込)','合計金額(税込)','手数料率(%)','入金額','メモ'];
+function recToRow(r){return [r.id,r.date,r.store,r.veggie,r.qty,r.price||0,r.total||0,r.fee||0,r.income||0,r.memo||''];}
+function toCells(vals){return vals.map(v=>typeof v==='number'?{userEnteredValue:{numberValue:v}}:{userEnteredValue:{stringValue:String(v)}});}
+// 日付がシリアル値(数値)で入っていた場合の変換
+function toDateStr(v){
+  if(typeof v==='number')return new Date(Date.UTC(1899,11,30)+v*86400000).toISOString().slice(0,10);
+  return String(v||'');
+}
+function rowToRec(r){
+  return {id:Number(r[0]),date:toDateStr(r[1]),store:String(r[2]??''),veggie:String(r[3]??''),qty:parseInt(r[4])||0,price:parseInt(r[5])||0,total:parseInt(r[6])||0,fee:parseFloat(r[7])||0,income:parseInt(r[8])||0,memo:String(r[9]??'')};
+}
+
+// 記録IDは「作成時刻(ミリ秒)」から作る。端末ごとの連番だと、2台で同時に入力したときに同じIDになるため
+let lastIssuedId=0;
+function newRecordId(used){
+  let id=Date.now();
+  while(id<=lastIssuedId||(used&&used.has(id))||records.some(r=>r.id===id))id++;
+  lastIssuedId=id;
+  return id;
+}
+
+async function getDataSheetId(){
+  const meta=await gapi.client.sheets.spreadsheets.get({spreadsheetId:SPREADSHEET_ID});
+  const sheet=meta.result.sheets.find(s=>s.properties.title==='出荷データ');
+  if(!sheet)throw new Error('出荷データシートが見つかりません');
+  return sheet.properties.sheetId;
+}
+
+// シートの出荷データを読み込んで records に反映する（1回の読込で全件を取得）
+async function loadRecords(){
+  const res=await gapi.client.sheets.spreadsheets.values.get({spreadsheetId:SPREADSHEET_ID,range:'出荷データ!A2:J',valueRenderOption:'UNFORMATTED_VALUE'});
+  const rows=res.result.values||[];
+  const list=[],seen=new Set(),dups=[];
+  rows.forEach((r,i)=>{
+    if(r[0]===undefined||r[0]==='')return;
+    const rec=rowToRec(r);
+    if(!Number.isFinite(rec.id))return;
+    if(seen.has(rec.id))dups.push({rec,rowIndex:i+1});else seen.add(rec.id);
+    list.push(rec);
+  });
+  // 過去にIDが重複していた場合は、2件目以降に新しいIDを振り直す（編集・削除で別の記録を巻き込まないように）
+  if(dups.length){
+    try{
+      const sheetId=await getDataSheetId();
+      const used=new Set(seen);
+      dups.forEach(d=>{d.rec.id=newRecordId(used);used.add(d.rec.id);});
+      await gapi.client.sheets.spreadsheets.batchUpdate({spreadsheetId:SPREADSHEET_ID,resource:{requests:dups.map(d=>(
+        {updateCells:{start:{sheetId,rowIndex:d.rowIndex,columnIndex:0},rows:[{values:toCells([d.rec.id])}],fields:'userEnteredValue'}}
+      ))}});
+      console.warn(`ID重複 ${dups.length}件を振り直しました`);
+    }catch(e){console.error('ID重複の修復に失敗:',e);throw e;}
+  }
+  records=list.sort((a,b)=>{
+    const d=b.date.localeCompare(a.date);
+    return d!==0?d:b.id-a.id;
+  });
+}
+
+// 指定IDの記録がシート上で何行目か（0始まりのデータ行index）。無ければ -1
+async function findRowIndex(id){
+  const res=await gapi.client.sheets.spreadsheets.values.get({spreadsheetId:SPREADSHEET_ID,range:'出荷データ!A2:A',valueRenderOption:'UNFORMATTED_VALUE'});
+  return (res.result.values||[]).findIndex(v=>v&&v.length&&Number(v[0])===id);
+}
+
+// 書き込み後にシートの最新状態を読み直し、集計シートも更新する。読み直せたら true
+async function refreshAfterWrite(){
+  let loaded=false;
+  try{await loadRecords();loaded=true;}catch(e){console.error('読み直しエラー:',e);handleAuthError(e);}
+  if(!isSignedIn)return false;
+  try{await updateAggSheets();}catch(e){
+    console.error('集計シート更新エラー:',e);
+    if(!handleAuthError(e))setSyncStatus('⚠️ 集計シートの更新に失敗（記録は保存済み）');
+  }
+  return loaded;
+}
+// 失敗したときにシートの状態へ表示を合わせ直す（認証切れで解除済みなら何もしない）
+async function resyncQuiet(){
+  if(!isSignedIn)return;
+  try{await loadRecords();}catch(e){console.error(e);handleAuthError(e);}
+}
+
+// 新しい1件を先頭行(2行目)に挿入して書き込む（挿入と書き込みは1回のリクエストで行う）
 async function appendRecord(r){
   if(!isSignedIn)return false;
   try{
     setSyncStatus('⏳');
-    const meta=await gapi.client.sheets.spreadsheets.get({spreadsheetId:SPREADSHEET_ID});
-    const sheet=meta.result.sheets.find(s=>s.properties.title==='出荷データ');
-    const sheetId=sheet?sheet.properties.sheetId:0;
+    const sheetId=await getDataSheetId();
     await gapi.client.sheets.spreadsheets.batchUpdate({spreadsheetId:SPREADSHEET_ID,resource:{requests:[
-      {insertDimension:{range:{sheetId,dimension:'ROWS',startIndex:1,endIndex:2},inheritFromBefore:false}}
+      {insertDimension:{range:{sheetId,dimension:'ROWS',startIndex:1,endIndex:2},inheritFromBefore:false}},
+      {updateCells:{start:{sheetId,rowIndex:1,columnIndex:0},rows:[{values:toCells(recToRow(r))}],fields:'userEnteredValue'}}
     ]}});
-    await gapi.client.sheets.spreadsheets.values.update({
-      spreadsheetId:SPREADSHEET_ID,range:'出荷データ!A2:J2',
-      valueInputOption:'RAW',
-      resource:{values:[[r.id,r.date,r.store,r.veggie,r.qty,r.price||0,r.total||0,r.fee||0,r.income||0,r.memo||'']]}
-    });
-    await updateAggSheets();
+    await refreshAfterWrite();
     setSyncStatus('✅ 保存');
     return true;
   }catch(e){setSyncStatus('❌');console.error(e);handleAuthError(e);return false;}
 }
 
-// 指定したIDの出荷記録が、実際にスプレッドシート側に書き込まれているかを確認する
-async function verifyRecordSaved(id){
-  try{
-    const res=await gapi.client.sheets.spreadsheets.values.get({spreadsheetId:SPREADSHEET_ID,range:'出荷データ!A2:A'});
-    const ids=(res.result.values||[]).flat().map(v=>parseInt(v)).filter(n=>!isNaN(n));
-    return ids.includes(id);
-  }catch(e){console.error('verifyRecordSaved error:',e);return false;}
+// 既存記録の修正：IDで該当行を探して、その1行だけ上書きする。'ok' または 'notfound'
+async function updateRecordInSheet(rec){
+  const sheetId=await getDataSheetId();
+  const idx=await findRowIndex(rec.id);
+  if(idx<0)return 'notfound';
+  await gapi.client.sheets.spreadsheets.batchUpdate({spreadsheetId:SPREADSHEET_ID,resource:{requests:[
+    {updateCells:{start:{sheetId,rowIndex:idx+1,columnIndex:0},rows:[{values:toCells(recToRow(rec))}],fields:'userEnteredValue'}}
+  ]}});
+  await refreshAfterWrite();
+  return 'ok';
 }
 
-// 出荷データシートを新しい順にヘッダー付きで全書き換え
-async function rewriteDataSheet(){
-  if(!isSignedIn||!records.length)return;
-  try{
-    const header=['ID','日付','店舗','野菜','個数','単価(税込)','合計金額(税込)','手数料率(%)','入金額','メモ'];
-    const sorted=[...records].sort((a,b)=>{
-      const s=a.store.localeCompare(b.store,'ja');
-      if(s!==0)return s;
-      const d=b.date.localeCompare(a.date);
-      return d!==0?d:b.id-a.id;
-    });
-    const rows=[header,...sorted.map(r=>[r.id,r.date,r.store,r.veggie,r.qty,r.price||0,r.total||0,r.fee||0,r.income||0,r.memo||''])];
-    // シートをクリアしてから書き込み（古いデータが残らないように）
-    await gapi.client.sheets.spreadsheets.values.clear({spreadsheetId:SPREADSHEET_ID,range:'出荷データ!A:J'});
-    await gapi.client.sheets.spreadsheets.values.update({spreadsheetId:SPREADSHEET_ID,range:'出荷データ!A1',valueInputOption:'RAW',resource:{values:rows}});
-  }catch(e){console.error('rewriteDataSheet error:',e);handleAuthError(e);}
+// 削除：IDで該当行を探して、その1行だけ削除する。'ok' または 'notfound'（既に無い）
+async function deleteRecordInSheet(id){
+  const sheetId=await getDataSheetId();
+  const idx=await findRowIndex(id);
+  if(idx<0)return 'notfound';
+  await gapi.client.sheets.spreadsheets.batchUpdate({spreadsheetId:SPREADSHEET_ID,resource:{requests:[
+    {deleteDimension:{range:{sheetId,dimension:'ROWS',startIndex:idx+1,endIndex:idx+2}}}
+  ]}});
+  await refreshAfterWrite();
+  return 'ok';
+}
+
+// シートから読み直した内容が、保存したつもりの内容と一致しているか
+function recordSavedAs(rec){
+  const r=records.find(x=>x.id===rec.id);
+  return !!r&&r.date===rec.date&&r.store===rec.store&&r.veggie===rec.veggie&&r.qty===rec.qty&&r.price===rec.price&&r.fee===rec.fee&&r.memo===rec.memo;
 }
 
 // 設定のみ保存（店舗・野菜リスト・消費税率）
@@ -556,6 +639,7 @@ async function updateAggSheets(){
   const byMonth={};
   records.forEach(r=>{const ym=r.date.substring(0,7);if(!byMonth[ym])byMonth[ym]={total:0,income:0,qty:0,count:0};byMonth[ym].total+=r.total||0;byMonth[ym].income+=r.income||0;byMonth[ym].qty+=r.qty||0;byMonth[ym].count++;});
   const mRows=[['年月','件数','個数','売値合計(税込)','入金額合計'],...Object.entries(byMonth).sort((a,b)=>b[0].localeCompare(a[0])).map(([ym,v])=>[ym.replace('-','年')+'月',v.count,v.qty,v.total,v.income])];
+  await gapi.client.sheets.spreadsheets.values.clear({spreadsheetId:SPREADSHEET_ID,range:'月次集計!A:E'});
   await gapi.client.sheets.spreadsheets.values.update({spreadsheetId:SPREADSHEET_ID,range:'月次集計!A1',valueInputOption:'RAW',resource:{values:mRows}});
   // 店舗別サマリー（シンプル版。詳細は「絞り込み」シートで）
   const sRows=[['店舗','件数','個数','金額(税込)','入金予定額','手数料率']];
@@ -576,6 +660,7 @@ async function updateAggSheets(){
   const byVeggie={};
   records.forEach(r=>{if(!byVeggie[r.veggie])byVeggie[r.veggie]={total:0,income:0,qty:0,count:0};byVeggie[r.veggie].total+=r.total||0;byVeggie[r.veggie].income+=r.income||0;byVeggie[r.veggie].qty+=r.qty||0;byVeggie[r.veggie].count++;});
   const vRows=[['野菜','件数','個数','売値合計(税込)','入金額合計'],...Object.entries(byVeggie).sort((a,b)=>b[1].total-a[1].total).map(([v,d])=>[v,d.count,d.qty,d.total,d.income])];
+  await gapi.client.sheets.spreadsheets.values.clear({spreadsheetId:SPREADSHEET_ID,range:'野菜別集計!A:E'});
   await gapi.client.sheets.spreadsheets.values.update({spreadsheetId:SPREADSHEET_ID,range:'野菜別集計!A1',valueInputOption:'RAW',resource:{values:vRows}});
   // 絞り込みシート
   await buildFilterSheet();
@@ -653,17 +738,8 @@ async function syncFromSheets(){
     setSyncStatus('⏳ 読込中');
     const meta=await gapi.client.sheets.spreadsheets.get({spreadsheetId:SPREADSHEET_ID});
     await ensureSheets(meta.result.sheets.map(s=>s.properties.title));
-    // 出荷データ
-    const dr=await gapi.client.sheets.spreadsheets.values.get({spreadsheetId:SPREADSHEET_ID,range:'出荷データ!A2:J'});
-    const rows=dr.result.values||[];
-    const sheetRecords=rows.filter(r=>r[0]).map(r=>({id:parseInt(r[0]),date:r[1],store:r[2],veggie:r[3],qty:parseInt(r[4])||0,price:parseInt(r[5])||0,total:parseInt(r[6])||0,fee:parseFloat(r[7])||0,income:parseInt(r[8])||0,memo:r[9]||''}));
-    records=sheetRecords.sort((a,b)=>{
-      const d=b.date.localeCompare(a.date);
-      return d!==0?d:b.id-a.id;
-    });
-    nextId=records.reduce((m,r)=>Math.max(m,r.id),0)+1;
-    // 出荷データシートを新しい順に書き直す
-    await rewriteDataSheet();
+    // 出荷データ（読み込むだけ。シートの書き直しはしない）
+    await loadRecords();
     // 設定
     const sr=await gapi.client.sheets.spreadsheets.values.get({spreadsheetId:SPREADSHEET_ID,range:'設定!A2:C'});
     const srows=sr.result.values||[];
@@ -824,31 +900,36 @@ async function addRecord(){
   const income=calcIncomeAmount(total,fee);
 
   if(editingId){
-    // 既存記録の修正
-    const idx=records.findIndex(r=>r.id===editingId);
+    // 既存記録の修正：該当する1行だけをシート上で更新する
     const savedId=editingId;
-    if(idx!==-1){
-      records[idx]={...records[idx],date,store,veggie,qty,price,total,fee,income,memo};
-      showAlert('alert-ok',`✅ ${veggie}の記録を修正しました（入金予定：${fmt(income)}）`);
-    }
+    const idx=records.findIndex(r=>r.id===savedId);
+    const updated={...(idx!==-1?records[idx]:{}),id:savedId,date,store,veggie,qty,price,total,fee,income,memo};
+    if(idx!==-1)records[idx]=updated;
     editingId=null;
     resetRecordForm();
     renderSummary();
+    showAlert('alert-ok',`✅ ${veggie}の記録を修正しました（入金予定：${fmt(income)}）`);
     if(isSignedIn){
       setSyncStatus('⏳ 修正を保存中...');
       try{
-        await rewriteDataSheet();
-        await updateAggSheets();
-        const ok=await verifyRecordSaved(savedId);
-        if(ok){setSyncStatus('✅ 保存を確認しました');showAlert('alert-ok',`✅ ${veggie}の修正をスプレッドシートで確認しました`);}
+        const res=await updateRecordInSheet(updated);
+        renderSummary();
+        if(res==='notfound'){
+          await resyncQuiet();renderSummary();
+          setSyncStatus('⚠️ 記録が見つかりません');
+          showAlert('alert-ng','⚠️ この記録はスプレッドシートに見つかりませんでした（他の端末で削除された可能性があります）。「🔄 保存を確認」で最新の状態を確認してください');
+        }else if(recordSavedAs(updated)){setSyncStatus('✅ 保存を確認しました');showAlert('alert-ok',`✅ ${veggie}の修正をスプレッドシートで確認しました`);}
         else{setSyncStatus('⚠️ 確認できません');showAlert('alert-ng','⚠️ 保存後の確認ができませんでした。「🔄 保存を確認」で再確認してください');}
-      }catch(e){setSyncStatus('❌ 保存に失敗');showAlert('alert-ng','❌ スプレッドシートへの保存に失敗しました。もう一度お試しください');console.error(e);handleAuthError(e);}
+      }catch(e){
+        setSyncStatus('❌ 保存に失敗');console.error(e);
+        if(!handleAuthError(e)){await resyncQuiet();renderSummary();showAlert('alert-ng','❌ スプレッドシートへの保存に失敗しました。もう一度お試しください');}
+      }
     }
     return;
   }
 
   // 新規追加
-  const rec={id:nextId++,date,store,veggie,qty,price,total,fee,income,memo};
+  const rec={id:newRecordId(),date,store,veggie,qty,price,total,fee,income,memo};
   records.unshift(rec);
   saveDraft();            // 保存に失敗してログインし直す場合に備えて、入力内容を残しておく
   resetRecordForm();
@@ -857,12 +938,16 @@ async function addRecord(){
   if(isSignedIn){
     const ok=await appendRecord(rec);
     if(ok){
-      const verified=await verifyRecordSaved(rec.id);
+      renderSummary();
       clearDraft();
-      if(verified){setSyncStatus('✅ 保存を確認しました');showAlert('alert-ok',`✅ ${veggie}の記録をスプレッドシートで確認しました`);}
+      if(recordSavedAs(rec)){setSyncStatus('✅ 保存を確認しました');showAlert('alert-ok',`✅ ${veggie}の記録をスプレッドシートで確認しました`);}
       else{setSyncStatus('⚠️ 確認できません');showAlert('alert-ng','⚠️ 保存後の確認ができませんでした。「🔄 保存を確認」で再確認してください');}
-    }else{
-      showAlert('alert-ng','❌ スプレッドシートへの保存に失敗しました。もう一度お試しください');
+    }else if(isSignedIn){
+      // 保存できなかった：シートの状態に表示を合わせ、入力内容をフォームに戻して再送信できるようにする
+      await resyncQuiet();
+      if(!records.some(x=>x.id===rec.id))restoreDraft();
+      renderSummary();
+      showAlert('alert-ng','❌ スプレッドシートへの保存に失敗しました。入力内容は残してあります。もう一度お試しください');
     }
   }
 }
@@ -973,18 +1058,27 @@ function resetRecordForm(){
   const cb=document.getElementById('cancel-edit-btn');if(cb)cb.style.display='none';
 }
 
+function rerenderCurrent(){
+  renderSummary();
+  const t=document.querySelector('.tab.active').textContent;
+  if(t.includes('当日出荷'))renderToday();
+  else if(t.includes('履歴'))renderList();
+}
 async function deleteRecord(id){
   if(!confirm('この出荷記録を削除しますか？'))return;
   records=records.filter(r=>r.id!==id);
   if(editingId===id){editingId=null;resetRecordForm();}
-  renderList();renderSummary();
+  rerenderCurrent();
   if(isSignedIn){
     setSyncStatus('⏳ 削除中...');
     try{
-      await rewriteDataSheet();
-      await updateAggSheets();
+      await deleteRecordInSheet(id);   // 該当する1行だけを削除（既に無ければ何もしない）
+      rerenderCurrent();
       setSyncStatus('✅ 削除しました（Sheetsにも反映済み）');
-    }catch(e){setSyncStatus('❌ 削除の反映に失敗');console.error(e);handleAuthError(e);}
+    }catch(e){
+      setSyncStatus('❌ 削除の反映に失敗');console.error(e);
+      if(!handleAuthError(e)){await resyncQuiet();rerenderCurrent();alert('❌ 削除をスプレッドシートに反映できませんでした。もう一度お試しください');}
+    }
   }
 }
 
