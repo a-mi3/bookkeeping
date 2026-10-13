@@ -144,6 +144,7 @@ body.authed #login-screen{display:none}
   <button class="tab" onclick="sw('monthly')">📅 月次</button>
   <button class="tab" onclick="sw('sales')">🔍 売上比較</button>
   <button class="tab" onclick="sw('salesStore')">💰 売上店舗別</button>
+  <button class="tab" onclick="sw('salesInput')">✍️ 売上入力</button>
   <button class="tab" onclick="sw('settings')">⚙️ 設定</button>
 </div>
 
@@ -283,6 +284,40 @@ body.authed #login-screen{display:none}
     <div id="salesstore-content"></div>
   </div>
 
+  <!-- 売上入力（手入力） -->
+  <div id="tab-salesInput" class="panel">
+    <div class="list-header">
+      <span class="list-title">売上の手入力</span>
+      <button class="btn btn-reload btn-sm" onclick="reloadData()">🔄 最新データ</button>
+    </div>
+    <div style="font-size:11px;color:var(--text-sub);margin-bottom:10px">売上メールが届かない店舗の売上を手入力します。「売上比較」「売上店舗別」に、メール取込の売上と一緒に反映されます。メール取込の行はここでは編集できません。同じ日・店舗の売上メールが後から取り込まれると、その日・店舗の手入力分はメールの内容に置き換わります</div>
+    <div class="card">
+      <div class="card-title">✍️ 売上を入力する</div>
+      <div id="si-alert-ok" class="alert alert-ok"></div>
+      <div id="si-alert-ng" class="alert alert-ng"></div>
+      <div class="fg"><label>売上日</label><input type="date" id="si-date"></div>
+      <div class="row2">
+        <div class="fg"><label>店舗</label><select id="si-store" onchange="onSiStoreChange()"><option value="">選択してください</option></select></div>
+        <div class="fg"><label>野菜</label><select id="si-veggie"><option value="">選択してください</option></select></div>
+      </div>
+      <div class="row3">
+        <div class="fg"><label>売値（税込・円）<span class="badge-tax">税込</span></label><input type="number" id="si-price" placeholder="0" min="0" oninput="calcSiIncome()"></div>
+        <div class="fg"><label>売れた個数</label><input type="number" id="si-qty" placeholder="0" min="1" oninput="calcSiIncome()"></div>
+        <div class="fg"><label>手数料率（%）</label><input type="number" id="si-fee" placeholder="0" min="0" max="100" step="0.1" oninput="calcSiIncome()"></div>
+      </div>
+      <div class="income-preview" id="si-preview">
+        <div class="label">入金見込額</div>
+        <div class="value" id="si-income">¥0</div>
+      </div>
+      <button class="btn btn-primary btn-block" id="si-submit" onclick="saveSalesInput()">＋ 売上を記録する</button>
+      <button class="btn btn-block" id="si-cancel" style="display:none;margin-top:8px" onclick="cancelSalesInputEdit()">編集をキャンセル</button>
+    </div>
+    <div class="card">
+      <div class="card-title">手入力した売上（新しい順・最大50件）</div>
+      <div id="si-list"></div>
+    </div>
+  </div>
+
   <!-- 設定 -->
   <div id="tab-settings" class="panel">
     <div class="card">
@@ -372,7 +407,7 @@ function tokenStillValid(){const s=getSavedToken();return !!s&&Date.now()<s.expi
 function lockToLogin(msg,isError){
   clearTimeout(refreshTimer);clearInterval(expiryTimer);
   isSignedIn=false;refreshing=false;loginPending=false;
-  records=[];salesRecords=[];editingId=null;
+  records=[];salesRecords=[];editingId=null;salesEditingMid=null;
   try{localStorage.removeItem('yasai_token');}catch(e){}
   try{gapi.client.setToken('');}catch(e){}
   updateAuthUI(false);
@@ -757,9 +792,7 @@ async function syncFromSheets(){
     // 売上実績（メール自動取込・GASが書き込むシート。無い場合は空扱い）
     try{
       if(meta.result.sheets.map(s=>s.properties.title).includes('売上実績')){
-        const sr2=await gapi.client.sheets.spreadsheets.values.get({spreadsheetId:SPREADSHEET_ID,range:'売上実績!A2:J'});
-        const srows2=sr2.result.values||[];
-        salesRecords=srows2.filter(r=>r[0]).map(r=>({date:r[0],store:r[1],veggie:r[2],price:parseInt(r[3])||0,qty:parseInt(r[4])||0,total:parseInt(r[5])||0,fee:parseFloat(r[6])||0,income:parseInt(r[7])||0,sender:r[8]||'',messageId:r[9]||''}));
+        await loadSalesRecords();
       }else{
         salesRecords=[];
       }
@@ -781,6 +814,7 @@ async function reloadData(){
   const t=document.querySelector('.tab.active').textContent;
   if(t.includes('当日出荷'))renderToday();
   else if(t.includes('履歴'))renderList();
+  else if(t.includes('売上入力'))renderSalesInput();
   else if(t.includes('売上店舗別')){buildSalesStoreChecks();renderSalesStore();}
   else if(t.includes('店舗'))renderStore();
   else if(t.includes('野菜'))renderVeggie();
@@ -807,7 +841,7 @@ function sw(t){
   document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
   document.getElementById('tab-'+t).classList.add('active');
-  const tabs=['record','today','list','store','veggie','monthly','sales','salesStore','settings'];
+  const tabs=['record','today','list','store','veggie','monthly','sales','salesStore','salesInput','settings'];
   document.querySelectorAll('.tab')[tabs.indexOf(t)].classList.add('active');
   if(t==='record')renderSummary();
   else if(t==='today')renderToday();
@@ -817,6 +851,7 @@ function sw(t){
   else if(t==='monthly')renderMonthly();
   else if(t==='sales')renderSales();
   else if(t==='salesStore'){buildSalesStoreChecks();renderSalesStore();}
+  else if(t==='salesInput')renderSalesInput();
   else if(t==='settings')renderSettings();
 }
 
@@ -1383,6 +1418,191 @@ function renderSalesStore(){
     </div>`;
   }
   el.innerHTML=html;
+}
+
+/* ===== 売上の手入力（メールが届かない店舗用） =====
+   「売上実績」シートに、メール取込と同じ列構成で1行ずつ追加する。
+   送信元は「手入力」、メールID列には手入力用の固有IDを入れる（編集・削除はこのIDで行を探す）。
+   メール取込（GAS）が管理する行は、このアプリでは編集・削除しない。 */
+const SALES_SHEET='売上実績';
+const SALES_HEADER=['日付','店舗','野菜','単価','点数','金額','手数料率(%)','入金見込額','送信元','メールID'];
+const MANUAL_SENDER='手入力';
+let salesEditingMid=null;
+
+function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function newManualSalesId(){return 'manual-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,6);}
+function salesRecToRow(r){return [r.date,r.store,r.veggie,r.price||0,r.qty||0,r.total||0,r.fee||0,r.income||0,MANUAL_SENDER,r.messageId];}
+
+async function loadSalesRecords(){
+  const res=await gapi.client.sheets.spreadsheets.values.get({spreadsheetId:SPREADSHEET_ID,range:SALES_SHEET+'!A2:J'});
+  const rows=res.result.values||[];
+  salesRecords=rows.filter(r=>r[0]).map(r=>({date:r[0],store:r[1],veggie:r[2],price:parseInt(r[3])||0,qty:parseInt(r[4])||0,total:parseInt(r[5])||0,fee:parseFloat(r[6])||0,income:parseInt(r[7])||0,sender:r[8]||'',messageId:r[9]||''}));
+}
+// 「売上実績」シートが無ければ（メール取込が未セットアップなど）ヘッダー付きで作る。シートIDを返す
+async function ensureSalesSheet(){
+  const meta=await gapi.client.sheets.spreadsheets.get({spreadsheetId:SPREADSHEET_ID});
+  const found=meta.result.sheets.find(s=>s.properties.title===SALES_SHEET);
+  if(found)return found.properties.sheetId;
+  const add=await gapi.client.sheets.spreadsheets.batchUpdate({spreadsheetId:SPREADSHEET_ID,resource:{requests:[{addSheet:{properties:{title:SALES_SHEET}}}]}});
+  await gapi.client.sheets.spreadsheets.values.update({spreadsheetId:SPREADSHEET_ID,range:SALES_SHEET+'!A1',valueInputOption:'RAW',resource:{values:[SALES_HEADER]}});
+  return add.result.replies[0].addSheet.properties.sheetId;
+}
+// メールID列から、手入力行の位置（データ行の0始まりindex）を探す。メール取込が並べ替えるので毎回探し直す
+async function findSalesRowIndex(mid){
+  const res=await gapi.client.sheets.spreadsheets.values.get({spreadsheetId:SPREADSHEET_ID,range:SALES_SHEET+'!J2:J'});
+  return (res.result.values||[]).findIndex(v=>v&&v.length&&String(v[0])===mid);
+}
+async function appendSalesRecord(rec){
+  const sheetId=await ensureSalesSheet();
+  await gapi.client.sheets.spreadsheets.batchUpdate({spreadsheetId:SPREADSHEET_ID,resource:{requests:[
+    {appendCells:{sheetId,rows:[{values:toCells(salesRecToRow(rec))}],fields:'userEnteredValue'}}
+  ]}});
+  await loadSalesRecords();
+}
+async function updateSalesRecordInSheet(rec){
+  const sheetId=await ensureSalesSheet();
+  const idx=await findSalesRowIndex(rec.messageId);
+  if(idx<0)return 'notfound';
+  await gapi.client.sheets.spreadsheets.batchUpdate({spreadsheetId:SPREADSHEET_ID,resource:{requests:[
+    {updateCells:{start:{sheetId,rowIndex:idx+1,columnIndex:0},rows:[{values:toCells(salesRecToRow(rec))}],fields:'userEnteredValue'}}
+  ]}});
+  await loadSalesRecords();
+  return 'ok';
+}
+async function deleteSalesRecordInSheet(mid){
+  const sheetId=await ensureSalesSheet();
+  const idx=await findSalesRowIndex(mid);
+  if(idx<0){await loadSalesRecords();return 'notfound';}
+  await gapi.client.sheets.spreadsheets.batchUpdate({spreadsheetId:SPREADSHEET_ID,resource:{requests:[
+    {deleteDimension:{range:{sheetId,dimension:'ROWS',startIndex:idx+1,endIndex:idx+2}}}
+  ]}});
+  await loadSalesRecords();
+  return 'ok';
+}
+
+function buildSalesInputSelects(){
+  const sSel=document.getElementById('si-store'),vSel=document.getElementById('si-veggie');
+  const ps=sSel.value,pv=vSel.value;
+  sSel.innerHTML='<option value="">選択してください</option>'+stores.map(s=>`<option value="${esc(s.name)}">${esc(s.name)}</option>`).join('');
+  vSel.innerHTML='<option value="">選択してください</option>'+veggies.map(v=>`<option value="${esc(v)}">${esc(v)}</option>`).join('');
+  if(ps)sSel.value=ps;if(pv)vSel.value=pv;
+}
+function onSiStoreChange(){
+  const s=stores.find(x=>x.name===document.getElementById('si-store').value);
+  document.getElementById('si-fee').value=s?(s.fee||''):'';
+  calcSiIncome();
+}
+function calcSiIncome(){
+  const qty=parseInt(document.getElementById('si-qty').value)||0;
+  const price=parseInt(document.getElementById('si-price').value)||0;
+  const fee=parseFloat(document.getElementById('si-fee').value)||0;
+  const pv=document.getElementById('si-preview');
+  if(qty>0&&price>0){
+    const total=qty*price;
+    document.getElementById('si-income').textContent=fmt(calcIncomeAmount(total,fee))+'（売上合計'+fmt(total)+'）';
+    pv.style.display='block';
+  }else pv.style.display='none';
+}
+function renderSalesInput(){
+  buildSalesInputSelects();
+  const d=document.getElementById('si-date');if(!d.value)d.value=todayLocalStr();
+  const list=salesRecords.filter(r=>r.sender===MANUAL_SENDER).sort((a,b)=>b.date.localeCompare(a.date)||String(b.messageId).localeCompare(String(a.messageId))).slice(0,50);
+  const el=document.getElementById('si-list');
+  if(!list.length){el.innerHTML='<div class="empty"><div class="empty-icon">✍️</div>手入力した売上はまだありません</div>';return;}
+  el.innerHTML=list.map(r=>`
+    <div class="ship-item">
+      <div class="ship-top">
+        <div><div class="ship-veggie">${esc(r.veggie)} <span class="badge badge-store">${esc(r.store)}</span></div></div>
+        <div class="ship-date">${esc(r.date)}</div>
+      </div>
+      <div class="ship-nums">
+        <div class="ship-num-item"><div class="ship-num-label">売上合計<span class="badge-tax">税込</span></div><div class="ship-num-val">${fmt(r.total)}</div></div>
+        <div class="ship-num-item"><div class="ship-num-label">個数</div><div class="ship-num-val">${fmtN(r.qty)}個</div></div>
+        <div class="ship-num-item"><div class="ship-num-label">手数料率</div><div class="ship-num-val">${r.fee||0}%</div></div>
+        <div class="ship-num-item"><div class="ship-num-label">入金見込</div><div class="ship-num-val income">${fmt(r.income)}</div></div>
+      </div>
+      <div style="margin-top:8px;display:flex;gap:6px">
+        <button class="btn btn-sm" onclick="editSalesInput('${esc(r.messageId)}')">✎ 編集</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteSalesInput('${esc(r.messageId)}')">削除</button>
+      </div>
+    </div>`).join('');
+}
+function resetSalesInputForm(){
+  salesEditingMid=null;
+  ['si-qty','si-price'].forEach(id=>{document.getElementById(id).value='';});
+  document.getElementById('si-preview').style.display='none';
+  document.getElementById('si-submit').textContent='＋ 売上を記録する';
+  document.getElementById('si-cancel').style.display='none';
+}
+function editSalesInput(mid){
+  const r=salesRecords.find(x=>x.messageId===mid&&x.sender===MANUAL_SENDER);
+  if(!r)return;
+  salesEditingMid=mid;
+  document.getElementById('si-date').value=r.date;
+  document.getElementById('si-store').value=r.store;
+  document.getElementById('si-veggie').value=r.veggie;
+  document.getElementById('si-price').value=r.price||'';
+  document.getElementById('si-qty').value=r.qty||'';
+  document.getElementById('si-fee').value=r.fee||0;
+  calcSiIncome();
+  document.getElementById('si-submit').textContent='✎ 修正を保存する';
+  document.getElementById('si-cancel').style.display='inline-flex';
+  showAlert('si-alert-ok',`✎ ${r.veggie}（${r.date}）を編集中です`);
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+async function saveSalesInput(){
+  const date=document.getElementById('si-date').value;
+  const store=document.getElementById('si-store').value;
+  const veggie=document.getElementById('si-veggie').value;
+  const qty=parseInt(document.getElementById('si-qty').value)||0;
+  const price=parseInt(document.getElementById('si-price').value)||0;
+  const fee=parseFloat(document.getElementById('si-fee').value)||0;
+  if(!date||!store||!veggie){showAlert('si-alert-ng','売上日・店舗・野菜を選択してください');return;}
+  if(qty<=0){showAlert('si-alert-ng','個数を入力してください');return;}
+  const total=qty*price,income=calcIncomeAmount(total,fee);
+  const editing=salesEditingMid;
+  // 同じ日・店舗・野菜が既にある場合は、二重入力の確認をする（編集時は除く）
+  if(!editing&&salesRecords.some(r=>r.date===date&&r.store===store&&normalizeKana(r.veggie)===normalizeKana(veggie))){
+    if(!confirm(`${date}の${store}・${veggie}の売上は既にあります。さらに追加しますか？`))return;
+  }
+  const rec={date,store,veggie,price,qty,total,fee,income,messageId:editing||newManualSalesId()};
+  const btn=document.getElementById('si-submit');btn.disabled=true;
+  setSyncStatus('⏳ 売上を保存中...');
+  try{
+    const res=editing?await updateSalesRecordInSheet(rec):(await appendSalesRecord(rec),'ok');
+    if(res==='notfound'){
+      renderSalesInput();setSyncStatus('⚠️ 記録が見つかりません');
+      showAlert('si-alert-ng','⚠️ この売上はスプレッドシートに見つかりませんでした（削除された可能性があります）。「🔄 最新データ」で確認してください');
+    }else{
+      const saved=salesRecords.find(r=>r.messageId===rec.messageId);
+      if(saved&&saved.qty===qty&&saved.price===price&&saved.store===store&&saved.veggie===veggie){
+        setSyncStatus('✅ 保存を確認しました');
+        showAlert('si-alert-ok',`✅ ${veggie}の売上を${editing?'修正':'記録'}しました（入金見込：${fmt(income)}）`);
+      }else{
+        setSyncStatus('⚠️ 確認できません');
+        showAlert('si-alert-ng','⚠️ 保存後の確認ができませんでした。「🔄 最新データ」で確認してください');
+      }
+      resetSalesInputForm();   // 日付と店舗はそのまま残す（続けて同じ店舗の別の野菜を入力しやすいように）
+      renderSalesInput();
+    }
+  }catch(e){
+    console.error(e);setSyncStatus('❌ 保存に失敗');
+    if(!handleAuthError(e))showAlert('si-alert-ng','❌ スプレッドシートへの保存に失敗しました。入力内容は残してあります。もう一度お試しください');
+  }finally{btn.disabled=false;}
+}
+function cancelSalesInputEdit(){resetSalesInputForm();}
+async function deleteSalesInput(mid){
+  if(!confirm('この売上の記録を削除しますか？'))return;
+  setSyncStatus('⏳ 削除中...');
+  try{
+    await deleteSalesRecordInSheet(mid);
+    if(salesEditingMid===mid)resetSalesInputForm();
+    renderSalesInput();
+    setSyncStatus('✅ 削除しました');
+  }catch(e){
+    console.error(e);setSyncStatus('❌ 削除に失敗');
+    if(!handleAuthError(e))alert('❌ 削除をスプレッドシートに反映できませんでした。もう一度お試しください');
+  }
 }
 
 function renderSettings(){
