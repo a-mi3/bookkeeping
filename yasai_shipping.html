@@ -290,7 +290,7 @@ body.authed #login-screen{display:none}
       <span class="list-title">売上の手入力</span>
       <button class="btn btn-reload btn-sm" onclick="reloadData()">🔄 最新データ</button>
     </div>
-    <div style="font-size:11px;color:var(--text-sub);margin-bottom:10px">売上メールが届かない店舗の売上を手入力します。「売上比較」「売上店舗別」に、メール取込の売上と一緒に反映されます。メール取込の行はここでは編集できません。同じ日・店舗の売上メールが後から取り込まれると、その日・店舗の手入力分はメールの内容に置き換わります</div>
+    <div style="font-size:11px;color:var(--text-sub);margin-bottom:10px">売上メールが届かない店舗の売上を手入力します。「売上比較」「売上店舗別」に、メール取込の売上と一緒に反映されます。「売上実績」シートの日付順の位置に入り、売上実績の集計シートにもすぐ反映されます。メール取込の行はここでは編集できません。同じ日・店舗の売上メールが後から取り込まれると、その日・店舗の手入力分はメールの内容に置き換わります</div>
     <div class="card">
       <div class="card-title">✍️ 売上を入力する</div>
       <div id="si-alert-ok" class="alert alert-ok"></div>
@@ -529,6 +529,18 @@ async function ensureSheets(sheetNames){
   }
 }
 
+/* シートへの書き込み（追加・修正・削除）は1件ずつ順番に実行する。
+   行番号はその都度読み直して決めているため、続けて操作が重なると、先の操作で行がずれて
+   後の操作が別の行を消してしまうおそれがある。そのため前の操作が終わるまで次を待たせる */
+let sheetOpChain=Promise.resolve();
+function serial(fn){const run=sheetOpChain.then(fn,fn);sheetOpChain=run.catch(()=>{});return run;}
+const appendRecord=r=>serial(()=>_appendRecord(r));
+const updateRecordInSheet=r=>serial(()=>_updateRecordInSheet(r));
+const deleteRecordInSheet=id=>serial(()=>_deleteRecordInSheet(id));
+const appendSalesRecord=r=>serial(()=>_appendSalesRecord(r));
+const updateSalesRecordInSheet=r=>serial(()=>_updateSalesRecordInSheet(r));
+const deleteSalesRecordInSheet=id=>serial(()=>_deleteSalesRecordInSheet(id));
+
 /* ===== 出荷データシートの操作 =====
    シートの全消去・全書き換えは行わない。追加・修正・削除は常に「該当する1行だけ」を操作する。
    （全消去方式だと、途中で通信が切れたときや2台で同時に使ったときに記録が消えるため） */
@@ -614,7 +626,7 @@ async function resyncQuiet(){
 }
 
 // 新しい1件を先頭行(2行目)に挿入して書き込む（挿入と書き込みは1回のリクエストで行う）
-async function appendRecord(r){
+async function _appendRecord(r){
   if(!isSignedIn)return false;
   try{
     setSyncStatus('⏳');
@@ -630,7 +642,7 @@ async function appendRecord(r){
 }
 
 // 既存記録の修正：IDで該当行を探して、その1行だけ上書きする。'ok' または 'notfound'
-async function updateRecordInSheet(rec){
+async function _updateRecordInSheet(rec){
   const sheetId=await getDataSheetId();
   const idx=await findRowIndex(rec.id);
   if(idx<0)return 'notfound';
@@ -642,7 +654,7 @@ async function updateRecordInSheet(rec){
 }
 
 // 削除：IDで該当行を探して、その1行だけ削除する。'ok' または 'notfound'（既に無い）
-async function deleteRecordInSheet(id){
+async function _deleteRecordInSheet(id){
   const sheetId=await getDataSheetId();
   const idx=await findRowIndex(id);
   if(idx<0)return 'notfound';
@@ -1447,37 +1459,119 @@ async function ensureSalesSheet(){
   await gapi.client.sheets.spreadsheets.values.update({spreadsheetId:SPREADSHEET_ID,range:SALES_SHEET+'!A1',valueInputOption:'RAW',resource:{values:[SALES_HEADER]}});
   return add.result.replies[0].addSheet.properties.sheetId;
 }
-// メールID列から、手入力行の位置（データ行の0始まりindex）を探す。メール取込が並べ替えるので毎回探し直す
-async function findSalesRowIndex(mid){
-  const res=await gapi.client.sheets.spreadsheets.values.get({spreadsheetId:SPREADSHEET_ID,range:SALES_SHEET+'!J2:J'});
-  return (res.result.values||[]).findIndex(v=>v&&v.length&&String(v[0])===mid);
+// 売上実績シートの全行（A〜J）。メール取込が並べ替えるので、操作のたびに読み直して位置を決める
+async function readSalesRows(){
+  const res=await gapi.client.sheets.spreadsheets.values.get({spreadsheetId:SPREADSHEET_ID,range:SALES_SHEET+'!A2:J'});
+  return res.result.values||[];
 }
-async function appendSalesRecord(rec){
-  const sheetId=await ensureSalesSheet();
-  await gapi.client.sheets.spreadsheets.batchUpdate({spreadsheetId:SPREADSHEET_ID,resource:{requests:[
-    {appendCells:{sheetId,rows:[{values:toCells(salesRecToRow(rec))}],fields:'userEnteredValue'}}
-  ]}});
-  await loadSalesRecords();
+const salesRowDate=r=>String((r&&r[0])??'').replace(/\//g,'-');
+const salesRowMid=r=>String((r&&r[9])??'');
+// 日付の新しい順(メール取込と同じ並び)を保つための挿入位置。該当なしなら末尾(=rows.length)
+function salesInsertIndex(rows,date){
+  const i=rows.findIndex(r=>{const d=salesRowDate(r);return d&&d<date;});
+  return i<0?rows.length:i;
 }
-async function updateSalesRecordInSheet(rec){
+// 行を追加するリクエスト群（日付順の位置に挿入。末尾なら appendCells）
+function salesInsertRequests(sheetId,rows,rec){
+  const idx=salesInsertIndex(rows,rec.date);
+  const cells={values:toCells(salesRecToRow(rec))};
+  if(idx>=rows.length)return [{appendCells:{sheetId,rows:[cells],fields:'userEnteredValue'}}];
+  return [
+    {insertDimension:{range:{sheetId,dimension:'ROWS',startIndex:idx+1,endIndex:idx+2},inheritFromBefore:false}},
+    {updateCells:{start:{sheetId,rowIndex:idx+1,columnIndex:0},rows:[cells],fields:'userEnteredValue'}}
+  ];
+}
+async function _appendSalesRecord(rec){
   const sheetId=await ensureSalesSheet();
-  const idx=await findSalesRowIndex(rec.messageId);
-  if(idx<0)return 'notfound';
-  await gapi.client.sheets.spreadsheets.batchUpdate({spreadsheetId:SPREADSHEET_ID,resource:{requests:[
-    {updateCells:{start:{sheetId,rowIndex:idx+1,columnIndex:0},rows:[{values:toCells(salesRecToRow(rec))}],fields:'userEnteredValue'}}
-  ]}});
-  await loadSalesRecords();
+  const rows=await readSalesRows();
+  await gapi.client.sheets.spreadsheets.batchUpdate({spreadsheetId:SPREADSHEET_ID,resource:{requests:salesInsertRequests(sheetId,rows,rec)}});
+  await afterSalesWrite();
+}
+async function _updateSalesRecordInSheet(rec){
+  const sheetId=await ensureSalesSheet();
+  const rows=await readSalesRows();
+  const cur=rows.findIndex(r=>salesRowMid(r)===rec.messageId);
+  if(cur<0)return 'notfound';
+  let requests;
+  if(salesRowDate(rows[cur])===rec.date){
+    requests=[{updateCells:{start:{sheetId,rowIndex:cur+1,columnIndex:0},rows:[{values:toCells(salesRecToRow(rec))}],fields:'userEnteredValue'}}];
+  }else{
+    // 日付が変わったときは、削除して日付順の正しい位置へ入れ直す
+    const rest=rows.filter((_,i)=>i!==cur);
+    requests=[{deleteDimension:{range:{sheetId,dimension:'ROWS',startIndex:cur+1,endIndex:cur+2}}},...salesInsertRequests(sheetId,rest,rec)];
+  }
+  await gapi.client.sheets.spreadsheets.batchUpdate({spreadsheetId:SPREADSHEET_ID,resource:{requests}});
+  await afterSalesWrite();
   return 'ok';
 }
-async function deleteSalesRecordInSheet(mid){
+async function _deleteSalesRecordInSheet(mid){
   const sheetId=await ensureSalesSheet();
-  const idx=await findSalesRowIndex(mid);
+  const rows=await readSalesRows();
+  const idx=rows.findIndex(r=>salesRowMid(r)===mid);
   if(idx<0){await loadSalesRecords();return 'notfound';}
   await gapi.client.sheets.spreadsheets.batchUpdate({spreadsheetId:SPREADSHEET_ID,resource:{requests:[
     {deleteDimension:{range:{sheetId,dimension:'ROWS',startIndex:idx+1,endIndex:idx+2}}}
   ]}});
-  await loadSalesRecords();
+  await afterSalesWrite();
   return 'ok';
+}
+
+/* 売上実績の集計シート（売上実績_月次集計 / 売上実績_店舗別 / 売上実績_絞り込み）は、
+   メール取込(GAS)が1日1回作り直している。手入力の売上がすぐ見えるよう、アプリ側でも同じ内容に更新する。
+   既に存在するシートだけを更新し、失敗しても売上の記録自体は保存済みなので続行する。 */
+let salesAggOk=true;
+async function afterSalesWrite(){
+  await loadSalesRecords();
+  try{await refreshSalesAggregates();salesAggOk=true;}
+  catch(e){console.error('売上集計シートの更新エラー:',e);salesAggOk=false;handleAuthError(e);}
+}
+async function refreshSalesAggregates(){
+  const meta=await gapi.client.sheets.spreadsheets.get({spreadsheetId:SPREADSHEET_ID});
+  const sheets=meta.result.sheets;
+  const has=t=>sheets.some(s=>s.properties.title===t);
+  const byStore={},byMonth={};
+  salesRecords.forEach(r=>{
+    const date=String(r.date||'').replace(/\//g,'-'),store=r.store;
+    if(!date||!store)return;
+    const ym=date.substring(0,7);
+    [[byStore,store],[byMonth,ym]].forEach(([m,k])=>{
+      if(!m[k])m[k]={count:0,qty:0,total:0,income:0};
+      m[k].count++;m[k].qty+=r.qty||0;m[k].total+=r.total||0;m[k].income+=r.income||0;
+    });
+  });
+  const toRows=(o,sorter)=>Object.entries(o).sort(sorter).map(([k,v])=>[k,v.count,v.qty,v.total,v.income]);
+  const writes=[
+    ['売上実績_店舗別',['店舗','件数','点数','金額(税込)','入金見込額'],toRows(byStore,(a,b)=>b[1].income-a[1].income)],
+    ['売上実績_月次集計',['年月','件数','点数','金額(税込)','入金見込額'],toRows(byMonth,(a,b)=>b[0].localeCompare(a[0]))]
+  ];
+  for(const [name,header,rows] of writes){
+    if(!has(name))continue;
+    await gapi.client.sheets.spreadsheets.values.clear({spreadsheetId:SPREADSHEET_ID,range:name+'!A:E'});
+    await gapi.client.sheets.spreadsheets.values.update({spreadsheetId:SPREADSHEET_ID,range:name+'!A1',valueInputOption:'RAW',resource:{values:[header,...rows]}});
+  }
+  if(has('売上実績_絞り込み'))await syncSalesFilterSheet(sheets.find(s=>s.properties.title==='売上実績_絞り込み').properties.sheetId);
+}
+// 「売上実績_絞り込み」の店舗チェック一覧に、手入力で増えた店舗(メールが来ない店舗)を足す。
+// 枠(ヘッダー行の2行上まで)に空きがある場合だけ追加し、無ければ次回のメール取込の作り直しに任せる
+async function syncSalesFilterSheet(sheetId){
+  const FS='売上実績_絞り込み';
+  const res=await gapi.client.sheets.spreadsheets.values.get({spreadsheetId:SPREADSHEET_ID,range:FS+'!A1:D40'});
+  const rows=res.result.values||[];
+  const headerIdx=rows.findIndex((r,i)=>i>0&&r&&r[0]==='日付');
+  if(headerIdx<0)return;
+  const headerRow=headerIdx+1,formulaRow=headerRow+1,maxSlotRow=headerRow-2;
+  const existing=new Set();let lastStoreRow=1;
+  for(let r=2;r<=maxSlotRow;r++){const c=(rows[r-1]||[])[2];if(c){existing.add(c);lastStoreRow=r;}}
+  const need=[...new Set(salesRecords.map(x=>x.store).filter(Boolean))].filter(s=>!existing.has(s));
+  const adds=need.slice(0,Math.max(0,maxSlotRow-lastStoreRow));
+  if(!adds.length)return;
+  const first=lastStoreRow+1,last=lastStoreRow+adds.length;
+  await gapi.client.sheets.spreadsheets.values.update({spreadsheetId:SPREADSHEET_ID,range:`${FS}!C${first}:D${last}`,valueInputOption:'RAW',resource:{values:adds.map(s=>[s,true])}});
+  await gapi.client.sheets.spreadsheets.batchUpdate({spreadsheetId:SPREADSHEET_ID,resource:{requests:[
+    {repeatCell:{range:{sheetId,startRowIndex:first-1,endRowIndex:last,startColumnIndex:3,endColumnIndex:4},cell:{dataValidation:{condition:{type:'BOOLEAN'}}},fields:'dataValidation'}}
+  ]}});
+  const formula=`=IFERROR(FILTER(${SALES_SHEET}!A2:J,LEFT(${SALES_SHEET}!A2:A,7)=B1,ISNUMBER(MATCH(${SALES_SHEET}!B2:B,FILTER(C2:C${last},D2:D${last}=TRUE),0))),"該当データなし")`;
+  await gapi.client.sheets.spreadsheets.values.update({spreadsheetId:SPREADSHEET_ID,range:`${FS}!A${formulaRow}`,valueInputOption:'USER_ENTERED',resource:{values:[[formula]]}});
 }
 
 function buildSalesInputSelects(){
@@ -1577,7 +1671,7 @@ async function saveSalesInput(){
       const saved=salesRecords.find(r=>r.messageId===rec.messageId);
       if(saved&&saved.qty===qty&&saved.price===price&&saved.store===store&&saved.veggie===veggie){
         setSyncStatus('✅ 保存を確認しました');
-        showAlert('si-alert-ok',`✅ ${veggie}の売上を${editing?'修正':'記録'}しました（入金見込：${fmt(income)}）`);
+        showAlert('si-alert-ok',`✅ ${veggie}の売上を${editing?'修正':'記録'}しました（入金見込：${fmt(income)}）`+(salesAggOk?'':'　※集計シートの更新は失敗しました（記録は保存済み）'));
       }else{
         setSyncStatus('⚠️ 確認できません');
         showAlert('si-alert-ng','⚠️ 保存後の確認ができませんでした。「🔄 最新データ」で確認してください');
