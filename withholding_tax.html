@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>源泉所得税 納付書作成</title>
+<style>
+:root{--bg:#f6f7f9;--card:#fff;--fg:#1f2933;--sub:#6b7280;--line:#d8dce2;--accent:#1d6fb8;--warn:#b45309}
+@media (prefers-color-scheme:dark){:root{--bg:#14171a;--card:#1d2125;--fg:#e6e8eb;--sub:#9aa3ad;--line:#343b42;--accent:#5aa9e6;--warn:#f0a65a}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.6 -apple-system,"Hiragino Sans","Noto Sans JP",sans-serif}
+main{max-width:980px;margin:0 auto;padding:16px}
+h1{font-size:1.3rem;margin:.4em 0}
+h2{font-size:1.05rem;margin:0 0 .6em}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin:12px 0}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}
+label{display:block;font-size:.82rem;color:var(--sub)}
+input,select{width:100%;padding:7px 8px;border:1px solid var(--line);border-radius:6px;background:var(--card);color:var(--fg);font:inherit}
+input[type=number]{text-align:right}
+button{padding:7px 14px;border:1px solid var(--accent);background:var(--accent);color:#fff;border-radius:6px;font:inherit;cursor:pointer}
+button.ghost{background:transparent;color:var(--accent)}
+button.del{background:transparent;color:var(--warn);border-color:var(--line);padding:4px 9px}
+.tablewrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;min-width:760px}
+th,td{border:1px solid var(--line);padding:4px 6px;text-align:left;vertical-align:middle}
+th{background:var(--bg);font-size:.8rem;font-weight:600}
+td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
+tfoot td{font-weight:700}
+.note{font-size:.8rem;color:var(--sub)}
+.due{font-size:1.1rem;font-weight:700;color:var(--accent)}
+.bar{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.excl{opacity:.45}
+#sheet{display:none}
+@media print{
+  body{background:#fff;color:#000}
+  main>*:not(#sheet){display:none!important}
+  #sheet{display:block!important}
+  main{padding:0;max-width:none}
+}
+#sheet{background:#fff;color:#000;border:2px solid #000;padding:18px}
+#sheet table{min-width:0}
+#sheet th{background:#eee;color:#000}
+#sheet td,#sheet th{border-color:#000}
+</style>
+</head>
+<body>
+<main>
+<h1>源泉所得税 納付書（徴収高計算書）作成ツール</h1>
+<p class="note">支払明細を入力すると、対象期間の集計・納期限・印刷用の「所得税徴収高計算書」を作ります。データはこのブラウザ内（localStorage）にのみ保存されます。税額・納期限は目安です。提出前に国税庁の最新の様式・税率で確認してください。</p>
+
+<section class="card">
+  <h2>1. 事業者情報</h2>
+  <div class="grid">
+    <div><label>氏名・名称</label><input id="bizName"></div>
+    <div><label>住所（所在地）</label><input id="bizAddr"></div>
+    <div><label>電話番号</label><input id="bizTel"></div>
+    <div><label>税務署名</label><input id="taxOffice" placeholder="例：土浦"></div>
+    <div><label>整理番号（任意）</label><input id="bizNo"></div>
+  </div>
+</section>
+
+<section class="card">
+  <h2>2. 納付する期間</h2>
+  <div class="grid">
+    <div><label>納付方法</label>
+      <select id="mode">
+        <option value="monthly">毎月納付（翌月10日）</option>
+        <option value="special">納期の特例（7/10・1/20）</option>
+      </select></div>
+    <div id="monthBox"><label>支払月</label><input type="month" id="month"></div>
+    <div id="halfBox"><label>対象年</label><input type="number" id="year" min="2000" max="2100"></div>
+    <div id="halfBox2"><label>期間</label>
+      <select id="half"><option value="1">上期（1〜6月払い）</option><option value="2">下期（7〜12月払い）</option></select></div>
+  </div>
+  <p style="margin:10px 0 0">納期限：<span class="due" id="dueDate">-</span> <span class="note" id="dueNote"></span></p>
+</section>
+
+<section class="card">
+  <h2>3. 支払明細</h2>
+  <p class="note">「報酬・料金等」は税額を自動計算します（100万円以下 10.21％、超過分 20.42％。復興特別所得税込み、1円未満切捨て）。消費税額が請求書で区分されている場合は欄に入力すると税抜額で計算します。給与・賞与・退職手当は源泉徴収税額表等で求めた税額を入力してください。税額欄に直接入力すれば上書きできます。</p>
+  <div class="tablewrap">
+  <table>
+    <thead><tr>
+      <th>支払日</th><th>支払先</th><th>区分</th><th class="n">支払金額</th><th class="n">うち消費税額</th><th class="n">源泉徴収税額</th><th></th>
+    </tr></thead>
+    <tbody id="rows"></tbody>
+  </table>
+  </div>
+  <div class="bar"><button id="addRow">＋ 行を追加</button><button class="ghost" id="clearAll">全行を削除</button></div>
+</section>
+
+<section class="card">
+  <h2>4. 集計（対象期間のみ）</h2>
+  <div class="tablewrap">
+  <table>
+    <thead><tr><th>区分</th><th class="n">人員</th><th class="n">支払金額</th><th class="n">源泉徴収税額</th></tr></thead>
+    <tbody id="sumBody"></tbody>
+    <tfoot><tr><td>合計（納付税額）</td><td class="n" id="sumCnt">0</td><td class="n" id="sumAmt">0</td><td class="n" id="sumTax">0</td></tr></tfoot>
+  </table>
+  </div>
+  <div class="bar"><button id="makeSheet">徴収高計算書を作成</button><button class="ghost" id="printBtn">印刷</button></div>
+</section>
+
+<section id="sheet"></section>
+</main>
+
+<script>
+const CATS = {
+  salary: {label:'俸給・給料等', auto:false},
+  bonus:  {label:'賞与',         auto:false},
+  retire: {label:'退職手当等',   auto:false},
+  fee:    {label:'報酬・料金等（原稿料・デザイン料・税理士報酬など）', auto:true}
+};
+const KEY = 'withholdingTax.v1';
+const $ = id => document.getElementById(id);
+const yen = n => (n||0).toLocaleString('ja-JP');
+let state;
+
+function load(){
+  try { state = JSON.parse(localStorage.getItem(KEY)); } catch(e){}
+  const now = new Date();
+  state = Object.assign({
+    biz:{name:'',addr:'',tel:'',office:'',no:''},
+    mode:'monthly',
+    month: now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0'),
+    year: now.getFullYear(), half: now.getMonth()<6 ? '1':'2',
+    rows:[]
+  }, state||{});
+}
+function save(){ try { localStorage.setItem(KEY, JSON.stringify(state)); } catch(e){} }
+
+// 報酬・料金の源泉徴収税額（復興特別所得税込み）
+function feeTax(amount, vat){
+  const base = Math.max(0, (amount||0) - (vat||0));
+  if (base <= 1000000) return Math.floor(base*1021/10000);
+  return 102100 + Math.floor((base-1000000)*2042/10000);
+}
+function rowTax(r){
+  if (r.tax !== '' && r.tax != null) return Number(r.tax)||0;
+  return CATS[r.cat].auto ? feeTax(Number(r.amount), Number(r.vat)) : 0;
+}
+
+// 期間 [from, to) と納期限
+function period(){
+  if (state.mode === 'monthly'){
+    const [y,m] = state.month.split('-').map(Number);
+    return {from:new Date(y,m-1,1), to:new Date(y,m,1), due:new Date(y,m,10)};
+  }
+  const y = Number(state.year);
+  return state.half==='1'
+    ? {from:new Date(y,0,1), to:new Date(y,6,1), due:new Date(y,6,10)}
+    : {from:new Date(y,6,1), to:new Date(y+1,0,1), due:new Date(y+1,0,20)};
+}
+// 土日なら翌月曜へ（祝日は考慮していないので注記する）
+function adjustDue(d){
+  const x = new Date(d);
+  while (x.getDay()===0 || x.getDay()===6) x.setDate(x.getDate()+1);
+  return x;
+}
+const fmtDate = d => `${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日`;
+const inPeriod = (r,p) => { if(!r.date) return false; const d=new Date(r.date); return d>=p.from && d<p.to; };
+
+function renderRows(){
+  const p = period();
+  $('rows').innerHTML = '';
+  state.rows.forEach((r,i)=>{
+    const tr = document.createElement('tr');
+    if (!inPeriod(r,p)) tr.className = 'excl';
+    const auto = CATS[r.cat].auto ? feeTax(Number(r.amount),Number(r.vat)) : '';
+    tr.innerHTML = `
+      <td><input type="date" data-i="${i}" data-k="date" value="${r.date||''}"></td>
+      <td><input data-i="${i}" data-k="payee" value="${(r.payee||'').replace(/"/g,'&quot;')}"></td>
+      <td><select data-i="${i}" data-k="cat">${Object.entries(CATS).map(([k,v])=>`<option value="${k}"${k===r.cat?' selected':''}>${v.label}</option>`).join('')}</select></td>
+      <td><input type="number" min="0" data-i="${i}" data-k="amount" value="${r.amount??''}"></td>
+      <td><input type="number" min="0" data-i="${i}" data-k="vat" value="${r.vat??''}"></td>
+      <td><input type="number" min="0" data-i="${i}" data-k="tax" value="${r.tax??''}" placeholder="${auto===''?'':'自動 '+yen(auto)}"></td>
+      <td><button class="del" data-del="${i}">削除</button></td>`;
+    $('rows').appendChild(tr);
+  });
+}
+
+function renderSummary(){
+  const p = period();
+  const sum = {}; Object.keys(CATS).forEach(k=>sum[k]={names:new Set(),amt:0,tax:0});
+  state.rows.filter(r=>inPeriod(r,p)).forEach(r=>{
+    const s = sum[r.cat];
+    s.names.add((r.payee||'').trim()||('#'+state.rows.indexOf(r)));
+    s.amt += Number(r.amount)||0; s.tax += rowTax(r);
+  });
+  let c=0,a=0,t=0;
+  $('sumBody').innerHTML = Object.entries(CATS).map(([k,v])=>{
+    const s=sum[k]; c+=s.names.size; a+=s.amt; t+=s.tax;
+    return `<tr><td>${v.label}</td><td class="n">${s.names.size}</td><td class="n">${yen(s.amt)}</td><td class="n">${yen(s.tax)}</td></tr>`;
+  }).join('');
+  $('sumCnt').textContent = c; $('sumAmt').textContent = yen(a); $('sumTax').textContent = yen(t);
+  const due = adjustDue(p.due);
+  $('dueDate').textContent = fmtDate(due);
+  $('dueNote').textContent = due.getTime()!==p.due.getTime() ? `（${fmtDate(p.due)}が土日のため繰延）※祝日は未考慮` : '※祝日の場合は翌営業日';
+  return {sum,count:c,amt:a,tax:t,due,p};
+}
+
+function renderAll(){
+  $('monthBox').style.display = state.mode==='monthly' ? '' : 'none';
+  $('halfBox').style.display = $('halfBox2').style.display = state.mode==='special' ? '' : 'none';
+  renderRows(); renderSummary(); save();
+}
+
+function esc(s){ return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+function makeSheet(){
+  const r = renderSummary(), b = state.biz;
+  const label = state.mode==='monthly'
+    ? `${state.month.replace('-','年')}月分（${fmtDate(r.p.from).replace(/日$/,'')}日支払い分）`
+    : `${state.year}年 ${state.half==='1'?'上期（1月〜6月）':'下期（7月〜12月）'}分`;
+  const rows = Object.entries(CATS).map(([k,v])=>`<tr><td>${v.label}</td><td class="n">${r.sum[k].names.size}</td><td class="n">${yen(r.sum[k].amt)}</td><td class="n">${yen(r.sum[k].tax)}</td></tr>`).join('');
+  $('sheet').innerHTML = `
+    <h2 style="text-align:center;font-size:1.2rem">所得税徴収高計算書（納付書用）</h2>
+    <table>
+      <tr><th style="width:22%">納付年月日</th><td colspan="3">${fmtDate(r.due)}（納期限）</td></tr>
+      <tr><th>税務署</th><td colspan="3">${esc(b.office)} 税務署長 殿</td></tr>
+      <tr><th>支払対象期間</th><td colspan="3">${esc(label)}</td></tr>
+      <tr><th>住所（所在地）</th><td colspan="3">${esc(b.addr)}</td></tr>
+      <tr><th>氏名・名称</th><td>${esc(b.name)}</td><th style="width:16%">電話番号</th><td>${esc(b.tel)}</td></tr>
+      <tr><th>整理番号</th><td colspan="3">${esc(b.no)}</td></tr>
+    </table>
+    <table style="margin-top:10px">
+      <thead><tr><th>区分</th><th class="n">人員</th><th class="n">支払金額（円）</th><th class="n">源泉徴収税額（円）</th></tr></thead>
+      <tbody>${rows}</tbody>
+      <tfoot><tr><td>合計</td><td class="n">${r.count}</td><td class="n">${yen(r.amt)}</td><td class="n">${yen(r.tax)}</td></tr></tfoot>
+    </table>
+    <p style="margin-top:10px;font-size:1.1rem"><b>本税（所得税及び復興特別所得税）納付額：${yen(r.tax)} 円</b></p>
+    <p class="note" style="color:#444">※本書は入力内容の集計表です。実際の納付は、税務署から交付された納付書（または e-Tax／ダイレクト納付）に上記内容を転記してください。</p>`;
+  $('sheet').style.display = 'block';
+  $('sheet').scrollIntoView({behavior:'smooth'});
+}
+
+// 入力のバインド
+function bindBiz(){
+  const m = {bizName:'name',bizAddr:'addr',bizTel:'tel',taxOffice:'office',bizNo:'no'};
+  Object.entries(m).forEach(([id,k])=>{
+    $(id).value = state.biz[k]||'';
+    $(id).addEventListener('input',e=>{ state.biz[k]=e.target.value; save(); });
+  });
+}
+function init(){
+  load(); bindBiz();
+  $('mode').value=state.mode; $('month').value=state.month; $('year').value=state.year; $('half').value=state.half;
+  $('mode').onchange = e=>{state.mode=e.target.value;renderAll();};
+  $('month').onchange = e=>{state.month=e.target.value||state.month;renderAll();};
+  $('year').onchange = e=>{state.year=e.target.value;renderAll();};
+  $('half').onchange = e=>{state.half=e.target.value;renderAll();};
+  $('addRow').onclick = ()=>{ state.rows.push({date:'',payee:'',cat:'fee',amount:'',vat:'',tax:''}); renderAll(); };
+  $('clearAll').onclick = ()=>{ if(confirm('支払明細をすべて削除しますか？')){state.rows=[];renderAll();} };
+  $('makeSheet').onclick = makeSheet;
+  $('printBtn').onclick = ()=>{ makeSheet(); window.print(); };
+  $('rows').addEventListener('change',e=>{
+    const t=e.target, i=t.dataset.i; if(i==null) return;
+    state.rows[i][t.dataset.k]=t.value;
+    if (t.dataset.k==='cat') state.rows[i].tax='';
+    renderAll();
+  });
+  $('rows').addEventListener('click',e=>{
+    const i=e.target.dataset.del; if(i==null) return;
+    state.rows.splice(i,1); renderAll();
+  });
+  renderAll();
+}
+init();
+</script>
+</body>
+</html>
