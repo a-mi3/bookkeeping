@@ -121,7 +121,7 @@ function load(){
   const now = new Date();
   state = Object.assign({
     biz:{name:'',addr:'',tel:'',office:'',no:''},
-    mode:'monthly',
+    mode:'special',
     month: now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0'),
     year: now.getFullYear(), half: now.getMonth()<6 ? '1':'2',
     rows:[]
