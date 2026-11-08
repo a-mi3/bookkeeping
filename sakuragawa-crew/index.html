@@ -24,10 +24,10 @@ h2 em{font-style:normal;color:var(--orange)}
 
 /* Hero */
 .hero{min-height:92vh;display:flex;align-items:center;padding:60px 20px;
-  background:linear-gradient(90deg,#fdf6f4 0%,#fdf6f4 38%,rgba(253,246,244,.55) 58%,rgba(253,246,244,0) 80%),url(images/hero.jpg) 70% center/cover no-repeat}
+  background:linear-gradient(90deg,#fdf6f4 0%,#fdf6f4 38%,rgba(253,246,244,.55) 58%,rgba(253,246,244,0) 80%),url(images/hero.webp) 70% center/cover no-repeat}
 .hero .inner{width:100%}
 .hero-body{max-width:560px}
-.hero img.logo{width:150px;mix-blend-mode:multiply;margin-bottom:18px}
+.hero img.logo{width:150px;height:auto;mix-blend-mode:multiply;margin-bottom:18px}
 .hero h1{font-size:clamp(2.4rem,6vw,4rem);line-height:1.3;color:#1c1c1c;letter-spacing:.06em}
 .hero .sub{margin:14px 0 0;padding-bottom:14px;border-bottom:2px solid var(--pink);font-family:"Hiragino Sans","Noto Sans JP",sans-serif;letter-spacing:.1em;font-size:clamp(.95rem,2vw,1.1rem)}
 .hero p.desc{margin:22px 0 28px;font-family:"Hiragino Sans","Noto Sans JP",sans-serif;font-size:.98rem;color:#333}
@@ -39,7 +39,7 @@ h2 em{font-style:normal;color:var(--orange)}
 /* About */
 .about{background:#faf7f4}
 .about-wrap{display:grid;grid-template-columns:280px 1fr;gap:48px;align-items:center;margin-top:40px}
-.about-wrap img{width:100%;mix-blend-mode:multiply}
+.about-wrap img{width:100%;height:auto;mix-blend-mode:multiply}
 table{width:100%;border-collapse:collapse;background:#fff;border:1px solid var(--line);font-family:"Hiragino Sans","Noto Sans JP",sans-serif}
 th,td{padding:18px 22px;text-align:left;border-bottom:1px solid var(--line);font-size:.98rem;line-height:1.7}
 th{width:32%;background:#f3f1ec;color:var(--green);font-weight:600}
@@ -58,7 +58,7 @@ tr:last-child th,tr:last-child td{border-bottom:none}
 .scenery{background:var(--bg)}
 .gallery{display:grid;grid-template-columns:1fr 1fr;gap:28px;margin-top:44px}
 .gallery figure{border-radius:18px;overflow:hidden;background:#fff;box-shadow:0 6px 18px rgba(0,0,0,.08)}
-.gallery img{display:block;width:100%;aspect-ratio:3/2;object-fit:cover}
+.gallery img{display:block;width:100%;height:auto;aspect-ratio:3/2;object-fit:cover}
 .gallery figcaption{padding:14px 18px 18px;text-align:center;font-family:"Hiragino Sans","Noto Sans JP",sans-serif;background:#f1eeea}
 .gallery figcaption strong{display:block;font-size:1.02rem;color:#333}
 .gallery figcaption span{font-size:.85rem;color:#666}
@@ -74,7 +74,7 @@ footer{text-align:center;padding:28px;background:var(--green);color:#dfe9dc;font
 
 @media(max-width:820px){
   section{padding:60px 18px}
-  .hero{background:linear-gradient(180deg,rgba(253,246,244,.96) 0%,rgba(253,246,244,.85) 55%,rgba(253,246,244,.3) 100%),url(images/hero.jpg) center/cover no-repeat}
+  .hero{background:linear-gradient(180deg,rgba(253,246,244,.96) 0%,rgba(253,246,244,.85) 55%,rgba(253,246,244,.3) 100%),url(images/hero.webp) center/cover no-repeat}
   .about-wrap{grid-template-columns:1fr;gap:24px}
   .about-wrap img{max-width:220px;margin:0 auto;display:block}
   .cards{grid-template-columns:1fr;gap:34px}
@@ -91,6 +91,20 @@ footer{text-align:center;padding:28px;background:var(--green);color:#dfe9dc;font
 .giveback .card h3{margin-top:6px}
 @media(max-width:820px){.body{text-align:left;font-size:.98rem}.body br{display:none}}
 </style>
+<link rel="canonical" href="https://YOUR-DOMAIN/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Sakuragawa Crew">
+<meta property="og:title" content="Sakuragawa Crew｜桜川を、もっとおもしろく。">
+<meta property="og:description" content="得意なことを持ち寄って、桜川に“楽しい”をつくる地域のチームです。">
+<meta property="og:url" content="https://YOUR-DOMAIN/">
+<meta property="og:image" content="https://YOUR-DOMAIN/images/ogp.jpg">
+<meta property="og:locale" content="ja_JP">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#2d4a35">
+<link rel="icon" href="favicon.ico" sizes="any">
+<link rel="icon" type="image/png" href="favicon.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="preload" as="image" href="images/hero.webp">
 </head>
 <body>
 
@@ -100,7 +114,7 @@ footer{text-align:center;padding:28px;background:var(--green);color:#dfe9dc;font
   <span class="petal" style="bottom:14%;right:6%;--r:-20deg"></span>
   <div class="inner">
     <div class="hero-body">
-      <img class="logo" src="images/logo.jpg" alt="Sakuragawa Crew ロゴ">
+      <img class="logo" src="images/logo.webp" width="150" height="150" alt="Sakuragawa Crew ロゴ">
       <h1>桜川を、<br>もっとおもしろく。</h1>
       <p class="sub">得意なことを持ち寄って、桜川に“楽しい”をつくる地域のチームです。</p>
       <a class="btn-insta" href="https://www.instagram.com/sakuragawacrew/" target="_blank" rel="noopener">
@@ -197,10 +211,10 @@ footer{text-align:center;padding:28px;background:var(--green);color:#dfe9dc;font
     <div class="rule"></div>
     <p class="lead">豊かな自然と温かな空気が流れるこのまちで、<br>等身大の“楽しい”を形にしていきます。</p>
     <div class="gallery">
-      <figure><img src="images/view1.jpg" alt="雨引観音のしだれ桜と石段"><figcaption><strong>雨引観音のしだれ桜と石段</strong><span>（春の桜川を彩る美しい名所）</span></figcaption></figure>
-      <figure><img src="images/view2.jpg" alt="桜に囲まれた境内の風景"><figcaption><strong>桜に囲まれた境内の風景</strong><span>（歴史と季節の移ろいを感じる場所）</span></figcaption></figure>
-      <figure><img src="images/view3.jpg" alt="畑の向こうに沈む夕日"><figcaption><strong>畑の向こうに沈む夕日</strong><span>（日常に寄り添う穏やかで心地よい田園風景）</span></figcaption></figure>
-      <figure><img src="images/view4.jpg" alt="あじさい越しの平野と青空"><figcaption><strong>あじさい越しの平野と青空</strong><span>（季節ごとに豊かな表情を見せる桜川の眺望）</span></figcaption></figure>
+      <figure><img src="images/view1.webp" width="1400" height="788" loading="lazy" alt="雨引観音のしだれ桜と石段"><figcaption><strong>雨引観音のしだれ桜と石段</strong><span>（春の桜川を彩る美しい名所）</span></figcaption></figure>
+      <figure><img src="images/view2.webp" width="1400" height="788" loading="lazy" alt="桜に囲まれた境内の風景"><figcaption><strong>桜に囲まれた境内の風景</strong><span>（歴史と季節の移ろいを感じる場所）</span></figcaption></figure>
+      <figure><img src="images/view3.webp" width="1400" height="1050" loading="lazy" alt="畑の向こうに沈む夕日"><figcaption><strong>畑の向こうに沈む夕日</strong><span>（日常に寄り添う穏やかで心地よい田園風景）</span></figcaption></figure>
+      <figure><img src="images/view4.webp" width="1400" height="1050" loading="lazy" alt="あじさい越しの平野と青空"><figcaption><strong>あじさい越しの平野と青空</strong><span>（季節ごとに豊かな表情を見せる桜川の眺望）</span></figcaption></figure>
     </div>
   </div>
 </section>
@@ -214,7 +228,7 @@ footer{text-align:center;padding:28px;background:var(--green);color:#dfe9dc;font
     <h2>チーム概要</h2>
     <div class="rule" style="background:#a08c7b"></div>
     <div class="about-wrap">
-      <img src="images/logo.jpg" alt="Sakuragawa Crew ロゴ">
+      <img src="images/logo.webp" width="280" height="280" loading="lazy" alt="Sakuragawa Crew ロゴ">
       <table>
         <tr><th>チーム名</th><td>Sakuragawa Crew</td></tr>
         <tr><th>活動拠点</th><td>茨城県桜川市</td></tr>
