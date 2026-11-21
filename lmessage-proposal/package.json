@@ -1,0 +1,10 @@
+{
+  "name": "lmessage-proposal",
+  "private": true,
+  "type": "module",
+  "version": "1.0.0",
+  "description": "L Message 改善提案サイト（静的HTML + Basic認証ミドルウェア）",
+  "dependencies": {
+    "@vercel/edge": "1.2.2"
+  }
+}
