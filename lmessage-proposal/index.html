@@ -1,0 +1,310 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex, nofollow, noarchive, nosnippet">
+<meta name="googlebot" content="noindex, nofollow">
+<title>L Message 改善提案</title>
+<meta name="description" content="L Messageの改善提案（選考課題）">
+<style>
+:root{--bg:#f6f7f9;--card:#fff;--text:#1d2330;--muted:#5d6678;--line:#d9dee8;--box:#f3f6fb;--accent:#2457d6;--accentbg:#e4ecff;--good:#1b8a4b;--goodbg:#e2f6ea;--warn:#c4521d;--warnbg:#fdebe0;--shadow:0 1px 3px rgba(20,30,50,.08)}
+@media (prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#10131a;--card:#181c26;--text:#e8ebf2;--muted:#9aa3b5;--line:#2c3345;--box:#1e2431;--accent:#8aa8ff;--accentbg:#22305a;--good:#5fd391;--goodbg:#173a28;--warn:#ff9a6b;--warnbg:#44261a;--shadow:none}}
+*{box-sizing:border-box}html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--text);font:16px/1.85 -apple-system,BlinkMacSystemFont,"Hiragino Sans","Noto Sans JP","Yu Gothic",Meiryo,sans-serif}
+.wrap{max-width:980px;margin:0 auto;padding:0 16px}
+header.top{background:linear-gradient(135deg,#1c3fa8,#2f6bff);color:#fff;padding:48px 0 40px}
+header.top h1{margin:0 0 8px;font-size:clamp(24px,4.4vw,36px);line-height:1.4}
+header.top p{margin:4px 0;opacity:.95}
+.meta{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
+.meta span{background:rgba(255,255,255,.18);padding:3px 12px;border-radius:99px;font-size:13px}
+nav.toc{position:sticky;top:0;z-index:5;background:var(--card);border-bottom:1px solid var(--line);overflow-x:auto;white-space:nowrap}
+nav.toc a{display:inline-block;padding:12px 12px;color:var(--text);text-decoration:none;font-size:14px}
+nav.toc a:hover{color:var(--accent)}
+section.blk{margin:40px 0}
+h2{font-size:clamp(21px,3.4vw,27px);border-left:6px solid var(--accent);padding-left:12px;margin:0 0 16px;line-height:1.4}
+h3{margin:0;font-size:22px;line-height:1.4}
+h4{margin:28px 0 8px;font-size:17px;padding-bottom:4px;border-bottom:2px solid var(--accentbg)}
+p{margin:.6em 0}.muted{color:var(--muted)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:22px 22px 26px;margin:28px 0;box-shadow:var(--shadow)}
+.card-h{display:flex;gap:14px;align-items:flex-start}
+.pid{flex:none;width:48px;height:48px;border-radius:12px;background:var(--accent);color:#fff;font-weight:800;font-size:24px;display:grid;place-items:center}
+.sub{margin:2px 0 6px;color:var(--muted)}
+.chip{display:inline-block;background:var(--accentbg);color:var(--accent);padding:1px 10px;border-radius:99px;font-size:12.5px;margin:2px 6px 2px 0;font-weight:600}
+.rankchip{background:var(--goodbg);color:var(--good)}
+.example{background:var(--warnbg);border-left:4px solid var(--warn);padding:10px 14px;border-radius:8px;margin:12px 0}
+.example strong{display:block;color:var(--warn);font-size:14px}
+.list{padding-left:1.3em}.list li{margin:.3em 0}
+.checks{list-style:none;padding:0;margin:0}.checks li{display:flex;gap:10px;align-items:baseline;margin:.45em 0}
+.badge{flex:none;font-size:12px;font-weight:700;padding:1px 9px;border-radius:6px;white-space:nowrap}
+.b-done{background:var(--goodbg);color:var(--good)}.b-unk{background:var(--warnbg);color:var(--warn)}.b-no{background:var(--accentbg);color:var(--accent)}
+.figure{margin:14px 0}.figin{background:var(--box);border:1px solid var(--line);border-radius:12px;padding:8px 6px}
+figcaption{font-size:13px;color:var(--muted);margin-top:4px}
+svg.fig{width:100%;height:auto;display:block}
+.svgl{font-size:13px;font-weight:700;fill:var(--muted)}.svgt{font-size:13px;fill:var(--text)}.svgt2{font-size:14px;fill:var(--text)}.svgs{font-size:12.5px;fill:var(--muted)}.svgb{font-size:13px;font-weight:700;fill:#10131a}
+details.terms{background:var(--box);border:1px solid var(--line);border-radius:10px;padding:8px 14px;margin:10px 0}
+details summary{cursor:pointer;font-weight:700;color:var(--accent)}
+dt{font-weight:700;margin-top:.7em}dd{margin:0 0 0 .2em;color:var(--muted)}
+.tbl{width:100%;border-collapse:collapse;font-size:14.5px;margin:6px 0 10px}
+.tbl th,.tbl td{border:1px solid var(--line);padding:7px 10px;text-align:left;vertical-align:top}
+.tbl thead th{background:var(--box)}.tbl .num{text-align:center;white-space:nowrap}.tbl tr.sum th,.tbl tr.sum td{background:var(--accentbg);font-weight:700}
+.scroll{overflow-x:auto}
+.reco{background:linear-gradient(135deg,var(--accentbg),var(--goodbg));border:2px solid var(--accent);border-radius:16px;padding:20px 22px}
+.reco h3{color:var(--accent)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}
+.mini{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 16px}.mini b{display:block;margin-bottom:4px}
+.note{background:var(--warnbg);border:1px solid var(--warn);border-radius:12px;padding:12px 16px;font-size:15px}
+footer{padding:30px 0 60px;color:var(--muted);font-size:13px;text-align:center}
+a{color:var(--accent)}
+@media (max-width:700px){.figin{overflow-x:auto}svg.fig{min-width:680px}}
+@media (max-width:600px){.card{padding:16px 14px}.tbl{font-size:13px}svg .svgt{font-size:15px}}
+</style>
+</head>
+<body>
+<header class="top"><div class="wrap">
+  <p style="font-size:14px">L Message 改善提案</p>
+  <h1>「送る前の安心」と「始めやすさ」で、<br>L Messageをもっと使われるサービスに</h1>
+  <p>L Message（エルメ）の改善点5件と、その方法・工数・優先順位のご提案です。</p>
+  <div class="meta"><span>提案数：5件</span><span>最推奨：A 配信前セーフティチェック</span><span>作成日：2026年11月21日</span><span>作成所要時間：約0時間4分</span></div>
+</div></header>
+
+<nav class="toc"><div class="wrap">
+  <a href="#summary">要約</a><a href="#premise">前提</a><a href="#pA">A</a><a href="#pC">C</a><a href="#pE">E</a><a href="#pB">B</a><a href="#pD">D</a><a href="#priority">優先順位</a><a href="#client">依頼者視点</a><a href="#review">精査メモ</a>
+</div></nav>
+
+<main class="wrap">
+
+<section class="blk" id="summary">
+  <h2>1. 要約（3分で読める版）</h2>
+  <div class="reco">
+    <h3>最もおすすめ：A「配信前セーフティチェック」</h3>
+    <p>L Messageは設定が細かく、<b>一度送ると取り消せない「配信」</b>が最もミスの影響が大きい操作です。配信の直前に「何人に・何通・リンクは生きているか」を自動で点検する画面を挟むことで、<b>ミスによる信頼低下を防ぎ</b>、担当者も安心して使えます。<b>約6.5人日</b>と小さく始められ、既存の配信機能を壊しにくい点も理由です。</p>
+  </div>
+  <div class="scroll"><table class="tbl" style="margin-top:16px"><thead><tr><th>順位</th><th>提案</th><th>ユーザー価値</th><th>工数</th><th>既存との整合</th><th>総合点</th></tr></thead><tbody><tr><td class='num'><b>1</b></td><td><a href='#pA'>A：配信前セーフティチェック</a></td><td class='num'>★★★★★</td><td class='num'>6.5人日</td><td class='num'>★★★★★</td><td class='num'><b>4.75</b></td></tr><tr><td class='num'><b>2</b></td><td><a href='#pC'>C：配信通数の見積り＆上限アラート</a></td><td class='num'>★★★★☆</td><td class='num'>4人日</td><td class='num'>★★★★★</td><td class='num'><b>4.50</b></td></tr><tr><td class='num'><b>3</b></td><td><a href='#pE'>E：ブロック増加の原因分析</a></td><td class='num'>★★★★☆</td><td class='num'>5人日</td><td class='num'>★★★★☆</td><td class='num'><b>4.00</b></td></tr><tr><td class='num'><b>4</b></td><td><a href='#pB'>B：目的別セットアップウィザード</a></td><td class='num'>★★★★☆</td><td class='num'>9人日</td><td class='num'>★★★☆☆</td><td class='num'><b>3.50</b></td></tr><tr><td class='num'><b>5</b></td><td><a href='#pD'>D：A/Bテスト配信</a></td><td class='num'>★★★☆☆</td><td class='num'>10人日</td><td class='num'>★★★☆☆</td><td class='num'><b>2.75</b></td></tr></tbody></table></div>
+  <p class="muted" style="font-size:13px">総合点＝ユーザー価値×50%＋開発コスト（低いほど高得点）×25%＋既存機能との整合×25%（各5点満点）。詳細は「優先順位」の章をご覧ください。</p>
+</section>
+
+<section class="blk" id="premise">
+  <h2>2. 前提：調べた範囲と、読み方の注意</h2>
+  <div class="grid">
+    <div class="mini"><b>参照した情報</b>L Message公式マニュアル・アップデート情報（lme.jp）、料金情報、ITreview等のレビュー、LINE Developers公式ドキュメント（Messaging API）。</div>
+    <div class="mini"><b>「搭載済み」の表記</b><span class="badge b-done">搭載済み</span>は公式情報で確認できたもの。<span class="badge b-unk">要実機確認</span>は公開情報では見つからなかったもの（「無い」と断定していません）。</div>
+    <div class="mini"><b>工数の単位</b>1人日＝8時間。「要件整理・設計・実装・簡易テスト」までを含み、リリース作業・本格QA・運用保守は含みません。</div>
+  </div>
+  <div class="note" style="margin-top:14px"><b>重要：</b>本資料は公開情報の調査に基づく提案です。管理画面での実際の操作確認（アカウント登録後の画面確認）を行えた範囲は限られるため、「要実機確認」の項目は、提案を採用する前に実際の画面で確認することを前提としています。詳細は末尾の「精査メモ」に記載しました。</div>
+  <figure class="figure" style="margin-top:16px"><div class="figin"><svg viewBox="0 0 920 96" role="img" aria-label="L Message と LINE の関係（概念図・公開情報からの整理）" class="fig"><text x="10" y="16" class="svgl">L Message と LINE の関係（概念図・公開情報からの整理）</text><rect x="10.0" y="28" width="159.2" height="66" rx="10" fill="var(--box)" stroke="var(--line)" stroke-width="1.6"/><text x="89.6" y="58.0" text-anchor="middle" class="svgt">ユーザーの</text><text x="89.6" y="74.0" text-anchor="middle" class="svgt">LINE</text><path d="M172.2 61.0 h16 m-6 -5 l6 5 l-6 5" fill="none" stroke="var(--muted)" stroke-width="1.8"/><rect x="195.2" y="28" width="159.2" height="66" rx="10" fill="var(--box)" stroke="var(--line)" stroke-width="1.6"/><text x="274.8" y="58.0" text-anchor="middle" class="svgt">LINE</text><text x="274.8" y="74.0" text-anchor="middle" class="svgt">プラットフォーム</text><path d="M357.4 61.0 h16 m-6 -5 l6 5 l-6 5" fill="none" stroke="var(--muted)" stroke-width="1.8"/><rect x="380.4" y="28" width="159.2" height="66" rx="10" fill="var(--accentbg)" stroke="var(--accent)" stroke-width="1.6"/><text x="460.0" y="58.0" text-anchor="middle" class="svgt">Messaging API</text><text x="460.0" y="74.0" text-anchor="middle" class="svgt">（LINE公式の窓口）</text><path d="M542.6 61.0 h16 m-6 -5 l6 5 l-6 5" fill="none" stroke="var(--muted)" stroke-width="1.8"/><rect x="565.6" y="28" width="159.2" height="66" rx="10" fill="var(--accentbg)" stroke="var(--accent)" stroke-width="1.6"/><text x="645.2" y="58.0" text-anchor="middle" class="svgt">L Message</text><text x="645.2" y="74.0" text-anchor="middle" class="svgt">サーバー</text><path d="M727.8 61.0 h16 m-6 -5 l6 5 l-6 5" fill="none" stroke="var(--muted)" stroke-width="1.8"/><rect x="750.8" y="28" width="159.2" height="66" rx="10" fill="var(--goodbg)" stroke="var(--good)" stroke-width="1.6"/><text x="830.4" y="58.0" text-anchor="middle" class="svgt">管理画面</text><text x="830.4" y="74.0" text-anchor="middle" class="svgt">（運用担当）</text></svg></div><figcaption>図：L MessageはLINEの公式API（Messaging API）を使って配信しているため、LINE側の仕様（配信の取消不可、通数上限、統計の取得範囲）が提案の実現可能性を左右します。</figcaption></figure>
+</section>
+
+<section class="blk" id="proposals">
+  <h2>3. 改善提案（優先度順）</h2>
+  <p class="muted">以下は優先度の高い順（A→C→E→B→D）に並べています。各提案は「課題 → 改善 → 搭載確認 → 実現可能性 → 確認事項」の順です。</p>
+  
+<section class="card" id="pA">
+  <header class="card-h">
+    <div class="pid">A</div>
+    <div>
+      <h3>配信前セーフティチェック</h3>
+      <p class="sub">「送る前に、事故を止める」</p>
+      <p class="chips"><span class="chip">UI/UX・機能</span><span class="chip">工数 6.5人日</span><span class="chip rankchip">優先度 第1位</span></p>
+    </div>
+  </header>
+
+  <h4>1. 課題（何が困るのか）</h4>
+  <p>L Messageは設定項目が多く、「配信」は<b>一度送ると取り消せない</b>操作です（LINEの仕組み上、受け付けられたメッセージは取り下げられません）。現状は<b>テスト送信</b>という確認手段はありますが、「誰に何通届くか」「URLや差し込み文字は正しいか」を<b>配信前に自動で点検する仕組み</b>は、公開情報の範囲では確認できませんでした。担当者の目視に頼るため、忙しい時ほどミスが起きやすくなります。</p>
+  <div class="example"><strong>たとえば…</strong><p>セール告知を配信する際、タグの絞り込みを外したまま「全員」に送ってしまった。さらにリンク先が期限切れのURLだった──友だち数千人にそのまま届き、ブロックや問い合わせ対応が発生する。</p></div>
+
+  <h4>2. 改善内容と方法</h4>
+  <p>配信ボタンを押した後、<b>自動チェック画面</b>を1枚挟みます。確認項目は次のとおりです。</p><ul class='list'><li><b>対象人数</b>：「全友だち 3,214人に送信します」と大きく表示（絞り込み条件の漏れに気づける）</li><li><b>消費通数</b>：今月の残り通数と比較（提案Cと連携）</li><li><b>URL死活確認</b>：リンクが開けるか（404エラーなどを検知）</li><li><b>差し込み文字</b>：「{名前}」のような置き換え文字が空欄にならないか</li><li><b>テスト送信済み</b>：未実施なら警告</li><li><b>承認フロー（オプション）</b>：担当者が作成→責任者が承認、の2段階にできる</li></ul><p>さらに、予約配信では<b>配信の数分前まで停止できる猶予</b>を設けます。</p>
+  <figure class="figure"><div class="figin"><svg viewBox="0 0 920 96" role="img" aria-label="いま（想定される流れ）" class="fig"><text x="10" y="16" class="svgl">いま（想定される流れ）</text><rect x="10.0" y="28" width="205.5" height="66" rx="10" fill="var(--box)" stroke="var(--line)" stroke-width="1.6"/><text x="112.8" y="66.0" text-anchor="middle" class="svgt">メッセージ作成</text><path d="M218.5 61.0 h16 m-6 -5 l6 5 l-6 5" fill="none" stroke="var(--muted)" stroke-width="1.8"/><rect x="241.5" y="28" width="205.5" height="66" rx="10" fill="var(--box)" stroke="var(--line)" stroke-width="1.6"/><text x="344.2" y="66.0" text-anchor="middle" class="svgt">「配信」ボタン</text><path d="M450.0 61.0 h16 m-6 -5 l6 5 l-6 5" fill="none" stroke="var(--muted)" stroke-width="1.8"/><rect x="473.0" y="28" width="205.5" height="66" rx="10" fill="var(--warnbg)" stroke="var(--warn)" stroke-width="1.6"/><text x="575.8" y="58.0" text-anchor="middle" class="svgt">全員に即送信</text><text x="575.8" y="74.0" text-anchor="middle" class="svgt">（取消不可）</text><path d="M681.5 61.0 h16 m-6 -5 l6 5 l-6 5" fill="none" stroke="var(--muted)" stroke-width="1.8"/><rect x="704.5" y="28" width="205.5" height="66" rx="10" fill="var(--warnbg)" stroke="var(--warn)" stroke-width="1.6"/><text x="807.2" y="58.0" text-anchor="middle" class="svgt">誤字・誤URL・</text><text x="807.2" y="74.0" text-anchor="middle" class="svgt">対象違いが発覚</text></svg><svg viewBox="0 0 920 96" role="img" aria-label="改善後" class="fig"><text x="10" y="16" class="svgl">改善後</text><rect x="10.0" y="28" width="159.2" height="66" rx="10" fill="var(--box)" stroke="var(--line)" stroke-width="1.6"/><text x="89.6" y="66.0" text-anchor="middle" class="svgt">メッセージ作成</text><path d="M172.2 61.0 h16 m-6 -5 l6 5 l-6 5" fill="none" stroke="var(--muted)" stroke-width="1.8"/><rect x="195.2" y="28" width="159.2" height="66" rx="10" fill="var(--accentbg)" stroke="var(--accent)" stroke-width="1.6"/><text x="274.8" y="58.0" text-anchor="middle" class="svgt">自動チェック</text><text x="274.8" y="74.0" text-anchor="middle" class="svgt">人数/URL/変数/通数</text><path d="M357.4 61.0 h16 m-6 -5 l6 5 l-6 5" fill="none" stroke="var(--muted)" stroke-width="1.8"/><rect x="380.4" y="28" width="159.2" height="66" rx="10" fill="var(--accentbg)" stroke="var(--accent)" stroke-width="1.6"/><text x="460.0" y="58.0" text-anchor="middle" class="svgt">確認画面</text><text x="460.0" y="74.0" text-anchor="middle" class="svgt">（任意で承認）</text><path d="M542.6 61.0 h16 m-6 -5 l6 5 l-6 5" fill="none" stroke="var(--muted)" stroke-width="1.8"/><rect x="565.6" y="28" width="159.2" height="66" rx="10" fill="var(--goodbg)" stroke="var(--good)" stroke-width="1.6"/><text x="645.2" y="66.0" text-anchor="middle" class="svgt">予約→配信</text><path d="M727.8 61.0 h16 m-6 -5 l6 5 l-6 5" fill="none" stroke="var(--muted)" stroke-width="1.8"/><rect x="750.8" y="28" width="159.2" height="66" rx="10" fill="var(--goodbg)" stroke="var(--good)" stroke-width="1.6"/><text x="830.4" y="58.0" text-anchor="middle" class="svgt">猶予中は</text><text x="830.4" y="74.0" text-anchor="middle" class="svgt">停止可能</text></svg></div><figcaption>図：配信前に「自動チェック」と「確認画面」を挟み、予約配信の猶予時間で止められるようにする</figcaption></figure>
+  <details class="terms"><summary>専門用語の補足を開く</summary><dl><dt>Messaging API</dt><dd>LINEが公開している、他社サービスがLINEと連携するための窓口。L Messageはこれを使って配信しています。</dd><dt>マルチキャスト/ナローキャスト</dt><dd>特定の相手（絞り込んだ友だち）にまとめて送る配信方法。対象を絞る仕組みがあるため、人数の事前確認と相性が良いです。</dd><dt>リトライキー（X-Line-Retry-Key）</dt><dd>同じ配信リクエストを誤って2回送っても1回しか実行されないようにする、LINE公式の重複防止の仕組み。ダブル送信防止に使えます。</dd><dt>非同期処理</dt><dd>時間のかかる計算（例：数万人の対象人数の算出）を裏側で行い、画面は先に表示する方式。画面が固まるのを防ぎます。</dd></dl></details>
+
+  <h4>3. すでにL Messageに搭載済みか？（確認結果）</h4>
+  <ul class="checks"><li><span class="badge b-done">搭載済み</span><span>テスト送信（公式マニュアル「L Message(エルメ)のテスト送信」に記載）。この提案の前提として活用します。</span></li><li><span class="badge b-done">搭載済み</span><span>予約配信（公式マニュアルに新規配信予約の手順あり）。猶予機能の土台になります。</span></li><li><span class="badge b-unk">要実機確認</span><span>配信前の対象人数・URL・差し込み文字の自動チェック／承認フロー：公開情報・検索結果では確認できませんでした。管理画面での実機確認が必要です。</span></li></ul>
+
+  <h4>4. 実現可能性</h4>
+  <table class='tbl'><thead><tr><th>工程</th><th>工数</th><th>その工数になる根拠</th></tr></thead><tbody><tr><th scope='row'>要件整理</th><td class='num'>1人日</td><td>チェック項目の洗い出しと優先順位付け、承認フローは今回MVP対象外と合意するための打ち合わせ時間</td></tr><tr><th scope='row'>設計（画面・処理）</th><td class='num'>1人日</td><td>確認画面1枚のワイヤーフレームと、チェックを呼び出す処理の流れの設計</td></tr><tr><th scope='row'>実装</th><td class='num'>3.5人日</td><td>対象人数の算出1.0／URL確認と差し込み文字検査1.0／確認画面UI 1.0／警告表示・ログ0.5</td></tr><tr><th scope='row'>簡易テスト</th><td class='num'>1人日</td><td>代表的な配信パターン（全員・タグ絞り込み・予約）での動作確認と、リンク切れ・空欄のテストデータ作成</td></tr><tr class='sum'><th scope='row'>合計</th><td class='num'>6.5人日</td><td>約52時間（1人日=8時間）。バッファ30%を加えると約8.5人日</td></tr></tbody></table>
+  <p><b>技術的：可能です。</b>既存の配信処理の「直前」に検査を差し込む形で、既存機能を壊しにくい構成です。<b>リソース的：</b>画面担当1名＋サーバー担当1名で約1.5週間（実質6.5人日）を想定。LINE側のAPIで新たに必要な権限はありません。承認フロー（役割・通知まで）は別途<b>+5人日</b>が目安です。<b>性能面：</b>数万人規模の対象人数計算は重くなり得るため、事前集計のキャッシュ化が必要です。</p>
+
+  <h4>5. 実装する場合の確認事項</h4>
+  <ul class="list"><li>予約配信はL Message側のキューで管理されているのか、LINE側に予約しているのか（猶予時間中に停止できるかが変わります）</li><li>「全員配信」はどの程度の頻度で起きる運用か（現場ヒアリングで事故事例を3件以上集める）</li><li>承認フローの要否（少人数アカウントには不要の可能性）</li><li>チェックを必須にするか、警告のみで任意にするか（運用の自由度とのバランス）</li><li>URL確認のため外部サイトへアクセスして良いか（セキュリティ・負荷の観点）</li></ul>
+  
+</section>
+<section class="card" id="pC">
+  <header class="card-h">
+    <div class="pid">C</div>
+    <div>
+      <h3>配信通数の見積り＆上限アラート</h3>
+      <p class="sub">「今月あと何通送れる？」が配信前にわかる</p>
+      <p class="chips"><span class="chip">機能・パフォーマンス</span><span class="chip">工数 4人日</span><span class="chip rankchip">優先度 第2位</span></p>
+    </div>
+  </header>
+
+  <h4>1. 課題（何が困るのか）</h4>
+  <p>フリープランは<b>月間配信数1,000通まで</b>、有料プランは無制限（公式料金情報）。加えてLINE公式アカウント側にも別の月間メッセージ上限・従量課金があります。配信は「人数×通数」で消費されますが、<b>配信前に消費量を見積もる画面</b>は公開情報では確認できませんでした。上限に達すると配信できなくなったり、想定外の費用が発生したりします。</p>
+  <div class="example"><strong>たとえば…</strong><p>友だち800人に3通のメッセージを「今日中に」送る予定。実際は2,400通消費で、フリープランの月間1,000通を超えてしまい、途中から届かない。</p></div>
+
+  <h4>2. 改善内容と方法</h4>
+  <p>配信作成画面の右上に常時、<b>「この配信で約◯通消費／今月の残り◯通」</b>を表示します。残りが少ない時は黄色、超えそうな時は赤で警告し、<b>「対象を絞る」「予約日を来月にする」「プランを確認する」</b>の3つの次の行動を提示します。月次で80%に達したら担当者へ通知します。</p>
+  <figure class="figure"><div class="figin"><svg viewBox="0 0 920 96" role="img" aria-label="いま（想定される流れ）" class="fig"><text x="10" y="16" class="svgl">いま（想定される流れ）</text><rect x="10.0" y="28" width="205.5" height="66" rx="10" fill="var(--box)" stroke="var(--line)" stroke-width="1.6"/><text x="112.8" y="58.0" text-anchor="middle" class="svgt">対象を選んで</text><text x="112.8" y="74.0" text-anchor="middle" class="svgt">配信を作成</text><path d="M218.5 61.0 h16 m-6 -5 l6 5 l-6 5" fill="none" stroke="var(--muted)" stroke-width="1.8"/><rect x="241.5" y="28" width="205.5" height="66" rx="10" fill="var(--warnbg)" stroke="var(--warn)" stroke-width="1.6"/><text x="344.2" y="58.0" text-anchor="middle" class="svgt">人数×通数は</text><text x="344.2" y="74.0" text-anchor="middle" class="svgt">頭の中で計算</text><path d="M450.0 61.0 h16 m-6 -5 l6 5 l-6 5" fill="none" stroke="var(--muted)" stroke-width="1.8"/><rect x="473.0" y="28" width="205.5" height="66" rx="10" fill="var(--box)" stroke="var(--line)" stroke-width="1.6"/><text x="575.8" y="66.0" text-anchor="middle" class="svgt">配信実行</text><path d="M681.5 61.0 h16 m-6 -5 l6 5 l-6 5" fill="none" stroke="var(--muted)" stroke-width="1.8"/><rect x="704.5" y="28" width="205.5" height="66" rx="10" fill="var(--warnbg)" stroke="var(--warn)" stroke-width="1.6"/><text x="807.2" y="58.0" text-anchor="middle" class="svgt">月の途中で</text><text x="807.2" y="74.0" text-anchor="middle" class="svgt">上限に到達</text></svg><svg viewBox="0 0 920 96" role="img" aria-label="改善後" class="fig"><text x="10" y="16" class="svgl">改善後</text><rect x="10.0" y="28" width="205.5" height="66" rx="10" fill="var(--box)" stroke="var(--line)" stroke-width="1.6"/><text x="112.8" y="58.0" text-anchor="middle" class="svgt">対象を選んで</text><text x="112.8" y="74.0" text-anchor="middle" class="svgt">配信を作成</text><path d="M218.5 61.0 h16 m-6 -5 l6 5 l-6 5" fill="none" stroke="var(--muted)" stroke-width="1.8"/><rect x="241.5" y="28" width="205.5" height="66" rx="10" fill="var(--accentbg)" stroke="var(--accent)" stroke-width="1.6"/><text x="344.2" y="58.0" text-anchor="middle" class="svgt">自動で見積り</text><text x="344.2" y="74.0" text-anchor="middle" class="svgt">「約N通消費」</text><path d="M450.0 61.0 h16 m-6 -5 l6 5 l-6 5" fill="none" stroke="var(--muted)" stroke-width="1.8"/><rect x="473.0" y="28" width="205.5" height="66" rx="10" fill="var(--accentbg)" stroke="var(--accent)" stroke-width="1.6"/><text x="575.8" y="58.0" text-anchor="middle" class="svgt">今月の残り通数と</text><text x="575.8" y="74.0" text-anchor="middle" class="svgt">比較して警告</text><path d="M681.5 61.0 h16 m-6 -5 l6 5 l-6 5" fill="none" stroke="var(--muted)" stroke-width="1.8"/><rect x="704.5" y="28" width="205.5" height="66" rx="10" fill="var(--goodbg)" stroke="var(--good)" stroke-width="1.6"/><text x="807.2" y="66.0" text-anchor="middle" class="svgt">配信 or 絞り込み</text></svg></div><figcaption>図：配信前に消費通数を見積もり、残り通数と並べて表示する</figcaption></figure>
+  <details class="terms"><summary>専門用語の補足を開く</summary><dl><dt>配信通数（メッセージ数）</dt><dd>LINEでは「友だち1人に1吹き出し送る」ごとに1通と数えるのが基本です（複数吹き出しを1回で送ると複数通）。</dd><dt>クォータ（月間上限）</dt><dd>LINE公式アカウントのプランごとに決まる月間の無料メッセージ数。上限API（message/quota）で取得できます。</dd><dt>API（エーピーアイ）</dt><dd>ソフトウェア同士が情報をやり取りする窓口。ここでは『今月の消費数を教えて』とLINEに問い合わせるために使います。</dd><dt>429エラー</dt><dd>短時間にリクエストを送りすぎた時にLINEが返す『多すぎます』の合図。大量配信では送る速度の調整が必要です。</dd></dl></details>
+
+  <h4>3. すでにL Messageに搭載済みか？（確認結果）</h4>
+  <ul class="checks"><li><span class="badge b-done">搭載済み</span><span>プランごとの上限（フリー1,000通／有料は無制限）の設定自体は搭載・公開されています。</span></li><li><span class="badge b-unk">要実機確認</span><span>配信前の消費通数見積りと残数との比較表示、80%到達時のアラート：公開情報・2026年アップデート情報では確認できませんでした。</span></li><li><span class="badge b-unk">要実機確認</span><span>ダッシュボードに残り通数を出す機能があるか（実機で確認）。</span></li></ul>
+
+  <h4>4. 実現可能性</h4>
+  <table class='tbl'><thead><tr><th>工程</th><th>工数</th><th>その工数になる根拠</th></tr></thead><tbody><tr><th scope='row'>要件整理</th><td class='num'>0.5人日</td><td>表示場所・警告のしきい値（例：80%）の決定のみで済む小さな機能のため</td></tr><tr><th scope='row'>設計（画面・処理）</th><td class='num'>0.5人日</td><td>表示パーツ1つと、通数取得の呼び出し方の設計</td></tr><tr><th scope='row'>実装</th><td class='num'>2.5人日</td><td>消費量の取得処理1.0／見積りロジック（人数×吹き出し数）0.5／表示・警告UI 0.5／通知0.5</td></tr><tr><th scope='row'>簡易テスト</th><td class='num'>0.5人日</td><td>上限間際・上限超過・上限なしプランの3パターンを確認</td></tr><tr class='sum'><th scope='row'>合計</th><td class='num'>4人日</td><td>約32時間（1人日=8時間）。バッファ30%を加えると約5.2人日</td></tr></tbody></table>
+  <p><b>技術的：容易です。</b>LINE公式APIに今月の上限と消費数を取得する窓口が用意されており、新しい仕組みは不要です。<b>リソース的：</b>エンジニア1名で約0.5週間。最小コストで「事故防止」の価値が出るため、費用対効果が最も高い部類です。</p>
+
+  <h4>5. 実装する場合の確認事項</h4>
+  <ul class="list"><li>フリープラン上限（L Message側）とLINE公式アカウント側上限、どちらを優先して見せるか（両方の表示が親切）</li><li>見積りに含めるのは吹き出し数か、リッチメッセージ等の種別ごとか</li><li>有料プランの顧客にも表示して不快にならないか（表示のオン/オフ設定）</li><li>通知の宛先（管理者のみ？スタッフ全員？）と通知手段（管理画面・メール・アプリ）</li></ul>
+  
+</section>
+<section class="card" id="pE">
+  <header class="card-h">
+    <div class="pid">E</div>
+    <div>
+      <h3>ブロック増加の原因分析</h3>
+      <p class="sub">「いつ・どの配信で減ったか」を見える化</p>
+      <p class="chips"><span class="chip">機能・分析</span><span class="chip">工数 5人日</span><span class="chip rankchip">優先度 第3位</span></p>
+    </div>
+  </header>
+
+  <h4>1. 課題（何が困るのか）</h4>
+  <p>LINEでは配信を多くしすぎると<b>友だちにブロックされる</b>ことが大きな課題です。L Messageには<b>URL分析（クリック率の計測）</b>や、友だち詳細でのタグ履歴・アクション履歴がありますが、<b>「どの配信の後にブロックが増えたか」を配信単位で確認する機能</b>は、公開情報では確認できませんでした。原因が分からなければ改善できません。</p>
+  <div class="example"><strong>たとえば…</strong><p>先週の火曜に友だちが一気に40人減った。その日は3回配信している。どれが原因か分からず、結局すべての配信を減らす判断をして売上も下がった。</p></div>
+
+  <h4>2. 改善内容と方法</h4>
+  <p>管理画面に<b>「友だち数・ブロック数の日別グラフ」</b>を作り、同じ時間軸に<b>配信のタイミングを点で重ねます</b>。さらに配信ごとに<b>「配信後24時間のブロック数」</b>を表示し、ブロックが多かった配信に印を付けます。「配信内容・時間帯・頻度」の見直しヒントも文章で提示します（例：『朝の配信後にブロックが多い傾向があります』）。</p>
+  <figure class="figure"><div class="figin"><svg viewBox="0 0 920 96" role="img" aria-label="いま（想定される流れ）" class="fig"><text x="10" y="16" class="svgl">いま（想定される流れ）</text><rect x="10.0" y="28" width="205.5" height="66" rx="10" fill="var(--box)" stroke="var(--line)" stroke-width="1.6"/><text x="112.8" y="58.0" text-anchor="middle" class="svgt">友だち数の増減を</text><text x="112.8" y="74.0" text-anchor="middle" class="svgt">別画面で確認</text><path d="M218.5 61.0 h16 m-6 -5 l6 5 l-6 5" fill="none" stroke="var(--muted)" stroke-width="1.8"/><rect x="241.5" y="28" width="205.5" height="66" rx="10" fill="var(--warnbg)" stroke="var(--warn)" stroke-width="1.6"/><text x="344.2" y="58.0" text-anchor="middle" class="svgt">ブロックが</text><text x="344.2" y="74.0" text-anchor="middle" class="svgt">増えた日がある</text><path d="M450.0 61.0 h16 m-6 -5 l6 5 l-6 5" fill="none" stroke="var(--muted)" stroke-width="1.8"/><rect x="473.0" y="28" width="205.5" height="66" rx="10" fill="var(--warnbg)" stroke="var(--warn)" stroke-width="1.6"/><text x="575.8" y="58.0" text-anchor="middle" class="svgt">原因の配信が</text><text x="575.8" y="74.0" text-anchor="middle" class="svgt">わからない</text><path d="M681.5 61.0 h16 m-6 -5 l6 5 l-6 5" fill="none" stroke="var(--muted)" stroke-width="1.8"/><rect x="704.5" y="28" width="205.5" height="66" rx="10" fill="var(--warnbg)" stroke="var(--warn)" stroke-width="1.6"/><text x="807.2" y="58.0" text-anchor="middle" class="svgt">頻度や内容を</text><text x="807.2" y="74.0" text-anchor="middle" class="svgt">見直せない</text></svg><svg viewBox="0 0 920 96" role="img" aria-label="改善後" class="fig"><text x="10" y="16" class="svgl">改善後</text><rect x="10.0" y="28" width="205.5" height="66" rx="10" fill="var(--accentbg)" stroke="var(--accent)" stroke-width="1.6"/><text x="112.8" y="66.0" text-anchor="middle" class="svgt">日別のブロック数</text><path d="M218.5 61.0 h16 m-6 -5 l6 5 l-6 5" fill="none" stroke="var(--muted)" stroke-width="1.8"/><rect x="241.5" y="28" width="205.5" height="66" rx="10" fill="var(--accentbg)" stroke="var(--accent)" stroke-width="1.6"/><text x="344.2" y="58.0" text-anchor="middle" class="svgt">配信・施策と</text><text x="344.2" y="74.0" text-anchor="middle" class="svgt">同じ時間軸に重ねる</text><path d="M450.0 61.0 h16 m-6 -5 l6 5 l-6 5" fill="none" stroke="var(--muted)" stroke-width="1.8"/><rect x="473.0" y="28" width="205.5" height="66" rx="10" fill="var(--goodbg)" stroke="var(--good)" stroke-width="1.6"/><text x="575.8" y="58.0" text-anchor="middle" class="svgt">「配信後24hの</text><text x="575.8" y="74.0" text-anchor="middle" class="svgt">ブロック率」を表示</text><path d="M681.5 61.0 h16 m-6 -5 l6 5 l-6 5" fill="none" stroke="var(--muted)" stroke-width="1.8"/><rect x="704.5" y="28" width="205.5" height="66" rx="10" fill="var(--goodbg)" stroke="var(--good)" stroke-width="1.6"/><text x="807.2" y="58.0" text-anchor="middle" class="svgt">配信頻度・内容を</text><text x="807.2" y="74.0" text-anchor="middle" class="svgt">改善</text></svg></div><figcaption>図：ブロック数と配信履歴を一つのグラフに重ねて原因を特定する</figcaption></figure>
+  <details class="terms"><summary>専門用語の補足を開く</summary><dl><dt>ブロック</dt><dd>友だちがトークをブロックし、以降メッセージが届かなくなる状態。ブロック率が高いと配信の効果が落ちます。</dd><dt>Insight API（インサイトAPI）</dt><dd>LINE公式が提供する、友だち数・ブロック数などの統計を取得する窓口。日別の友だち数/ブロック数を取得できます。</dd><dt>バッチ処理</dt><dd>毎日決まった時刻に自動でデータを取りに行って保存する仕組み。リアルタイムではなく1日1回の更新で十分なケースに向いています。</dd><dt>相関</dt><dd>「Aが起きた後にBが増える」という関係。偶然の可能性もあるため、表示では断定せず『傾向』と表現します。</dd></dl></details>
+
+  <h4>3. すでにL Messageに搭載済みか？（確認結果）</h4>
+  <ul class="checks"><li><span class="badge b-done">搭載済み</span><span>URL分析（クリック率の測定）：公式マニュアルに記載。</span></li><li><span class="badge b-done">搭載済み</span><span>友だち詳細のタグ履歴・アクション履歴の確認（2026年6月アップデート情報）。</span></li><li><span class="badge b-unk">要実機確認</span><span>ブロック数と配信履歴を同じ時間軸に重ねる表示／配信単位のブロック分析：確認できませんでした。LINE公式アカウント管理画面側の分析で日別ブロック数は見られるため、差別化できる範囲を実機で確認する必要があります。</span></li></ul>
+
+  <h4>4. 実現可能性</h4>
+  <table class='tbl'><thead><tr><th>工程</th><th>工数</th><th>その工数になる根拠</th></tr></thead><tbody><tr><th scope='row'>要件整理</th><td class='num'>0.5人日</td><td>表示する指標（日別ブロック、配信後24h）と、見せ方の合意</td></tr><tr><th scope='row'>設計（画面・処理）</th><td class='num'>0.5人日</td><td>データ保存の設計（日次で蓄積）とグラフ画面のワイヤーフレーム</td></tr><tr><th scope='row'>実装</th><td class='num'>3.5人日</td><td>日次データ取得バッチ1.0／配信履歴との突合1.0／グラフUI 1.0／傾向メッセージ0.5</td></tr><tr><th scope='row'>簡易テスト</th><td class='num'>0.5人日</td><td>データ欠損日・配信ゼロ日・大量配信日の表示確認</td></tr><tr class='sum'><th scope='row'>合計</th><td class='num'>5人日</td><td>約40時間（1人日=8時間）。バッファ30%を加えると約6.5人日</td></tr></tbody></table>
+  <p><b>技術的：可能です。</b>LINEが提供する統計の窓口から日別データを取得でき、L Message側が持つ配信履歴と日付で突き合わせるだけです。<b>制約：</b>統計は1日単位のため、「配信直後の時間単位」の分析はできません。また、友だち数が少ないアカウントでは統計が出ない場合があります（要確認）。</p>
+
+  <h4>5. 実装する場合の確認事項</h4>
+  <ul class="list"><li>LINE統計データが取得できる最低友だち数（少人数では非表示となるため、対象外の表示を設計）</li><li>過去データはどこまで遡って取得できるか</li><li>ブロックされた友だちの個人情報の扱い（LINE規約・個人情報保護の観点で、個人特定はしない設計にする）</li><li>『原因』と断定せず『傾向』と表示する表現の合意</li></ul>
+  
+</section>
+<section class="card" id="pB">
+  <header class="card-h">
+    <div class="pid">B</div>
+    <div>
+      <h3>目的別セットアップウィザード</h3>
+      <p class="sub">「何から設定すればいい？」をなくす</p>
+      <p class="chips"><span class="chip">UI/UX</span><span class="chip">工数 9人日</span><span class="chip rankchip">優先度 第4位</span></p>
+    </div>
+  </header>
+
+  <h4>1. 課題（何が困るのか）</h4>
+  <p>L Messageは多機能な反面、<b>細かな設定項目が多く、パソコンでの操作を前提</b>にしています（課題文の記載どおり）。初めて使う担当者は、ステップ配信・リッチメニュー・タグ・フォームのどこから手を付けるか迷いやすく、<b>設定漏れのまま運用が始まる</b>リスクがあります。公式マニュアルや動画は充実していますが、<b>自分の目的に合う順番で案内する仕組み</b>は確認できませんでした。</p>
+  <div class="example"><strong>たとえば…</strong><p>美容院の予約を増やしたい店長が登録したが、まず何を作ればよいか分からず、友だち追加時のあいさつメッセージだけ設定して数週間放置してしまう。</p></div>
+
+  <h4>2. 改善内容と方法</h4>
+  <p>登録直後に<b>「何を達成したいですか？」</b>と質問し（例：予約を増やす／来店を促す／問い合わせを減らす）、選んだ目的に合わせて<b>やることリスト</b>と<b>テンプレートの自動作成</b>を提供します。完了した項目にチェックが付く<b>進捗バー</b>を表示し、各項目から該当設定画面と解説動画へジャンプできます。</p>
+  <figure class="figure"><div class="figin"><svg viewBox="0 0 920 96" role="img" aria-label="いま（想定される流れ）" class="fig"><text x="10" y="16" class="svgl">いま（想定される流れ）</text><rect x="10.0" y="28" width="205.5" height="66" rx="10" fill="var(--warnbg)" stroke="var(--warn)" stroke-width="1.6"/><text x="112.8" y="58.0" text-anchor="middle" class="svgt">登録直後</text><text x="112.8" y="74.0" text-anchor="middle" class="svgt">空の管理画面</text><path d="M218.5 61.0 h16 m-6 -5 l6 5 l-6 5" fill="none" stroke="var(--muted)" stroke-width="1.8"/><rect x="241.5" y="28" width="205.5" height="66" rx="10" fill="var(--warnbg)" stroke="var(--warn)" stroke-width="1.6"/><text x="344.2" y="58.0" text-anchor="middle" class="svgt">機能が多く</text><text x="344.2" y="74.0" text-anchor="middle" class="svgt">何から触るか迷う</text><path d="M450.0 61.0 h16 m-6 -5 l6 5 l-6 5" fill="none" stroke="var(--muted)" stroke-width="1.8"/><rect x="473.0" y="28" width="205.5" height="66" rx="10" fill="var(--box)" stroke="var(--line)" stroke-width="1.6"/><text x="575.8" y="58.0" text-anchor="middle" class="svgt">マニュアルを</text><text x="575.8" y="74.0" text-anchor="middle" class="svgt">探して読む</text><path d="M681.5 61.0 h16 m-6 -5 l6 5 l-6 5" fill="none" stroke="var(--muted)" stroke-width="1.8"/><rect x="704.5" y="28" width="205.5" height="66" rx="10" fill="var(--warnbg)" stroke="var(--warn)" stroke-width="1.6"/><text x="807.2" y="58.0" text-anchor="middle" class="svgt">設定漏れのまま</text><text x="807.2" y="74.0" text-anchor="middle" class="svgt">運用開始</text></svg><svg viewBox="0 0 920 96" role="img" aria-label="改善後" class="fig"><text x="10" y="16" class="svgl">改善後</text><rect x="10.0" y="28" width="205.5" height="66" rx="10" fill="var(--accentbg)" stroke="var(--accent)" stroke-width="1.6"/><text x="112.8" y="58.0" text-anchor="middle" class="svgt">目的を選ぶ</text><text x="112.8" y="74.0" text-anchor="middle" class="svgt">例:予約集客</text><path d="M218.5 61.0 h16 m-6 -5 l6 5 l-6 5" fill="none" stroke="var(--muted)" stroke-width="1.8"/><rect x="241.5" y="28" width="205.5" height="66" rx="10" fill="var(--accentbg)" stroke="var(--accent)" stroke-width="1.6"/><text x="344.2" y="58.0" text-anchor="middle" class="svgt">必要な設定だけ</text><text x="344.2" y="74.0" text-anchor="middle" class="svgt">順番に案内</text><path d="M450.0 61.0 h16 m-6 -5 l6 5 l-6 5" fill="none" stroke="var(--muted)" stroke-width="1.8"/><rect x="473.0" y="28" width="205.5" height="66" rx="10" fill="var(--goodbg)" stroke="var(--good)" stroke-width="1.6"/><text x="575.8" y="58.0" text-anchor="middle" class="svgt">テンプレートを</text><text x="575.8" y="74.0" text-anchor="middle" class="svgt">自動で作成</text><path d="M681.5 61.0 h16 m-6 -5 l6 5 l-6 5" fill="none" stroke="var(--muted)" stroke-width="1.8"/><rect x="704.5" y="28" width="205.5" height="66" rx="10" fill="var(--goodbg)" stroke="var(--good)" stroke-width="1.6"/><text x="807.2" y="58.0" text-anchor="middle" class="svgt">進捗バーで</text><text x="807.2" y="74.0" text-anchor="middle" class="svgt">完了を確認</text></svg></div><figcaption>図：目的を選ぶだけで「やることリスト」とテンプレートが用意される</figcaption></figure>
+  <details class="terms"><summary>専門用語の補足を開く</summary><dl><dt>オンボーディング</dt><dd>新しく使い始めた人が迷わず最初の成果にたどり着けるようにする案内の仕組み。</dd><dt>ウィザード</dt><dd>質問に答えながら順番に進めていく、案内付きの設定画面。</dd><dt>ステップ配信</dt><dd>友だち追加から◯日後、のように、あらかじめ決めた順番・間隔でメッセージを自動配信する機能。</dd><dt>リッチメニュー</dt><dd>トーク画面の下部に表示される、画像付きのメニュー。ボタンで予約ページなどに誘導できます。</dd></dl></details>
+
+  <h4>3. すでにL Messageに搭載済みか？（確認結果）</h4>
+  <ul class="checks"><li><span class="badge b-done">搭載済み</span><span>公式マニュアル・動画・ステップ配信等の操作解説（lme.jp/manual）。</span></li><li><span class="badge b-unk">要実機確認</span><span>目的別のセットアップウィザード、進捗バー、テンプレート自動作成：公開情報では確認できませんでした。登録直後の画面を実機で確認する必要があります。</span></li></ul>
+
+  <h4>4. 実現可能性</h4>
+  <table class='tbl'><thead><tr><th>工程</th><th>工数</th><th>その工数になる根拠</th></tr></thead><tbody><tr><th scope='row'>要件整理</th><td class='num'>1人日</td><td>対象とする目的の絞り込み（最初は3パターン）と、完了判定の定義</td></tr><tr><th scope='row'>設計（画面・処理）</th><td class='num'>1.5人日</td><td>質問画面・やることリスト・進捗バーの3画面と、テンプレートが既存の設定画面とどう結び付くかの設計</td></tr><tr><th scope='row'>実装</th><td class='num'>5人日</td><td>ウィザード画面2.0／進捗の保存と完了判定1.5／テンプレート自動作成1.0／既存画面へのリンク0.5</td></tr><tr><th scope='row'>簡易テスト</th><td class='num'>1.5人日</td><td>3パターン×（新規・途中離脱・再開）の動作確認</td></tr><tr class='sum'><th scope='row'>合計</th><td class='num'>9人日</td><td>約72時間（1人日=8時間）。バッファ30%を加えると約11.7人日</td></tr></tbody></table>
+  <p><b>技術的：可能です。</b>新しい仕組みというより、既存機能を目的順に並べ替えて案内する画面です。<b>リソース的：</b>画面担当＋サーバー担当で約1〜2週間。<b>注意：</b>テンプレートの中身（文面）の作成は工数に含めていません。業種ごとの文面づくりは別途コンテンツ作成の工数がかかります。</p>
+
+  <h4>5. 実装する場合の確認事項</h4>
+  <ul class="list"><li>最初に対応する目的の優先順位（実際の顧客の業種・目的の割合をデータで確認）</li><li>既存ユーザーにも表示するか（新規のみ／全員）</li><li>ウィザードを後から再表示・スキップできるか</li><li>テンプレート文面の著作権・表現のチェック体制</li></ul>
+  
+</section>
+<section class="card" id="pD">
+  <header class="card-h">
+    <div class="pid">D</div>
+    <div>
+      <h3>A/Bテスト配信</h3>
+      <p class="sub">「どちらの文面が良いか」を勘ではなく数字で</p>
+      <p class="chips"><span class="chip">機能</span><span class="chip">工数 10人日</span><span class="chip rankchip">優先度 第5位</span></p>
+    </div>
+  </header>
+
+  <h4>1. 課題（何が困るのか）</h4>
+  <p>配信文面の良し悪しは、実際に送ってみないと分かりません。URL分析で結果は測れますが、<b>2つの案を同時に比べる仕組み</b>は公開情報の範囲では確認できませんでした。そのため、「どちらが良いか」は担当者の経験と勘に頼りがちです。</p>
+  <div class="example"><strong>たとえば…</strong><p>クーポン配信の文面を「10%OFF」と「500円引き」のどちらにするか迷い、結局前回と同じ文面を全員に送ってしまった。実は反応が2倍違ったかもしれない。</p></div>
+
+  <h4>2. 改善内容と方法</h4>
+  <p>配信作成画面で<b>文面AとBを同時に作成</b>できるようにします。まず対象のうち一部（例：各10%）にそれぞれ送り、一定時間後に<b>クリック率を自動比較</b>。成績の良かった方を、<b>残りの80%に自動配信</b>します。どちらが勝ったかは、グラフと一言コメント（『Aが1.4倍クリックされました』）で表示します。</p>
+  <figure class="figure"><div class="figin"><svg viewBox="0 0 920 96" role="img" aria-label="いま（想定される流れ）" class="fig"><text x="10" y="16" class="svgl">いま（想定される流れ）</text><rect x="10.0" y="28" width="205.5" height="66" rx="10" fill="var(--box)" stroke="var(--line)" stroke-width="1.6"/><text x="112.8" y="66.0" text-anchor="middle" class="svgt">文面を1つだけ作成</text><path d="M218.5 61.0 h16 m-6 -5 l6 5 l-6 5" fill="none" stroke="var(--muted)" stroke-width="1.8"/><rect x="241.5" y="28" width="205.5" height="66" rx="10" fill="var(--box)" stroke="var(--line)" stroke-width="1.6"/><text x="344.2" y="66.0" text-anchor="middle" class="svgt">全員に配信</text><path d="M450.0 61.0 h16 m-6 -5 l6 5 l-6 5" fill="none" stroke="var(--muted)" stroke-width="1.8"/><rect x="473.0" y="28" width="205.5" height="66" rx="10" fill="var(--warnbg)" stroke="var(--warn)" stroke-width="1.6"/><text x="575.8" y="58.0" text-anchor="middle" class="svgt">反応が良いか</text><text x="575.8" y="74.0" text-anchor="middle" class="svgt">悪いか不明</text><path d="M681.5 61.0 h16 m-6 -5 l6 5 l-6 5" fill="none" stroke="var(--muted)" stroke-width="1.8"/><rect x="704.5" y="28" width="205.5" height="66" rx="10" fill="var(--warnbg)" stroke="var(--warn)" stroke-width="1.6"/><text x="807.2" y="66.0" text-anchor="middle" class="svgt">次回も勘で作成</text></svg><svg viewBox="0 0 920 96" role="img" aria-label="改善後" class="fig"><text x="10" y="16" class="svgl">改善後</text><rect x="10.0" y="28" width="205.5" height="66" rx="10" fill="var(--box)" stroke="var(--line)" stroke-width="1.6"/><text x="112.8" y="66.0" text-anchor="middle" class="svgt">文面A・Bを作成</text><path d="M218.5 61.0 h16 m-6 -5 l6 5 l-6 5" fill="none" stroke="var(--muted)" stroke-width="1.8"/><rect x="241.5" y="28" width="205.5" height="66" rx="10" fill="var(--accentbg)" stroke="var(--accent)" stroke-width="1.6"/><text x="344.2" y="58.0" text-anchor="middle" class="svgt">一部(例:各10%)に</text><text x="344.2" y="74.0" text-anchor="middle" class="svgt">試験配信</text><path d="M450.0 61.0 h16 m-6 -5 l6 5 l-6 5" fill="none" stroke="var(--muted)" stroke-width="1.8"/><rect x="473.0" y="28" width="205.5" height="66" rx="10" fill="var(--accentbg)" stroke="var(--accent)" stroke-width="1.6"/><text x="575.8" y="58.0" text-anchor="middle" class="svgt">クリック率を</text><text x="575.8" y="74.0" text-anchor="middle" class="svgt">自動比較</text><path d="M681.5 61.0 h16 m-6 -5 l6 5 l-6 5" fill="none" stroke="var(--muted)" stroke-width="1.8"/><rect x="704.5" y="28" width="205.5" height="66" rx="10" fill="var(--goodbg)" stroke="var(--good)" stroke-width="1.6"/><text x="807.2" y="58.0" text-anchor="middle" class="svgt">勝った文面を</text><text x="807.2" y="74.0" text-anchor="middle" class="svgt">残りへ配信</text></svg></div><figcaption>図：少人数で試し、成績の良い文面を残りの友だちに自動で送る</figcaption></figure>
+  <details class="terms"><summary>専門用語の補足を開く</summary><dl><dt>A/Bテスト</dt><dd>2つの案をランダムに分けた人に送り、結果の良い方を選ぶ手法。</dd><dt>クリック率</dt><dd>メッセージ内のURLを開いた人の割合。URL分析で測定できます。</dd><dt>統計的有意差</dt><dd>結果の違いが『偶然ではなさそう』と言える程度の差のこと。友だち数が少ないと差が出ても偶然の可能性が高く、判定を保留する必要があります。</dd><dt>ランダム振り分け</dt><dd>対象者を無作為にA群・B群へ分けること。偏りをなくし、公平に比較するために必要です。</dd></dl></details>
+
+  <h4>3. すでにL Messageに搭載済みか？（確認結果）</h4>
+  <ul class="checks"><li><span class="badge b-done">搭載済み</span><span>URL分析によるクリック率の測定は搭載済みで、この提案の土台として使えます。</span></li><li><span class="badge b-unk">要実機確認</span><span>A/Bテスト配信（振り分けと自動勝者配信）：公開情報・2026年のアップデート情報では確認できませんでした。</span></li></ul>
+
+  <h4>4. 実現可能性</h4>
+  <table class='tbl'><thead><tr><th>工程</th><th>工数</th><th>その工数になる根拠</th></tr></thead><tbody><tr><th scope='row'>要件整理</th><td class='num'>1人日</td><td>対象人数の最低ライン、比較する指標（クリック率）、待ち時間の決め方の整理</td></tr><tr><th scope='row'>設計（画面・処理）</th><td class='num'>1人日</td><td>振り分けルールと、勝者を自動配信する流れの設計</td></tr><tr><th scope='row'>実装</th><td class='num'>6人日</td><td>A/B作成UI 2.0／振り分け処理1.0／集計・勝敗判定1.5／勝者の自動配信1.0／結果表示0.5</td></tr><tr><th scope='row'>簡易テスト</th><td class='num'>2人日</td><td>振り分けの偏り確認、少人数時の保留動作、途中停止の動作確認（既存配信との整合に時間がかかる）</td></tr><tr class='sum'><th scope='row'>合計</th><td class='num'>10人日</td><td>約80時間（1人日=8時間）。バッファ30%を加えると約13.0人日</td></tr></tbody></table>
+  <p><b>技術的：可能ですが、他案より重い。</b>既存の配信処理に「分割して配信し、結果で後続配信を決める」流れを足すため、予約配信・URL分析との整合確認が必要です。<b>効果の前提：</b>友だち数が少ないアカウントでは差が検出しにくく、価値が出る顧客が限られます。</p>
+
+  <h4>5. 実装する場合の確認事項</h4>
+  <ul class="list"><li>利用顧客の友だち数分布（A/Bに十分な人数のアカウント割合）</li><li>勝者判定の基準（クリック率のみで良いか／購入などの成果まで見るか）</li><li>配信通数が増えないか（試験配信分も消費）</li><li>LINE公式のガイドライン上、同一内容の分割配信に問題がないか</li></ul>
+  
+</section>
+</section>
+
+<section class="blk" id="priority">
+  <h2>4. 優先順位と最推奨案</h2>
+  <figure class="figure"><div class="figin"><svg viewBox="0 0 920 380" role="img" aria-label="価値とコストの散布図" class="fig"><rect x="70" y="20" width="820" height="300" fill="var(--box)" stroke="var(--line)"/><rect x="70" y="20" width="478.3" height="90.0" fill="var(--goodbg)" opacity=".7"/><text x="80" y="42" class="svgs" fill="var(--good)">優先ゾーン（価値4以上・7人日以下）</text><text x="70.0" y="340" text-anchor="middle" class="svgs">0</text><text x="206.7" y="340" text-anchor="middle" class="svgs">2</text><text x="343.3" y="340" text-anchor="middle" class="svgs">4</text><text x="480.0" y="340" text-anchor="middle" class="svgs">6</text><text x="616.7" y="340" text-anchor="middle" class="svgs">8</text><text x="753.3" y="340" text-anchor="middle" class="svgs">10</text><text x="890.0" y="340" text-anchor="middle" class="svgs">12</text><text x="480.0" y="368" text-anchor="middle" class="svgs">開発コスト（人日）→ 大きいほど高コスト</text><text x="60" y="294.0" text-anchor="end" class="svgs">1</text><text x="60" y="234.0" text-anchor="end" class="svgs">2</text><text x="60" y="174.0" text-anchor="end" class="svgs">3</text><text x="60" y="114.0" text-anchor="end" class="svgs">4</text><text x="60" y="54.0" text-anchor="end" class="svgs">5</text><text x="18" y="170.0" transform="rotate(-90 18 170.0)" text-anchor="middle" class="svgs">ユーザー価値（1〜5）↑</text><circle cx="514.2" cy="50.0" r="22" fill="var(--accentbg)" stroke="var(--accent)" stroke-width="2"/><text x="514.2" y="56.0" text-anchor="middle" class="svgb" font-size="16">A</text><circle cx="685.0" cy="110.0" r="22" fill="var(--accentbg)" stroke="var(--accent)" stroke-width="2"/><text x="685.0" y="116.0" text-anchor="middle" class="svgb" font-size="16">B</text><circle cx="343.3" cy="110.0" r="22" fill="var(--accentbg)" stroke="var(--accent)" stroke-width="2"/><text x="343.3" y="116.0" text-anchor="middle" class="svgb" font-size="16">C</text><circle cx="753.3" cy="170.0" r="22" fill="var(--accentbg)" stroke="var(--accent)" stroke-width="2"/><text x="753.3" y="176.0" text-anchor="middle" class="svgb" font-size="16">D</text><circle cx="411.7" cy="110.0" r="22" fill="var(--accentbg)" stroke="var(--accent)" stroke-width="2"/><text x="411.7" y="116.0" text-anchor="middle" class="svgb" font-size="16">E</text></svg></div><figcaption>図：左上ほど「価値が高く低コスト」。A・C・Eが優先ゾーンに入ります（円内の文字は提案ID）。</figcaption></figure>
+  <h4>工数の内訳比較</h4>
+  <figure class="figure"><div class="figin"><svg viewBox="0 0 920 320" role="img" aria-label="提案ごとの工数内訳の積み上げ棒グラフ" class="fig"><rect x="10" y="6" width="14" height="14" rx="3" fill="#7aa2f7"/><text x="30" y="18" class="svgs">要件整理</text><rect x="120" y="6" width="14" height="14" rx="3" fill="#9ece6a"/><text x="140" y="18" class="svgs">設計</text><rect x="230" y="6" width="14" height="14" rx="3" fill="#e0af68"/><text x="250" y="18" class="svgs">実装</text><rect x="340" y="6" width="14" height="14" rx="3" fill="#bb9af7"/><text x="360" y="18" class="svgs">簡易テスト</text><text x="10" y="48" class="svgt2">A：配信前セーフティチェック</text><rect x="250.0" y="34" width="48.0" height="26" fill="#7aa2f7"/><text x="274.0" y="52" text-anchor="middle" class="svgb">1</text><rect x="298.0" y="34" width="48.0" height="26" fill="#9ece6a"/><text x="322.0" y="52" text-anchor="middle" class="svgb">1</text><rect x="346.0" y="34" width="168.0" height="26" fill="#e0af68"/><text x="430.0" y="52" text-anchor="middle" class="svgb">3.5</text><rect x="514.0" y="34" width="48.0" height="26" fill="#bb9af7"/><text x="538.0" y="52" text-anchor="middle" class="svgb">1</text><text x="570.0" y="52" class="svgt2"><tspan font-weight="700">6.5人日</tspan>（約52時間）</text><text x="10" y="104" class="svgt2">B：目的別セットアップウィザード</text><rect x="250.0" y="90" width="48.0" height="26" fill="#7aa2f7"/><text x="274.0" y="108" text-anchor="middle" class="svgb">1</text><rect x="298.0" y="90" width="72.0" height="26" fill="#9ece6a"/><text x="334.0" y="108" text-anchor="middle" class="svgb">1.5</text><rect x="370.0" y="90" width="240.0" height="26" fill="#e0af68"/><text x="490.0" y="108" text-anchor="middle" class="svgb">5</text><rect x="610.0" y="90" width="72.0" height="26" fill="#bb9af7"/><text x="646.0" y="108" text-anchor="middle" class="svgb">1.5</text><text x="690.0" y="108" class="svgt2"><tspan font-weight="700">9人日</tspan>（約72時間）</text><text x="10" y="160" class="svgt2">C：配信通数の見積り＆上限アラート</text><rect x="250.0" y="146" width="24.0" height="26" fill="#7aa2f7"/><rect x="274.0" y="146" width="24.0" height="26" fill="#9ece6a"/><rect x="298.0" y="146" width="120.0" height="26" fill="#e0af68"/><text x="358.0" y="164" text-anchor="middle" class="svgb">2.5</text><rect x="418.0" y="146" width="24.0" height="26" fill="#bb9af7"/><text x="450.0" y="164" class="svgt2"><tspan font-weight="700">4人日</tspan>（約32時間）</text><text x="10" y="216" class="svgt2">D：A/Bテスト配信</text><rect x="250.0" y="202" width="48.0" height="26" fill="#7aa2f7"/><text x="274.0" y="220" text-anchor="middle" class="svgb">1</text><rect x="298.0" y="202" width="48.0" height="26" fill="#9ece6a"/><text x="322.0" y="220" text-anchor="middle" class="svgb">1</text><rect x="346.0" y="202" width="288.0" height="26" fill="#e0af68"/><text x="490.0" y="220" text-anchor="middle" class="svgb">6</text><rect x="634.0" y="202" width="96.0" height="26" fill="#bb9af7"/><text x="682.0" y="220" text-anchor="middle" class="svgb">2</text><text x="738.0" y="220" class="svgt2"><tspan font-weight="700">10人日</tspan>（約80時間）</text><text x="10" y="272" class="svgt2">E：ブロック増加の原因分析</text><rect x="250.0" y="258" width="24.0" height="26" fill="#7aa2f7"/><rect x="274.0" y="258" width="24.0" height="26" fill="#9ece6a"/><rect x="298.0" y="258" width="168.0" height="26" fill="#e0af68"/><text x="382.0" y="276" text-anchor="middle" class="svgb">3.5</text><rect x="466.0" y="258" width="24.0" height="26" fill="#bb9af7"/><text x="498.0" y="276" class="svgt2"><tspan font-weight="700">5人日</tspan>（約40時間）</text></svg></div><figcaption>図：提案ごとの工数内訳（人日）。Dは「既存配信との整合確認」が重く、最もコストが高い。</figcaption></figure>
+  <h4>判断の理由</h4>
+  <ul class="list">
+    <li><b>第1位 A（最推奨）</b>：影響が最も大きい「取り消せない配信」のミスを防ぐ。価値が高く、既存の配信処理の手前に差し込むだけなので既存機能との整合も良い。</li>
+    <li><b>第2位 C</b>：最小コスト（4人日）で効果が出る。Aの確認画面にそのまま組み込めるため、<b>A→Cの順（または同時）</b>で実施すると効率的。</li>
+    <li><b>第3位 E</b>：ブロックという重要な成果指標を扱う。ただしLINE統計が日単位のため分析の深さに限界がある。</li>
+    <li><b>第4位 B</b>：新規ユーザーの定着に効くが、画面数が多く工数が大きい。業種別のテンプレート作成も別途必要。</li>
+    <li><b>第5位 D</b>：効果は大きくなり得るが、友だち数が多いアカウントに限られ、既存配信との整合確認が重い。</li>
+  </ul>
+  <h4>推奨ロードマップ</h4>
+  <div class="scroll"><table class="tbl"><thead><tr><th>フェーズ</th><th>内容</th><th>工数目安</th></tr></thead><tbody>
+    <tr><td>1（約2週間）</td><td>A（MVP）＋ C を同時に実施。確認画面に通数見積りを組み込む。</td><td class="num">約10.5人日</td></tr>
+    <tr><td>2（約1週間）</td><td>E：ブロック数の可視化。Aの確認画面から分析画面へ誘導。</td><td class="num">約5人日</td></tr>
+    <tr><td>3（以降）</td><td>利用状況を見て B または D、承認フロー拡張（+5人日）を選択。</td><td class="num">要判断</td></tr>
+  </tbody></table></div>
+</section>
+
+<section class="blk" id="client">
+  <h2>5. 依頼者の立場で、追加で入れておきたい視点</h2>
+  <div class="grid">
+    <div class="mini"><b>成功を測る指標（KPI）</b>A：配信ミスによる問い合わせ件数／C：上限超過の発生件数／E：配信後24hブロック率。導入前の数値を先に測っておかないと、効果を説明できません。</div>
+    <div class="mini"><b>段階リリース</b>最初は一部の顧客だけに公開（フィーチャーフラグ）し、問題がなければ全体へ。確認画面は操作を増やすため、「毎回出す／警告時のみ出す」の設定を用意して不満を防ぎます。</div>
+    <div class="mini"><b>既存ユーザーへの影響</b>日々の運用手順が変わるため、リリース前の告知とマニュアル更新、リリースノートが必要です（この工数は見積りに含みません）。</div>
+    <div class="mini"><b>LINE側の制約と規約</b>配信の取消不可、API利用の速度制限（超過すると429エラー）、友だちの個人情報の取り扱い。仕様は変更され得るため、公式ドキュメントで定期確認します。</div>
+    <div class="mini"><b>性能と安全性</b>数万人規模の対象人数計算は時間がかかるため非同期で処理。ログ（誰がいつ配信したか）を残し、誤配信時の原因調査に使います。</div>
+    <div class="mini"><b>見積りのリスク</b>既存コードの理解に時間がかかる、仕様が既に搭載済みだった場合は工数が減る/変わる、など。バッファ30%を推奨します。</div>
+    <div class="mini"><b>競合との差別化</b>Lステップなど同種サービスが多い中、「安心して使える」「迷わず始められる」は価格以外の選ばれる理由になります。</div>
+    <div class="mini"><b>サポート負荷の軽減</b>レビューでも「サポート範囲」への言及があります。AとBは、問い合わせの事前防止にも効果が見込めます。</div>
+  </div>
+  <h4>導入前に共通して確認したいこと</h4>
+  <ul class="list">
+    <li>現在の利用顧客の規模（友だち数の分布）と、配信ミスに関する実際の問い合わせ件数</li>
+    <li>開発体制（担当者数・使用技術・リリース頻度）と、既存の優先課題との兼ね合い</li>
+    <li>管理画面の実機確認で「搭載済み」と判明した機能の有無（本資料の「要実機確認」項目）</li>
+    <li>スマホアプリ側にも反映が必要か（チャット対応等はスマホ対応のため、確認画面の対応範囲を決める）</li>
+  </ul>
+</section>
+
+<section class="blk" id="review">
+  <h2>6. 精査メモ（AI活用と提出者の責任範囲）</h2>
+  <p>本資料は、AIで情報収集と下書きを行い、内容は提出者が確認・編集する前提で作成しています。確認した範囲と限界を明記します。</p>
+  <div class="grid">
+    <div class="mini"><b>AIに任せた範囲</b>情報の検索・整理、文章とHTMLの下書き、図の作成。</div>
+    <div class="mini"><b>確認した事実</b>公式マニュアル・料金情報・アップデート情報の検索結果、LINE公式ドキュメントの記載（リトライキー、429エラー、Webhook再送等）。</div>
+    <div class="mini"><b>確認できていないこと</b>管理画面（ログイン後）の実際の操作。件数・上限等の数値は公開情報ベースで、最新の公式情報での再確認が必要です。</div>
+    <div class="mini"><b>工数の性質</b>経験則に基づく概算です。既存コードを確認できていないため、実装時に再見積りを推奨します。</div>
+  </div>
+  <p class="muted" style="font-size:13px">参照：<a href="https://lme.jp/manual/url_analysis/" rel="noopener noreferrer">L Message URL分析マニュアル</a>／<a href="https://lme.jp/manual/?p=84" rel="noopener noreferrer">テスト送信マニュアル</a>／<a href="https://lme.jp/manual/2026_9update/" rel="noopener noreferrer">2026年9月アップデート</a>／<a href="https://lme.jp/manual/category/system_contract/paid_plan/" rel="noopener noreferrer">有料プラン</a>／<a href="https://developers.line.biz/ja/reference/messaging-api/nojs/" rel="noopener noreferrer">Messaging APIリファレンス</a>／<a href="https://developers.line.biz/ja/docs/messaging-api/retrying-api-request/" rel="noopener noreferrer">APIリトライ</a></p>
+</section>
+</main>
+<footer><div class="wrap">L Message 改善提案（選考課題）／ 作成所要時間：約0時間4分</div></footer>
+</body>
+</html>
